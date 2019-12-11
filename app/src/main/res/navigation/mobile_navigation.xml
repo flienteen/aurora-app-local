@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@id/nav_login">
+
+    <fragment
+        android:id="@+id/nav_status"
+        android:name="com.persidius.eos.aurora.ui.status.StatusFragment"
+        android:label="status"
+        tools:layout="@layout/fragment_status" />
+    <fragment
+        android:id="@+id/nav_settings"
+        android:name="com.persidius.eos.aurora.ui.settings.SettingsFragment"
+        android:label="@string/settings" />
+    <fragment
+        android:id="@+id/nav_cameraScanner"
+        android:name="com.persidius.eos.aurora.ui.cameraScanner.CameraScannerFragment"
+        android:label="Scanare Cod" />
+    <fragment
+        android:id="@+id/nav_login"
+        android:name="com.persidius.eos.aurora.ui.login.LoginFragment"
+        android:label="Autentificare"
+        tools:layout="@layout/fragment_login" >
+        <action
+            android:id="@+id/action_nav_login_to_nav_status"
+            app:destination="@id/nav_status"
+            app:popUpTo="@+id/nav_status" />
+    </fragment>
+    <action
+        android:id="@+id/action_global_nav_login"
+        app:destination="@id/nav_login" />
+
+</navigation>

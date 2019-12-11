@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "12378837883",
+    "firebase_url": "https://aurora-ef5f4.firebaseio.com",
+    "project_id": "aurora-ef5f4",
+    "storage_bucket": "aurora-ef5f4.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:12378837883:android:d59a25eb578f0b3ea0a3de",
+        "android_client_info": {
+          "package_name": "com.persidius.eos.aurora"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "12378837883-rna1hkmul1t76b3d4ieth2hipe3f4fuk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.persidius.eos.aurora",
+            "certificate_hash": "91e43fa686e61284a824ba338a0bb3851196d1f2"
+          }
+        },
+        {
+          "client_id": "12378837883-u5d10s5bng9s7k6absv9oe96tkhl7b36.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxTkny9UpBrof6keimPkQlfuv9Sm8yYCU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "12378837883-u5d10s5bng9s7k6absv9oe96tkhl7b36.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

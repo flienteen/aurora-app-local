@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">Aurora</string>
+    <string name="flows">Fluxuri</string>
+    <string name="settings">Setări</string>
+    <string name="bin">Recipient</string>
+    <string name="user">Utilizator</string>
+    <string name="group">Grup</string>
+    <string name="tasks">Taskuri</string>
+    <string name="add_recipients">Înregistrare Recipienți</string>
+    <string name="create_task">Creare Task</string>
+    <string name="add_economic_agents">Înregistrare Agent Economic</string>
+    <string name="password">Parolă</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <array name="eos_env">
+        <item>Dezvoltare</item>
+        <item>Producție</item>
+    </array>
+    <array name="eos_env_values">
+        <item>persidius.dev</item>
+        <item>persidius.com</item>
+    </array>
+</resources>

@@ -1,0 +1,41 @@
+query rawUsers {
+    rawUsers(updatedAfter: 0) {
+        active
+        id
+        name
+        idNumber
+        type
+        billingType
+        billingData {
+            ... on UserBillingData_Fixed {
+                fixedComponents {
+                    collections
+                    size
+                    stream
+                }
+            }
+            ... on UserBillingData_PerPerson {
+                persons
+            }
+
+            ... on UserBillingData_PerPerson_RA {
+                persons
+            }
+        }
+        addressNumber
+        addressStreet
+        labels
+        updatedAt
+        uat {
+            id
+        }
+        county {
+            id
+        }
+        loc {
+            id
+        }
+        comments
+        groupId
+    }
+}
