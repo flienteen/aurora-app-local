@@ -1,22 +1,19 @@
 package com.persidius.eos.aurora
 
-import android.content.ClipData
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
-import android.view.MenuItem
-import android.view.View
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.Observer
+import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
-import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.navigation.NavigationView
-import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
-import androidx.lifecycle.Observer
-import androidx.navigation.NavController
 import com.persidius.eos.aurora.authorization.AuthorizationManager
 import com.persidius.eos.aurora.authorization.Role
 import com.persidius.eos.aurora.rfidService.RFIDService
@@ -89,27 +86,19 @@ class MainActivity : AppCompatActivity() {
             menu.userSearch.isEnabled = s.hasRole(Role.LOGISTICS_VIEW_USER)
             menu.groupSearch.isEnabled = s.hasRole(Role.LOGISTICS_VIEW_GROUPS)
 
-            menu.createEconomicAgent.isEnabled = listOf(
+            menu.createEconomicAgent.isEnabled = s.hasRoles(
                 Role.LOGISTICS_ALLOC_USER,
                 Role.LOGISTICS_EDIT_USER,
                 Role.LOGISTICS_VIEW_RECIPIENT,
                 Role.LOGISTICS_VIEW_GROUPS
             )
-            .map { s.hasRole(it) }
-            .reduce { acc, b -> b && acc }
 
-            menu.createTask.isEnabled = listOf(
+            menu.createTask.isEnabled = s.hasRoles(
                 Role.LOGISTICS_CREATE_TASK,
                 Role.LOGISTICS_EDIT_TASK
-            ).map { s.hasRole(it) }
-            .reduce { acc, b -> b && acc }
+            )
             menu.createBin.isEnabled = s.hasRole(Role.LOGISTICS_EDIT_RECIPIENT)
         }
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        return super.onCreateOptionsMenu(menu)
-        Log.d("MAIUN", "menu created?")
     }
 
     override fun onSupportNavigateUp(): Boolean {

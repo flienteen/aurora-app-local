@@ -16,6 +16,9 @@ class LoginViewModel(private val am: AuthorizationManager): ViewModel() {
     val loginError: LiveData<Boolean> = map<Boolean, Boolean>(am.session.loggingIn) {
         loggingIn ->  if(loggingIn) false else am.session.error.value === AuthorizationManager.ErrorCode.LOGIN_FAILED_INVALID_CREDENTIALS
     }
+    val loginOtherError: LiveData<Boolean> = map<Boolean, Boolean>(am.session.loggingIn) {
+        loggingIn -> if(loggingIn) false else am.session.error.value === AuthorizationManager.ErrorCode.LOGIN_FAILED_OTHER_ERROR
+    }
     val pass: MutableLiveData<String> = MutableLiveData("")
 
     fun login(v: View) {

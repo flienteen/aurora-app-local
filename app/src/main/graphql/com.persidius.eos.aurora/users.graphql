@@ -1,5 +1,5 @@
-query rawUsers {
-    rawUsers(updatedAfter: 0) {
+query users($updatedAfter: Int) {
+    rawUsers(updatedAfter: $updatedAfter) {
         active
         id
         name
@@ -7,13 +7,6 @@ query rawUsers {
         type
         billingType
         billingData {
-            ... on UserBillingData_Fixed {
-                fixedComponents {
-                    collections
-                    size
-                    stream
-                }
-            }
             ... on UserBillingData_PerPerson {
                 persons
             }

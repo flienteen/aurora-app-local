@@ -1,32 +1,38 @@
 package com.persidius.eos.aurora.authorization
 
-object Role {
-    val LOGISTICS_VIEW_RECIPIENT = "lvr"
-    val LOGISTICS_VIEW_USER = "lvu"
-    val LOGISTICS_VIEW_GROUPS = "lvg"
-    val LOGISTICS_VIEW_TAGS = "lvt"
+enum class Role(val code: String) {
+    LOGISTICS_VIEW_RECIPIENT("lvr"),
+    LOGISTICS_VIEW_USER("lvu"),
+    LOGISTICS_VIEW_GROUPS("lvg"),
+    LOGISTICS_VIEW_TAGS("lvt"),
 
-    val LOGISTICS_EDIT_RECIPIENT = "ler"
-    val LOGISTICS_EDIT_USER = "leu"
-    val LOGISTICS_EDIT_GROUP = "leg"
+    LOGISTICS_EDIT_RECIPIENT("ler"),
+    LOGISTICS_EDIT_USER("leu"),
+    LOGISTICS_EDIT_GROP("leg"),
 
-    val LOGISTICS_ALLOC_RECIPIENT = "lar"
-    val LOGISTICS_ALLOG_GROUP = "lag"
-    val LOGISTICS_ALLOC_USER = "lau"
+    LOGISTICS_ALLOC_RECIPIENT("lar"),
+    LOGISTICS_ALLOC_GROUP("lag"),
+    LOGISTICS_ALLOC_USER("lau"),
 
-    // Allows creation of tasks.
-    val LOGISTICS_CREATE_TASK = "lck"
+    // Allows Creation of tasks
+    LOGISTICS_CREATE_TASK("lck"),
 
-    // Allows viewing tasks
-    val LOGISTICS_VIEW_TASK = "lvk"
+    // Allows viewing own tasks
+    LOGISTICS_VIEW_TASK("lvk"),
 
-    // Allows editing (aka assigning/removing/setting every other attribute) on tasks
-    // not used in mobile app
-    val LOGISTICS_EDIT_TASK = "lek"
+    // Allows editing on tasks. Not used in mobile app.
+    LOGISTICS_EDIT_TASK("lek"),
 
-    // Allows updating tasks (updating existing or newly created tasks)
-    val LOGISTICS_UPDATE_TASK = "luk"
+    // allows updating tasks.
+    LOGISTICS_UPDATE_TASK("luk"),
 
-    val DISABLE_PAGINATION = "dpp"
-    val DEBUG = "dbg"
+    DISABLE_PAGINATION("dpp"),
+    DEBUG("dbg");
+
+    companion object {
+        private val Codes = values().map { it.code to it }.toMap()
+        fun fromCode(code: String): Role? {
+            return Codes.get(code)
+        }
+    }
 }

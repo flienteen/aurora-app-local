@@ -1,0 +1,242 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "382e87059fdcb2547b4146e86505c372",
+    "entities": [
+      {
+        "tableName": "County",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `seq` INTEGER NOT NULL, `short_` TEXT NOT NULL, `name` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "seq",
+            "columnName": "seq",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "short_",
+            "columnName": "short_",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "Uat",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `countyId` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`countyId`) REFERENCES `County`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "countyId",
+            "columnName": "countyId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [
+          {
+            "name": "index_Uat_countyId",
+            "unique": false,
+            "columnNames": [
+              "countyId"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Uat_countyId` ON `${TABLE_NAME}` (`countyId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "County",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "countyId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "Loc",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `uatId` INTEGER NOT NULL, `countyId` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`uatId`) REFERENCES `Uat`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`countyId`) REFERENCES `County`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uatId",
+            "columnName": "uatId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "countyId",
+            "columnName": "countyId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [
+          {
+            "name": "index_Loc_uatId",
+            "unique": false,
+            "columnNames": [
+              "uatId"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Loc_uatId` ON `${TABLE_NAME}` (`uatId`)"
+          },
+          {
+            "name": "index_Loc_countyId",
+            "unique": false,
+            "columnNames": [
+              "countyId"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Loc_countyId` ON `${TABLE_NAME}` (`countyId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Uat",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "uatId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "County",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "countyId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "Artery",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `prefix` TEXT NOT NULL, `locId` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`locId`) REFERENCES `Loc`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "prefix",
+            "columnName": "prefix",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "locId",
+            "columnName": "locId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [
+          {
+            "name": "index_Artery_locId",
+            "unique": false,
+            "columnNames": [
+              "locId"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Artery_locId` ON `${TABLE_NAME}` (`locId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Loc",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "locId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '382e87059fdcb2547b4146e86505c372')"
+    ]
+  }
+}

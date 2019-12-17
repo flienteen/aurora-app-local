@@ -1,0 +1,29 @@
+query recipients($withTags: Boolean!, $updatedAfter: Int) {
+    rawRecipients(updatedAfter: $updatedAfter) {
+        tags @include(if: $withTags) {
+            tag
+            slot
+        }
+        updatedAt
+        labels
+        addressStreet
+        addressNumber
+        posLat
+        posLng
+        stream
+        size
+        active
+        comments
+        groupId
+        id
+        county {
+            id
+        }
+        loc {
+            id
+        }
+        uat {
+            id
+        }
+    }
+}

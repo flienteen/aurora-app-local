@@ -1,19 +1,25 @@
 package com.persidius.eos.aurora.authorization
 
-import android.content.Context
-import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.LiveDataReactiveStreams
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations.map
-import androidx.preference.PreferenceManager
 import com.auth0.android.jwt.JWT
+import com.persidius.eos.aurora.BuildConfig
+import com.persidius.eos.aurora.util.Optional
+import com.persidius.eos.aurora.util.Preferences
+import com.persidius.eos.aurora.util.asOptional
+import io.reactivex.BackpressureStrategy
+import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.BehaviorSubject
 import retrofit2.HttpException
-import java.lang.Exception
 
+
+// TODO: Shared prefs should be moved into the Preferences object
+// TODO: Convert LiveData usage to Observables
 
 /**
  * Shared Preference Keys
@@ -25,12 +31,12 @@ import java.lang.Exception
  *
  */
 
-class AuthorizationManager(applicationContext: Context) {
+class AuthorizationManager {
 
     private companion object {
         val COUNTY_REX = Regex("^c[0-9]+$")
         val UAT_REX = Regex("^u[0-9]+$")
-        val TOKEN_LEEWAY = 300L
+        const val TOKEN_LEEWAY = 300L
     }
 
     private inner class UserClaim {
@@ -40,9 +46,14 @@ class AuthorizationManager(applicationContext: Context) {
         var enforce2FA: Boolean = false
     }
 
-    data class SessionToken(val email: String, val name: String, val uid: Int, val roles: List<String>, val countyIdLimit: List<Int>?, val uatIdLimit: List<Int>?) {
-        fun hasRole(role: String): Boolean {
+    data class SessionToken(val jwt: JWT, val email: String, val name: String, val uid: Int, val roles: List<Role>, val countyIdLimit: List<Int>?, val uatIdLimit: List<Int>?) {
+        fun hasRole(role: Role): Boolean {
             return (role in roles)
+        }
+
+        fun hasRoles(vararg roles: Role): Boolean {
+            return roles.map { hasRole(it) }
+                .reduce { acc, b -> b && acc }
         }
 
         fun hasUatAccess(id: Int): Boolean {
@@ -52,57 +63,75 @@ class AuthorizationManager(applicationContext: Context) {
         fun hasCountyAccess(id: Int): Boolean {
             return (countyIdLimit?.indexOf(id) ?: 0) != -1
         }
+
+        fun printRoles() {
+            Log.d("AM", "Session token roles: ${roles.map { it.name }.joinToString(",")}")
+        }
+
+        override fun toString(): String {
+            return jwt.toString()
+        }
     }
 
     // Public only properties here.
     inner class Session {
         val email: LiveData<String> = this@AuthorizationManager.username
 
-        val token: LiveData<JWT?> = this@AuthorizationManager.token
-        val sessionToken: LiveData<SessionToken?> = map<JWT?, SessionToken>(token) {
-            if(it == null) null else {
-                val roles = it.getClaim("auz").asList(String::class.java)
+        val token: LiveData<JWT?> = map<Optional<JWT>, JWT?>(
+            LiveDataReactiveStreams.fromPublisher(this@AuthorizationManager.token.toFlowable(BackpressureStrategy.LATEST))
+        ) { v -> v.value }
 
-
-                var uatIds: List<Int>? = roles
-                    .filter { COUNTY_REX.matches(it) }
-                    .map { it.substring(1).toInt() }
-
-                var countyIds: List<Int>? = roles
-                    .filter { UAT_REX.matches(it) }
-                    .map { it.substring(1).toInt() }
-
-                if(uatIds!!.indexOf(0) != -1) uatIds = null
-                if(countyIds!!.indexOf(0) !== -1) countyIds = null
-
-                val user = it.getClaim("user").asObject(UserClaim::class.java)
-
-                Log.d("AM", "${user?.toString() ?: null}")
-                user ?: return@map null
-
-                SessionToken(user.email, user.name, user.id, roles, countyIds, uatIds)
-            }
-        }
+        val sessionToken: LiveData<SessionToken?> = map<Optional<SessionToken>, SessionToken?> (
+            LiveDataReactiveStreams.fromPublisher(this@AuthorizationManager.sessionToken.toFlowable(BackpressureStrategy.LATEST))
+        ) { v -> v.value }
 
         val locked: LiveData<Boolean> = this@AuthorizationManager.locked
-        val signedIn: LiveData<Boolean> = this@AuthorizationManager.signedIn
+        val signedIn: LiveData<Boolean> = map<JWT?, Boolean>(token) { !((it?.isExpired(TOKEN_LEEWAY)) ?: true) }
         val loggingIn: LiveData<Boolean> = this@AuthorizationManager.loggingIn
 
         val error: LiveData<ErrorCode> = this@AuthorizationManager.error
     }
 
 
-
-    val prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
-
     // token user/pass
-    private val username = MutableLiveData<String>(prefs.getString("AMTokenUsername", ""))
-    private val password = MutableLiveData<String>(prefs.getString("AMTokenPassword", ""))
-    private val token = MutableLiveData<JWT>(null)
+    private val username = MutableLiveData<String>(Preferences.prefs.getString("AMTokenUsername", ""))
+    private val password = MutableLiveData<String>(Preferences.prefs.getString("AMTokenPassword", ""))
+    private val token: BehaviorSubject<Optional<JWT>> = BehaviorSubject.create()
+    val tokenObservable = token as Observable<Optional<JWT>>
+    private val sessionToken = token.map { v -> jwtToSessionToken(v) }
+
+    private fun jwtToSessionToken(tkn: Optional<JWT>): Optional<SessionToken> {
+        if(!tkn.isPresent()) {
+            return null.asOptional()
+        } else {
+            val roleCodes = tkn.get().getClaim("auz").asList(String::class.java)
+
+
+            var uatIds: List<Int>? = roleCodes
+                .filter { COUNTY_REX.matches(it) }
+                .map { it.substring(1).toInt() }
+
+            var countyIds: List<Int>? = roleCodes
+                .filter { UAT_REX.matches(it) }
+                .map { it.substring(1).toInt() }
+
+            if (uatIds!!.indexOf(0) != -1) uatIds = null
+            if (countyIds!!.indexOf(0) !== -1) countyIds = null
+
+            val user = tkn.get().getClaim("user").asObject(UserClaim::class.java)
+
+            user ?: return null.asOptional()
+
+            val roles = roleCodes
+                .mapNotNull { code -> Role.fromCode(code) }
+
+            return SessionToken(tkn.get(), user.email, user.name, user.id, roles, countyIds, uatIds).asOptional()
+        }
+    }
+
 
     // Whether usename field is locked cand cannot be changed
-    private val locked = MutableLiveData<Boolean>(prefs.getBoolean("AMLocked", false))
-    private val signedIn: LiveData<Boolean> = map<JWT?, Boolean>(token) { !((it?.isExpired(TOKEN_LEEWAY)) ?: true) }
+    private val locked = MutableLiveData<Boolean>(Preferences.prefs.getBoolean("AMLocked", false))
     private val loggingIn = MutableLiveData<Boolean>(false)
     private val error = MutableLiveData<ErrorCode>()
 
@@ -121,56 +150,50 @@ class AuthorizationManager(applicationContext: Context) {
 
     val session = Session()
 
-    private lateinit var userAPI: UserAPI
+    private val userApi: BehaviorSubject<UserAPI>
 
-    private val preferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener {
-            sharedPrefs, key ->
-        // what we care about most here is the 'eosEnv' variable.
-        when(key) {
-            "eosEnv" -> {
-                val newDomain = sharedPrefs.getString(key, "")
-                if(newDomain !== "") {
-                    if(!isLocked()) {
-                        createUserApi(newDomain!!)
-                        login(username.value!!, password.value!!)
-                    }
+    init {
+
+        try {
+            token.onNext(JWT(Preferences.amToken.value!!).asOptional())
+        } catch(e: Exception) {
+            token.onNext(null.asOptional())
+        }
+
+        token.subscribe { tkn ->
+            Preferences.amToken.onNext(if(tkn.isPresent()) tkn.get().toString() else "") }
+
+        // Auto-save these properties
+        username.observeForever {Preferences.prefs.edit().putString("AMTokenUsername", it).apply()}
+        password.observeForever {Preferences.prefs.edit().putString("AMTokenPassword", it).apply()}
+        locked.observeForever {Preferences.prefs.edit().putBoolean("AMLocked", it).apply()}
+
+        // UserAPI observable
+        Log.d("AM", "${Preferences.eosEnv.value!!}")
+        userApi = BehaviorSubject.createDefault(createUserAPI(Preferences.eosEnv.value!!))
+        Preferences.eosEnv.subscribe { v -> userApi.onNext(createUserAPI(v)) }
+
+        if(BuildConfig.DEBUG) {
+            sessionToken.subscribe{
+                if(it.isPresent()) {
+                    it.get().printRoles()
                 }
             }
         }
     }
 
-    init {
-        try {
-            token.value = JWT(prefs.getString("AMToken", "")!!)
-        } catch(e: Exception) {
-            token.value = null
-        }
-
-        prefs.registerOnSharedPreferenceChangeListener(preferenceChangeListener)
-
-        // Auto-save these properties
-        username.observeForever {prefs.edit().putString("AMTokenUsername", it).commit()}
-        password.observeForever {prefs.edit().putString("AMTokenPassword", it).commit()}
-        locked.observeForever {prefs.edit().putBoolean("AMLocked", it).commit()}
-        token.observeForever{ prefs.edit().putString("AMToken", it?.toString() ?: "").commit() }
-
-        createUserApi(prefs.getString("eosEnv", "persidius.com") ?: "persidius.com")
+    private fun createUserAPI(domain: String): UserAPI {
+        return UserAPI.create("https://eos-api.$domain/user/")
     }
-
-    private fun createUserApi(domain: String) {
-        userAPI = UserAPI.create("https://eos-api.$domain/user/")
-    }
-
 
     fun isLocked(): Boolean {
-        return locked.value ?: false
+        return session.locked.value ?: false
     }
 
     fun isSignedIn(): Boolean {
-        return signedIn.value ?: false
+        return session.signedIn.value ?: false
     }
 
-    private var loginDisposable: Disposable? = null
     fun login(newUsername: String, newPassword: String) {
         if(isSignedIn()) {
             return
@@ -188,16 +211,16 @@ class AuthorizationManager(applicationContext: Context) {
         }
 
         loggingIn.value = true
-        loginDisposable?.dispose()
-        loginDisposable = userAPI.Login(UserAPI.Credentials(newUsername, newPassword))
+        userApi.value!!.Login(UserAPI.Credentials(newUsername, newPassword))
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
+            .firstOrError()
             .subscribe(
             { result ->
                 try {
                     val newToken = JWT(result.token)
                     if(!newToken.isExpired(TOKEN_LEEWAY)) {
-                        token.value = newToken
+                        token.onNext(newToken.asOptional())
                         username.value = newUsername
                         password.value = newPassword
                     }
@@ -229,7 +252,7 @@ class AuthorizationManager(applicationContext: Context) {
         }
 
         // dump all the state
-        token.value = null
+        token.onNext(null.asOptional())
         username.value = ""
         password.value = ""
     }

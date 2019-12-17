@@ -36,7 +36,7 @@
                 android:layout_marginTop="14dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/loginErrorMessage">
+                app:layout_constraintTop_toBottomOf="@id/loginOtherErrorMessage">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/username"
@@ -102,10 +102,20 @@
                 android:gravity="center"
                 android:textColor="@color/colorError"
                 android:visibility="@{model.loginError ? View.VISIBLE : View.GONE}"
-                android:text="Combinatie email/parolă invalidă." >
+                android:text="Combinatie email/parolă invalidă." />
 
+            <TextView
+                android:id="@+id/loginOtherErrorMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/loginErrorMessage"
+                android:gravity="center"
+                android:textColor="@color/colorError"
+                android:visibility="@{model.loginOtherError ? View.VISIBLE : View.GONE}"
+                android:text="A avut loc o eroare. Incearcă mai tarziu." />
 
-        </TextView>
 
             <ProgressBar
                 android:layout_width="wrap_content"

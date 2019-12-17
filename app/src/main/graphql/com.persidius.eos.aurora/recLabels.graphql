@@ -1,0 +1,6 @@
+query recLabels {
+    recommendedLabels {
+        displayName
+        label
+    }
+}

@@ -1,0 +1,10 @@
+query arteries($locIds: [Int!]!) {
+    arteries(locIds: $locIds) {
+        name
+        prefix
+        id
+        loc {
+            id
+        }
+    }
+}

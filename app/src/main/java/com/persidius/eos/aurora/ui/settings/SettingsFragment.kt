@@ -3,7 +3,10 @@ package com.persidius.eos.aurora.ui.settings
 import android.os.Bundle
 import android.util.Log
 import androidx.lifecycle.Observer
-import androidx.preference.*
+import androidx.preference.ListPreference
+import androidx.preference.Preference
+import androidx.preference.PreferenceCategory
+import androidx.preference.PreferenceFragmentCompat
 import com.persidius.eos.aurora.BuildConfig
 import com.persidius.eos.aurora.MainActivity
 import com.persidius.eos.aurora.R

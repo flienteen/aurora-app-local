@@ -1,0 +1,12 @@
+query locs($uatIds: [Int!]!) {
+    locs(uatIds: $uatIds) {
+        id
+        name
+        uat {
+            id
+        }
+        county {
+            id
+        }
+    }
+}

@@ -7,17 +7,16 @@ import android.os.Bundle
 import android.util.Log
 import android.util.Size
 import android.view.*
-import androidx.fragment.app.Fragment
 import android.widget.Toast
 import androidx.camera.core.*
 import androidx.camera.view.TextureViewMeteringPointFactory
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
 import com.google.firebase.ml.vision.common.FirebaseVisionImageMetadata
 import com.persidius.eos.aurora.R
-import java.lang.Exception
 import java.util.concurrent.Executors
 
 private const val REQUEST_CODE_PERMISSIONS = 1

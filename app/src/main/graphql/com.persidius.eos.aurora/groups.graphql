@@ -1,0 +1,17 @@
+query groups($updatedAfter: Int){
+    rawGroups(updatedAfter: $updatedAfter) {
+        id
+        type
+        county {
+            id
+        }
+        uat {
+            id
+        }
+        active
+        updatedAt
+        labels
+        comments
+
+    }
+}

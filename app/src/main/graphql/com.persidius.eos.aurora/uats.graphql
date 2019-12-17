@@ -1,0 +1,10 @@
+
+query uats($countyIds: [Int!]!) {
+    uats(countyIds: $countyIds) {
+        name
+        id
+        county {
+            id
+        }
+    }
+}

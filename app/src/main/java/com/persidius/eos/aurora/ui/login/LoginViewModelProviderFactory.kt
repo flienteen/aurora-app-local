@@ -1,6 +1,5 @@
 package com.persidius.eos.aurora.ui.login
 
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.persidius.eos.aurora.authorization.AuthorizationManager
