@@ -8,4 +8,12 @@
     <color name="colorSecondaryDark">#38006b</color>
     <color name="colorBackground">#ffffff</color>
     <color name="colorError">#ff1744</color>
+
+    <!-- TODO: Also update colors in java/util/StreamColors.kt -->
+    <color name="colorREZ">#212121</color>
+    <color name="colorRGL">#00c853</color>
+    <color name="colorRPC">#2962ff</color>
+    <color name="colorRPM">#ffab00</color>
+    <color name="colorBIO">#5d4037</color>
+    <color name="colorUNK">@color/colorError</color>
 </resources>

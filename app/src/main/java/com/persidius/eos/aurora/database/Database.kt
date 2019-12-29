@@ -12,30 +12,39 @@ object Database {
         eos = Room.databaseBuilder(
             applicationContext,
             EosDatabase::class.java,
-            "eos-database").build()
+            "eos.database").build()
     }
 
     val county: CountyDao
-        get() { return eos.countyDao() }
+        get() = eos.countyDao()
 
     val uat: UatDao
-        get() { return eos.uatDao() }
+        get() = eos.uatDao()
 
     val loc: LocDao
-        get() { return eos.locDao() }
+        get() = eos.locDao()
 
     val artery: ArteryDao
-        get() { return eos.arteryDao() }
+        get() = eos.arteryDao()
 
     val recipient: RecipientDao
-        get() { return eos.recipientDao() }
+        get() = eos.recipientDao()
 
     val recipientTag: RecipientTagDao
-        get() { return eos.recipientTagDao() }
+        get() = eos.recipientTagDao()
 
     val groups: GroupsDao
-        get() { return eos.groupsDao() }
+        get() = eos.groupsDao()
+
+    val user: UserDao
+        get() = eos.userDao()
 
     val recLabel: RecommendedLabelDao
-        get() { return eos.recLabelDao() }
+        get() = eos.recLabelDao()
+
+
+    val session get() = eos.sessionDao()
+
+    val recipientPatch get() = eos.recipientPatchDao()
+
 }

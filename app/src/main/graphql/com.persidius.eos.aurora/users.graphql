@@ -1,5 +1,5 @@
-query users($updatedAfter: Int) {
-    rawUsers(updatedAfter: $updatedAfter) {
+query users($updatedAfter: Int, $pageAfter: String) {
+    rawUsers(updatedAfter: $updatedAfter, pageAfter: $pageAfter, maxResultsPerPage: 2500) {
         active
         id
         name

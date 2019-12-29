@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <data>
+        <variable
+            name="tagSlot"
+            type="androidx.lifecycle.LiveData&lt;Integer&gt;" />
+        <variable
+            name="tagId"
+            type="androidx.lifecycle.LiveData&lt;String&gt;" />
+
+        <variable
+            name="parentModel"
+            type="com.persidius.eos.aurora.ui.recipient.RecipientViewModel" />
+    </data>
+
+   <LinearLayout
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       android:orientation="horizontal"
+       android:onClick="@{() -> parentModel.setActiveTag(tagSlot)}"
+       >
+
+        <TextView
+            android:layout_width="30dp"
+            android:layout_height="wrap_content"
+            android:text="@{tagSlot}"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:textSize="20dp"
+            />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@{tagId}"
+            android:textSize="20dp"
+            />
+
+    </LinearLayout>
+</layout>

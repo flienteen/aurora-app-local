@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout>
+    <data>
+        <variable
+            name="color"
+            type="android.content.res.ColorStateList" />
+
+        <variable
+            name="recipient"
+            type="com.persidius.eos.aurora.database.entities.Recipient" />
+        <variable
+            name="uat"
+            type="com.persidius.eos.aurora.database.entities.Uat" />
+        <variable
+            name="loc"
+            type="com.persidius.eos.aurora.database.entities.Loc" />
+    </data>
+
+    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+
+        android:layout_margin="10sp"
+        android:orientation="vertical">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            >
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="center"
+                android:padding="8sp"
+                >
+
+                <!-- there's no other fucking way of implementing this shite -->
+                <ImageView
+                    android:id="@+id/icon"
+                    android:background="@drawable/ic_bin_24dp"
+                    android:backgroundTint="@{(recipient.stream.equals(`REZ`)) ? @color/colorREZ : ((recipient.stream.equals(`RPC`)) ? @color/colorRPC : ((recipient.stream.equals(`RPM`)) ? @color/colorRPM : ((recipient.stream.equals(`RGL`)) ? @color/colorRGL : ((recipient.stream.equals(`BIO`)) ? @color/colorBIO : @color/colorUNK))))}"
+                    android:layout_width="24sp"
+                    android:layout_height="24sp"
+                    android:layout_gravity="center_vertical"
+                    />
+
+                <LinearLayout
+                    android:layout_width="0sp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginLeft="20sp"
+                    >
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@{recipient.id}"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="end|center_horizontal"
+                            android:text="@{recipient.size + ` / ` + loc.name + `, ` + uat.name}"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@{recipient.addressStreet + ` ` + recipient.addressNumber}"
+                        />
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+    </FrameLayout>
+</layout>

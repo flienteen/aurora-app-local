@@ -5,10 +5,15 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.persidius.eos.aurora.database.dao.*
 import com.persidius.eos.aurora.database.entities.*
+import com.persidius.eos.aurora.database.fts.ArteryFTS
+import com.persidius.eos.aurora.database.fts.RecipientFTS
+import com.persidius.eos.aurora.database.fts.UatFTS
 
 @Database(
-    entities = [County::class, Uat::class, Loc::class, Artery::class,
-            Recipient::class, RecipientTag::class, Groups::class
+    entities = [County::class, Uat::class, UatFTS::class, Loc::class,
+            Artery::class, ArteryFTS::class, RecommendedLabel::class, Session::class,
+            Recipient::class, RecipientTag::class, RecipientFTS::class, RecipientPatch::class,
+            Groups::class, User::class
     ],
     version = 1
 )
@@ -29,4 +34,10 @@ abstract class EosDatabase: RoomDatabase() {
     abstract fun groupsDao(): GroupsDao
 
     abstract fun recLabelDao(): RecommendedLabelDao
+
+    abstract fun userDao(): UserDao
+
+    abstract fun recipientPatchDao(): RecipientPatchDao
+
+    abstract fun sessionDao(): SessionDao
 }

@@ -1,5 +1,5 @@
-query recipients($withTags: Boolean!, $updatedAfter: Int) {
-    rawRecipients(updatedAfter: $updatedAfter) {
+query recipients($withTags: Boolean!, $updatedAfter: Int, $pageAfter: String) {
+    rawRecipients(updatedAfter: $updatedAfter, pageAfter: $pageAfter, maxResultsPerPage: 2500) {
         tags @include(if: $withTags) {
             tag
             slot

@@ -1,19 +1,19 @@
 package com.persidius.eos.aurora.database.entities
 
 import androidx.annotation.NonNull
-import androidx.room.Entity
-import androidx.room.Index
-import androidx.room.PrimaryKey
+import androidx.room.*
 
 @Entity(
     indices = [
         Index(value = ["countyId"], unique = false),
         Index(value = ["uatId"], unique = false),
-        Index(value = ["locId"], unique = false)
+        Index(value = ["locId"], unique = false),
+        Index(value = ["updatedAt"], unique = false)
     ]
 )
 data class Recipient(
-    @PrimaryKey @NonNull val id: String,
+    @PrimaryKey
+    @NonNull val id: String,
     val addressNumber: String,
     val addressStreet: String,
     val posLat: Double,
@@ -23,7 +23,10 @@ data class Recipient(
     val comments: String,
     val active: Boolean,
     val updatedAt: Long,
+    val groupId: String?,
 
+    val stream: String,
+    val size: String,
 
     val locId: Int,
     val uatId: Int,

@@ -24,7 +24,8 @@ import androidx.room.PrimaryKey
     indices = [
         Index(value = ["uatId"], unique = false),
         Index(value = ["active"], unique = false),
-        Index(value = ["type"], unique = false)
+        Index(value = ["type"], unique = false),
+        Index(value = ["updatedAt"], unique = false)
     ]
 )
 data class Groups(

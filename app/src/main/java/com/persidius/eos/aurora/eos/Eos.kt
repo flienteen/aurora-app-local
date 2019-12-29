@@ -11,6 +11,7 @@ import com.persidius.eos.aurora.authorization.AuthorizationManager
 import com.persidius.eos.aurora.util.Optional
 import com.persidius.eos.aurora.util.Preferences
 import io.reactivex.Observable
+import io.reactivex.Single
 import io.reactivex.rxkotlin.withLatestFrom
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
@@ -54,7 +55,10 @@ object Eos {
         }
 
         if(BuildConfig.ENABLE_HTTP_LOGGING) {
-            httpClient.addInterceptor(HttpLoggingInterceptor())
+            val interceptor = HttpLoggingInterceptor()
+            interceptor.level = HttpLoggingInterceptor.Level.BODY
+
+            httpClient.addInterceptor(interceptor)
         }
 
         val apolloClient = ApolloClient.builder()
@@ -65,35 +69,51 @@ object Eos {
         return apolloClient.build()
     }
 
-    fun queryCounties(): Observable<Response<CountiesQuery.Data>> {
-        return client.value!!.rxQuery(CountiesQuery()).observeOn(Schedulers.io())
+    fun queryCounties(): Single<Response<CountiesQuery.Data>> {
+        return client.value!!.rxQuery(CountiesQuery())
+            .subscribeOn(Schedulers.io())
+            .firstOrError()
     }
 
-    fun queryUats(countyIds: List<Int>): Observable<Response<UatsQuery.Data>> {
-        return client.value!!.rxQuery(UatsQuery(countyIds)).observeOn(Schedulers.io())
+    fun queryUats(countyIds: List<Int>): Single<Response<UatsQuery.Data>> {
+        return client.value!!.rxQuery(UatsQuery(countyIds))
+            .subscribeOn(Schedulers.io())
+            .firstOrError()
     }
 
-    fun queryLocs(uatIds: List<Int>): Observable<Response<LocsQuery.Data>> {
-        return client.value!!.rxQuery(LocsQuery(uatIds)).observeOn(Schedulers.io())
+    fun queryLocs(uatIds: List<Int>): Single<Response<LocsQuery.Data>> {
+        return client.value!!.rxQuery(LocsQuery(uatIds))
+            .subscribeOn(Schedulers.io())
+            .firstOrError()
     }
 
-    fun queryArteries(locIds: List<Int>): Observable<Response<ArteriesQuery.Data>> {
-        return client.value!!.rxQuery(ArteriesQuery(locIds)).observeOn(Schedulers.io())
+    fun queryArteries(locIds: List<Int>): Single<Response<ArteriesQuery.Data>> {
+        return client.value!!.rxQuery(ArteriesQuery(locIds))
+            .subscribeOn(Schedulers.io())
+            .firstOrError()
     }
 
-    fun queryRecipients(withTags: Boolean = false, updatedAfter: Int?): Observable<Response<RecipientsQuery.Data>> {
-        return client.value!!.rxQuery(RecipientsQuery(withTags, Input.fromNullable(updatedAfter))).observeOn(Schedulers.io())
+    fun queryRecipients(withTags: Boolean = false, updatedAfter: Int?, pageAfter: String? = null): Single<Response<RecipientsQuery.Data>> {
+        return client.value!!.rxQuery(RecipientsQuery(withTags, Input.fromNullable(updatedAfter), Input.fromNullable(pageAfter)))
+            .subscribeOn(Schedulers.io())
+            .firstOrError()
     }
 
-    fun queryUsers(updatedAfter: Int?): Observable<Response<UsersQuery.Data>> {
-        return client.value!!.rxQuery(UsersQuery(Input.fromNullable(updatedAfter))).observeOn(Schedulers.io())
+    fun queryUsers(updatedAfter: Int?, pageAfter: String? = null): Single<Response<UsersQuery.Data>> {
+        return client.value!!.rxQuery(UsersQuery(Input.fromNullable(updatedAfter), Input.fromNullable(pageAfter)))
+            .subscribeOn(Schedulers.io())
+            .firstOrError()
     }
 
-    fun queryGroups(updatedAfter: Int?): Observable<Response<GroupsQuery.Data>> {
-        return client.value!!.rxQuery(GroupsQuery(Input.fromNullable(updatedAfter))).observeOn(Schedulers.io())
+    fun queryGroups(updatedAfter: Int?, pageAfter: String? = null): Single<Response<GroupsQuery.Data>> {
+        return client.value!!.rxQuery(GroupsQuery(Input.fromNullable(updatedAfter), Input.fromNullable(pageAfter)))
+            .subscribeOn(Schedulers.io())
+            .firstOrError()
     }
 
-    fun queryRecLabels(): Observable<Response<RecLabelsQuery.Data>> {
-        return client.value!!.rxQuery(RecLabelsQuery()).observeOn(Schedulers.io())
+    fun queryRecLabels(): Single<Response<RecLabelsQuery.Data>> {
+        return client.value!!.rxQuery(RecLabelsQuery())
+            .subscribeOn(Schedulers.io())
+            .firstOrError()
     }
 }

@@ -21,8 +21,7 @@ class LoginViewModel(private val am: AuthorizationManager): ViewModel() {
     }
     val pass: MutableLiveData<String> = MutableLiveData("")
 
-    fun login(v: View) {
-        Log.d("LOGIN","Authenticating...")
+    fun login(@Suppress("UNUSED_PARAMETER") v: View) {
         am.login(email.value!!, pass.value!!)
     }
 }

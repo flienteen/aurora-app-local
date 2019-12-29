@@ -10,6 +10,7 @@ import androidx.preference.PreferenceFragmentCompat
 import com.persidius.eos.aurora.BuildConfig
 import com.persidius.eos.aurora.MainActivity
 import com.persidius.eos.aurora.R
+import com.persidius.eos.aurora.eos.SyncManager
 import com.persidius.eos.aurora.rfidService.RFIDService
 
 class SettingsFragment : PreferenceFragmentCompat() {
@@ -86,6 +87,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         mainActivity.am.session.signedIn.observe(this, amObserver)
 
         findPreference<Preference>("logout")?.onPreferenceClickListener = Preference.OnPreferenceClickListener {
+            SyncManager.doAbort()
             mainActivity.am.logout()
             true
         }

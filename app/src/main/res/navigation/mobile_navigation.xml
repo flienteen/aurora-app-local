@@ -17,7 +17,11 @@
     <fragment
         android:id="@+id/nav_cameraScanner"
         android:name="com.persidius.eos.aurora.ui.cameraScanner.CameraScannerFragment"
-        android:label="Scanare Cod" />
+        android:label="Scanare Cod" >
+        <action
+            android:id="@+id/action_nav_recipient"
+            app:destination="@id/recipientFragment" />
+    </fragment>
     <fragment
         android:id="@+id/nav_login"
         android:name="com.persidius.eos.aurora.ui.login.LoginFragment"
@@ -31,5 +35,21 @@
     <action
         android:id="@+id/action_global_nav_login"
         app:destination="@id/nav_login" />
+    <fragment
+        android:id="@+id/nav_searchRecipient"
+        android:name="com.persidius.eos.aurora.ui.searchRecipient.SearchRecipientFragment"
+        android:label="Căutare Recipient"
+        tools:layout="@layout/fragment_search_recipient" >
+        <action
+            android:id="@+id/action_nav_recipient_search_camera_scanner"
+            app:destination="@+id/nav_cameraScanner" />
+        <action
+            android:id="@+id/action_nav_recipient"
+            app:destination="@id/recipientFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/recipientFragment"
+        android:name="com.persidius.eos.aurora.ui.recipient.RecipientFragment"
+        android:label="RecipientFragment" />
 
 </navigation>

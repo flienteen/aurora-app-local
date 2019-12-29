@@ -26,7 +26,7 @@ enum class Role(val code: String) {
     // allows updating tasks.
     LOGISTICS_UPDATE_TASK("luk"),
 
-    DISABLE_PAGINATION("dpp"),
+    DISABLE_PAGINATION("ddp"),
     DEBUG("dbg");
 
     companion object {

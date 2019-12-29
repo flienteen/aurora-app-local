@@ -9,6 +9,12 @@
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar" />
 
+    <style name="AppTheme.Inverted" parent="Theme.MaterialComponents.NoActionBar" >
+        <item name="colorPrimary">@color/colorBackground</item>
+        <item name="colorPrimaryDark">@color/colorBackground</item>
+        <item name="android:colorBackground">@color/colorPrimary</item>
+    </style>
+
     <!-- <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
