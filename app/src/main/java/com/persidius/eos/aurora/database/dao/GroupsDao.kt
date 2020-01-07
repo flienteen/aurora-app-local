@@ -22,4 +22,7 @@ interface GroupsDao {
 
     @Query("SELECT COUNT(id) AS result FROM Groups")
     fun getCount(): Maybe<LongQueryResult>
+
+    @Query("SELECT * FROM Groups JOIN GroupsFTS ON (GroupsFTS.rowid = Groups.rowid) WHERE GroupsFTS MATCH :term")
+    fun search(term: String): Maybe<List<Groups>>
 }

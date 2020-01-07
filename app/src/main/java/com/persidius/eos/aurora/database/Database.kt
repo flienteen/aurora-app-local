@@ -12,7 +12,8 @@ object Database {
         eos = Room.databaseBuilder(
             applicationContext,
             EosDatabase::class.java,
-            "eos.database").build()
+            "eos.database")
+            .build()
     }
 
     val county: CountyDao

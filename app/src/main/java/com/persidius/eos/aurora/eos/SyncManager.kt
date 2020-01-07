@@ -3,6 +3,7 @@ package com.persidius.eos.aurora.eos
 import android.app.Service
 import android.content.Context
 import android.net.ConnectivityManager
+import android.net.Network
 import android.util.Log
 import com.apollographql.apollo.exception.ApolloNetworkException
 import com.auth0.android.jwt.JWT
@@ -23,6 +24,7 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
 import kotlin.math.min
@@ -37,7 +39,7 @@ import kotlin.math.min
 
 object SyncManager: ConnectivityManager.OnNetworkActiveListener {
 
-    private val interval = Observable.interval(0L, if(BuildConfig.DEBUG) 60L else 300L, TimeUnit.SECONDS)
+    private val interval = Observable.interval(0L, if(BuildConfig.DEBUG) 5L else 300L, TimeUnit.SECONDS)
         .subscribeOn(Schedulers.io())
 
     private val state: BehaviorSubject<SyncState> = Preferences.smSyncState
@@ -48,9 +50,13 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
     private val lastGroupUpdate = Preferences.smLastGroupUpdate
 
     private val transitionSub: AtomicReference<Disposable?> = AtomicReference(null)
-    private val lastUpdateTimes: ArrayList<Long> = ArrayList<Long>()
+
+    private val internetActive = AtomicBoolean(false)
 
     val progress: BehaviorSubject<Int> = BehaviorSubject.createDefault(0)
+
+
+
 
     object LiveData {
         val progress: androidx.lifecycle.LiveData<Int> = SyncManager.progress.asLiveData()
@@ -70,8 +76,16 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
         }
     }
 
-    private fun onInternet() = toState(SyncState.Next[state.value!!]?.onInternet)
-    private fun onInternetError() = toState(SyncState.Next[state.value!!]?.onInternetError)
+    private fun onInternet() {
+        internetActive.set(true)
+        toState(SyncState.Next[state.value!!]?.onInternet)
+    }
+
+    private fun onInternetError() {
+        internetActive.set(false)
+        toState(SyncState.Next[state.value!!]?.onInternetError)
+    }
+
     private fun onNext() = toState(SyncState.Next[state.value!!]?.onNext)
 
     private fun onAbort() {
@@ -123,243 +137,258 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
             am.unlock()
         }
 
-        var exec: Completable? = null
+            var exec: Completable? = null
 
-        when (newState) {
-            SyncState.DL_COUNTY -> {
-                exec = DownloadCounties.execute(progress)
-            }
-
-            SyncState.DL_UAT -> {
-                exec = Database.county.getAll()
-                    .subscribeOn(Schedulers.computation())
-                    .map { counties -> counties.map { c -> c.id } }
-                    .flatMapCompletable { countyIds -> DownloadUats.execute(progress, countyIds) }
-            }
-
-            SyncState.DL_LOC -> {
-                exec = Database.uat.getAll()
-                    .subscribeOn(Schedulers.computation())
-                    .map { uats -> uats.map { u -> u.id } }
-                    .flatMapCompletable {uatIds-> DownloadLocs.execute(progress, uatIds) }
-            }
-
-            SyncState.DL_ARTERY -> {
-                exec = Database.loc.getAll()
-                    .subscribeOn(Schedulers.computation())
-                    .flatMapCompletable { locs -> DownloadArteries.execute(progress, locs.map { l -> l.id }) }
-            }
-
-            SyncState.DL_LABELS -> {
-                exec = DownloadRecLabels.execute(progress)
-            }
-
-            SyncState.SYNC_RECIPIENTS -> {
-
-
-
-                val session = am.sessionToken.blockingFirst().value
-                if(session == null) {
-                    onAbort()
-                    return
+            when (newState) {
+                SyncState.DL_COUNTY -> {
+                    exec = DownloadCounties.execute(progress)
                 }
 
-                exec = if(session.hasRole(Role.LOGISTICS_VIEW_RECIPIENT)) {
-                    val startTime = System.currentTimeMillis() / 1000L
-                    SyncRecipients.execute(progress = progress,
-                    withTags = session.hasRole(Role.LOGISTICS_VIEW_TAGS),
-                    updatedAfter = lastRecipientUpdate.value?.toInt() ?: 0)
-                        .doOnComplete {
-                            val endTime = System.currentTimeMillis() / 1000L
-                            val delta = endTime - startTime
-
-                            val lastUpdate = Database.recipient.lastUpdatedAt().subscribeOn(Schedulers.io())
-                                .blockingGet().result
-
-                            lastRecipientUpdate.onNext(lastUpdate - delta)
-                        }
-                } else { null }
-            }
-
-
-            SyncState.SYNC_GROUPS -> {
-                val session = am.sessionToken.blockingFirst().value
-                if(session == null) {
-                    onAbort()
-                    return
+                SyncState.DL_UAT -> {
+                    exec = Database.county.getAll()
+                        .subscribeOn(Schedulers.computation())
+                        .map { counties -> counties.map { c -> c.id } }
+                        .flatMapCompletable { countyIds -> DownloadUats.execute(progress, countyIds) }
                 }
 
-                exec = if(session.hasRole(Role.LOGISTICS_VIEW_GROUPS)) {
-                    val startTime = System.currentTimeMillis() / 1000L
-
-                    SyncGroups.execute(progress = progress,
-                        updatedAfter = lastGroupUpdate.value?.toInt() ?: 0)
-                        .doOnComplete {
-                            // Update lastSyncUpdate
-                            val endTime = System.currentTimeMillis() / 1000L
-                            val delta = endTime - startTime
-
-                            val lastUpdate = Database.groups.lastUpdatedAt().subscribeOn(Schedulers.io())
-                                .blockingGet().result
-
-                            lastGroupUpdate.onNext(lastUpdate - delta)
-                        }
-                } else { null }
-
-            }
-
-            SyncState.SYNC_USERS -> {
-                // TODO: Enable this when GQL Errors are fixed.
-                val session = am.sessionToken.blockingFirst().value
-                if(session == null) {
-                    onAbort()
-                    return
+                SyncState.DL_LOC -> {
+                    exec = Database.uat.getAll()
+                        .subscribeOn(Schedulers.computation())
+                        .map { uats -> uats.map { u -> u.id } }
+                        .flatMapCompletable {uatIds-> DownloadLocs.execute(progress, uatIds) }
                 }
 
-                exec = if(session.hasRole(Role.LOGISTICS_VIEW_USER)) {
-                    val startTime = System.currentTimeMillis() / 1000L
-                    SyncUsers.execute(progress = progress,
-                        updatedAfter = lastUserUpdate.value?.toInt() ?: 0)
-                        .doOnComplete {
-                            val endTime = System.currentTimeMillis() / 1000L
-                            val delta = endTime - startTime
-
-                            val lastUpdate = Database.user.lastUpdatedAt().subscribeOn(Schedulers.io())
-                                .blockingGet().result
-
-                            lastUserUpdate.onNext(lastUpdate - delta)
-                        }
-                } else { null }
-            }
-
-            SyncState.SYNC_TASKS -> {
-                // TODO: Implement me
-            }
-
-            SyncState.UPDATE_TASKS -> {
-                // TODO: Implement me
-            }
-
-            SyncState.SYNC_PATCHES -> {
-                // TODO: Implement Me
-            }
-
-            SyncState.SYNCHRONIZED -> {
-                exec = Completable.create {
-                    lastSync.onNext(System.currentTimeMillis() / 1000L)
-                    it.onComplete()
+                SyncState.DL_ARTERY -> {
+                    exec = Database.loc.getAll()
+                        .subscribeOn(Schedulers.computation())
+                        .flatMapCompletable { locs -> DownloadArteries.execute(progress, locs.map { l -> l.id }) }
                 }
-                // Print a summary
-                // of the Database
 
-                Maybe.mergeArray(
-                    Database.recipient.getCount().subscribeOn(Schedulers.io()).map {
-                            r -> Pair("Recipients", r)
-                    },
-                    Database.recipientTag.getCount().subscribeOn(Schedulers.io()).map {
-                            r -> Pair("Recipient Tags", r)
-                    },
-                    Database.groups.getCount().subscribeOn(Schedulers.io()).map {
-                            r -> Pair("Groups", r)
-                    },
-                    Database.county.getCount().subscribeOn(Schedulers.io()).map {
-                            r -> Pair("Counties", r)
-                    },
-                    Database.user.getCount().subscribeOn(Schedulers.io()).map {
-                            r -> Pair("Users", r)
-                    },
-                    Database.uat.getCount().subscribeOn(Schedulers.io()).map {
-                            r -> Pair("UATs", r)
-                    },
-                    Database.loc.getCount().subscribeOn(Schedulers.io()).map {
-                            r -> Pair("Locs", r)
-                    },
-                    Database.artery.getCount().subscribeOn(Schedulers.io()).map {
-                            r -> Pair("Arteries", r)
+                SyncState.DL_LABELS -> {
+                    exec = DownloadRecLabels.execute(progress)
+                }
+
+                SyncState.SYNC_RECIPIENTS -> {
+                    val session = am.sessionToken.blockingFirst().value
+                    if(session == null) {
+                        onAbort()
+                        return
                     }
-                ).subscribe { p ->
-                    Log.d("SM", "DB Summary (${p.first}): ${p.second.result}")
+
+                    exec = if(session.hasRole(Role.LOGISTICS_VIEW_RECIPIENT)) {
+                        val startTime = System.currentTimeMillis() / 1000L
+                        SyncRecipients.execute(progress = progress,
+                            withTags = session.hasRole(Role.LOGISTICS_VIEW_TAGS),
+                            updatedAfter = lastRecipientUpdate.value?.toInt() ?: 0)
+                            .doOnComplete {
+                                val endTime = System.currentTimeMillis() / 1000L
+                                val delta = endTime - startTime
+
+                                val lastUpdate = Database.recipient.lastUpdatedAt().subscribeOn(Schedulers.io())
+                                    .blockingGet().result
+
+                                lastRecipientUpdate.onNext(lastUpdate - delta)
+                            }
+                    } else { null }
+                }
+
+
+                SyncState.SYNC_GROUPS -> {
+                    val session = am.sessionToken.blockingFirst().value
+                    if(session == null) {
+                        onAbort()
+                        return
+                    }
+
+                    exec = if(session.hasRole(Role.LOGISTICS_VIEW_GROUPS)) {
+                        val startTime = System.currentTimeMillis() / 1000L
+
+                        SyncGroups.execute(progress = progress,
+                            updatedAfter = lastGroupUpdate.value?.toInt() ?: 0)
+                            .doOnComplete {
+                                // Update lastSyncUpdate
+                                val endTime = System.currentTimeMillis() / 1000L
+                                val delta = endTime - startTime
+
+                                val lastUpdate = Database.groups.lastUpdatedAt().subscribeOn(Schedulers.io())
+                                    .blockingGet().result
+
+                                lastGroupUpdate.onNext(lastUpdate - delta)
+                            }
+                    } else { null }
+
+                }
+
+                SyncState.SYNC_USERS -> {
+                    val session = am.sessionToken.blockingFirst().value
+                    if(session == null) {
+                        onAbort()
+                        return
+                    }
+
+                    exec = if(session.hasRole(Role.LOGISTICS_VIEW_USER)) {
+                        val startTime = System.currentTimeMillis() / 1000L
+                        SyncUsers.execute(progress = progress,
+                            updatedAfter = lastUserUpdate.value?.toInt() ?: 0)
+                            .doOnComplete {
+                                val endTime = System.currentTimeMillis() / 1000L
+                                val delta = endTime - startTime
+
+                                val lastUpdate = Database.user.lastUpdatedAt().subscribeOn(Schedulers.io())
+                                    .blockingGet().result
+
+                                lastUserUpdate.onNext(lastUpdate - delta)
+                            }
+                    } else { null }
+
+                    // Since SYNC_USERS is the last stage of a successful SYNC before entering
+                    // the SYNCHRONIZED state, we set
+                    // lastSyncTime here
+                    exec?.doOnComplete {
+                        lastSync.onNext(System.currentTimeMillis() / 1000L)
+                    }
+
+                }
+
+                SyncState.SYNC_TASKS -> {
+                    // TODO: Implement me
+                }
+
+                SyncState.UPDATE_TASKS -> {
+                    // TODO: Implement Me
+                }
+
+                SyncState.SYNC_PATCHES -> {
+                    exec = SyncPatchGroups.execute(progress = progress)
+                }
+
+                SyncState.SYNCHRONIZED -> {
+                    exec = Completable.create {
+                        lastSync.onNext(System.currentTimeMillis() / 1000L)
+                        it.onComplete()
+                    }
+                    // Print a summary
+                    // of the Database
+
+                    Maybe.mergeArray(
+                        Database.recipient.getCount().subscribeOn(Schedulers.io()).map {
+                                r -> Pair("Recipients", r)
+                        },
+                        Database.recipientTag.getCount().subscribeOn(Schedulers.io()).map {
+                                r -> Pair("Recipient Tags", r)
+                        },
+                        Database.groups.getCount().subscribeOn(Schedulers.io()).map {
+                                r -> Pair("Groups", r)
+                        },
+                        Database.county.getCount().subscribeOn(Schedulers.io()).map {
+                                r -> Pair("Counties", r)
+                        },
+                        Database.user.getCount().subscribeOn(Schedulers.io()).map {
+                                r -> Pair("Users", r)
+                        },
+                        Database.uat.getCount().subscribeOn(Schedulers.io()).map {
+                                r -> Pair("UATs", r)
+                        },
+                        Database.loc.getCount().subscribeOn(Schedulers.io()).map {
+                                r -> Pair("Locs", r)
+                        },
+                        Database.artery.getCount().subscribeOn(Schedulers.io()).map {
+                                r -> Pair("Arteries", r)
+                        }
+                    ).subscribe { p ->
+                        Log.d("SM", "DB Summary (${p.first}): ${p.second.result}")
+                    }
+                }
+
+                SyncState.ABORTED -> {
+                    // Clean entire database
+                    // EXCEPT patch & task update tables
+                    exec = Database.groups.deleteAll().subscribeOn(Schedulers.computation())
+                        .andThen(
+                            Database.recipient.deleteAll().subscribeOn(Schedulers.computation())
+                        )
+                        .andThen(
+                            Database.artery.deleteAll().subscribeOn(Schedulers.computation())
+                        )
+                        .andThen(
+                            Database.loc.deleteAll().subscribeOn(Schedulers.computation())
+                        )
+                        .andThen(
+                            Database.uat.deleteAll().subscribeOn(Schedulers.computation())
+                        )
+                        .andThen(
+                            Database.county.deleteAll().subscribeOn(Schedulers.computation())
+                        )
+                        .andThen(
+                            Database.recLabel.deleteAll().subscribeOn(Schedulers.computation())
+                        )
+                        .andThen {
+                            try {
+                                Log.d("SM", "Finished cleaning DB. Resetting time markers")
+                                lastSync.onNext(0L)
+                                lastRecipientUpdate.onNext(0L)
+                                lastUserUpdate.onNext(0L)
+                                lastGroupUpdate.onNext(0L)
+                                it.onComplete()
+                            } catch (t: Throwable) {
+                                it.onError(t)
+                            }
+                        }
+                }
+                SyncState.INIT -> {
+                    // If we entered INIT & we've got a solid token
+                    val session = am.sessionToken.blockingFirst().value
+                    if(session != null) {
+                        // call doInit & exit exec flow.
+                        doInit()
+                        return
+                    }
+                }
+                SyncState.WAIT_INTERNET_BACKOFF -> {
+                    // Wait for a bit before entering ABORT state.
+                    exec = Observable.timer(30, TimeUnit.SECONDS).ignoreElements()
+                }
+                SyncState.OUT_OF_SYNC -> {
+                    exec = null
+                    if (internetActive.get()) {
+                        // enter next state
+                        onInternet()
+                    }
+                }
+                else -> {
+                    exec = null
                 }
             }
 
-            SyncState.ABORTED -> {
-                // Clean entire database
-                // EXCEPT patch & task update tables
-                exec = Database.groups.deleteAll().subscribeOn(Schedulers.computation())
-                    .andThen(
-                        Database.recipient.deleteAll().subscribeOn(Schedulers.computation())
-                    )
-                    .andThen(
-                        Database.artery.deleteAll().subscribeOn(Schedulers.computation())
-                    )
-                    .andThen(
-                        Database.loc.deleteAll().subscribeOn(Schedulers.computation())
-                    )
-                    .andThen(
-                        Database.uat.deleteAll().subscribeOn(Schedulers.computation())
-                    )
-                    .andThen(
-                        Database.county.deleteAll().subscribeOn(Schedulers.computation())
-                    )
-                    .andThen(
-                        Database.recLabel.deleteAll().subscribeOn(Schedulers.computation())
-                    )
-                    .andThen {
-                        try {
-                            Log.d("SM", "Finished cleaning DB. Resetting time markers")
-                            lastSync.onNext(0L)
-                            lastRecipientUpdate.onNext(0L)
-                            lastUserUpdate.onNext(0L)
-                            lastGroupUpdate.onNext(0L)
-                            it.onComplete()
-                        } catch (t: Throwable) {
-                            it.onError(t)
-                        }
-                    }
-            }
-            SyncState.INIT -> {
-                // If we entered INIT & we've got a solid token
-                val session = am.sessionToken.blockingFirst().value
-                if(session != null) {
-                    // call doInit & exit exec flow.
-                    doInit()
-                    return
-                }
-            }
-            SyncState.WAIT_INTERNET_BACKOFF -> {
-                // Wait for a bit before entering ABORT state.
-                exec = Observable.timer(30, TimeUnit.SECONDS).ignoreElements()
-            }
-            else -> {
-                exec = null
+            if(exec != null) {
+                transitionSub.set(
+                    exec
+                        .subscribeOn(Schedulers.io())
+                        .subscribe({
+                            Log.d("SM", "State executable done [for state = $newState]")
+                            onNext()
+                        }, { t ->
+                            if(t is ApolloNetworkException) {
+                                Log.e("SM", "Detected internet is down")
+                                onInternetError()
+
+                            } else {
+                                // We're fucked.
+                                if(isAbortable()) {
+                                    Log.e("SM", "Aborting due to error", t)
+                                    onAbort()
+                                } else {
+                                    // Retry entering the state.
+                                    Log.e("SM", "Error in unabortable stage")
+                                }
+                            }
+                        })
+                )
+            } else {
+                // Just call onNext
+                onNext()
             }
         }
-
-        if(exec != null) {
-            transitionSub.set(
-                exec.subscribe({
-                    onNext()
-                }, { t ->
-                    if(t is ApolloNetworkException) {
-                        Log.e("SM", "Detected internet is down")
-                        onInternetError()
-
-                    } else {
-                        // We're fucked.
-                        if(isAbortable()) {
-                            onAbort()
-                        } else {
-                            // Retry entering the state.
-                            Log.e("SM", "Error in unabortable stage")
-                        }
-                    }
-                })
-            )
-        } else {
-            // Just call onNext
-            onNext()
-        }
-    }
 
     /// Initialize function, **NOT** to be confused with doInit.
     fun init(am: AuthorizationManager, applicationContext: Context) {
@@ -396,16 +425,22 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
         progress.subscribe { newVal -> Log.d("SM", "Progress: $newVal") }
 
         // Every X minutes desync the app.
-        interval.subscribe {
-            if(state.value == SyncState.SYNCHRONIZED) {
-                toState(SyncState.OUT_OF_SYNC)
+        interval.subscribe {doDesynchronize() }
+
+        val connectivityManager = applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE)
+                as ConnectivityManager
+
+        connectivityManager?.registerDefaultNetworkCallback(object: ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                this@SyncManager.onNetworkActive()
             }
-        }
+        })
     }
 
     override fun onNetworkActive() {
-        // We have internet!
-        // Log.d("SM", "Network active")
-        // onInternet()
+        if(!internetActive.get()) {
+            onInternet()
+        }
     }
 }
+

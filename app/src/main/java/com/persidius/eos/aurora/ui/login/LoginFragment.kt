@@ -22,9 +22,8 @@ class LoginFragment : Fragment() {
         val binding: FragmentLoginBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_login, container, false)
         binding.lifecycleOwner = this
 
-        Log.d("LOGIN", (activity as MainActivity).am.session.email.toString())
         val viewModel = ViewModelProviders
-            .of(this, LoginViewModelProviderFactory<LoginViewModel>((activity as MainActivity).am))
+            .of(this, LoginViewModelProviderFactory((activity as MainActivity).am))
             .get(LoginViewModel::class.java)
         binding.model = viewModel
 

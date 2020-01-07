@@ -8,6 +8,7 @@ import android.graphics.drawable.ColorDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
 import androidx.databinding.adapters.Converters.convertColorToColorStateList
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.RecyclerView
@@ -17,20 +18,27 @@ import com.persidius.eos.aurora.database.entities.Uat
 import com.persidius.eos.aurora.databinding.RecipientSearchResultItemBinding
 import com.persidius.eos.aurora.util.StreamColors
 
-class SearchRecipientAdapter(private var data: List<Triple<Recipient, Uat, Loc>> = listOf()):
+class SearchRecipientAdapter(private var data: List<Triple<Recipient, Uat, Loc>> = listOf(),
+     private val itemClickListener: (Recipient) -> Unit):
     RecyclerView.Adapter<SearchRecipientAdapter.ResultViewHolder>() {
+
 
     inner class ResultViewHolder(val binding: RecipientSearchResultItemBinding): RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(item: Triple<Recipient, Uat, Loc>) {
+        fun bind(item: Triple<Recipient, Uat, Loc>, itemClickListener: (Recipient) -> Unit) {
             binding.color = ColorStateList.valueOf(StreamColors.from(item.first.stream).color.toArgb())
             binding.recipient = item.first
             binding.uat = item.second
             binding.loc = item.third
+
+            binding.root.setOnClickListener {
+                itemClickListener(item.first)
+            }
+            binding.root.isClickable = true
+
             binding.executePendingBindings()
         }
     }
-
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ResultViewHolder {
         val inflater = LayoutInflater.from(parent.context)
@@ -39,8 +47,8 @@ class SearchRecipientAdapter(private var data: List<Triple<Recipient, Uat, Loc>>
     }
 
     override fun onBindViewHolder(holder: ResultViewHolder, position: Int) {
-        val item = data.get(position)
-        holder.bind(item)
+        val item = data[position]
+        holder.bind(item, itemClickListener)
     }
 
     override fun getItemCount() = data.size
@@ -49,4 +57,6 @@ class SearchRecipientAdapter(private var data: List<Triple<Recipient, Uat, Loc>>
         this.data = newData
         notifyDataSetChanged()
     }
+
+
 }

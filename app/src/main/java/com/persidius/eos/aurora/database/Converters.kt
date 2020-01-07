@@ -1,5 +1,6 @@
 package com.persidius.eos.aurora.database
 
+import android.util.Log
 import androidx.room.TypeConverter
 import com.persidius.eos.aurora.util.ArrayOp
 
@@ -25,8 +26,13 @@ class Converters {
 
     @TypeConverter
     fun LabelEditFromString(value: String): List<Pair<ArrayOp, String>> {
+        if(value.isEmpty()) {
+            return listOf()
+        }
+
         return value.split(LEVEL_1_SEPARATOR).map { part ->
             val parts = part.split(LEVEL_2_SEPARATOR)
+            Log.d("DB", part + parts.joinToString { "|" })
             Pair(ArrayOp.valueOf(parts[0]), parts[1])
         }
     }
@@ -40,6 +46,10 @@ class Converters {
 
     @TypeConverter
     fun tagEditFromString(value: String): List<Triple<ArrayOp, Int, String>> {
+        if(value.isEmpty()) {
+            return listOf()
+        }
+
         return value.split(LEVEL_1_SEPARATOR).map { part ->
             val parts = part.split(LEVEL_2_SEPARATOR)
             Triple(ArrayOp.valueOf(parts[0]), parts[1].toInt(10), parts[2])

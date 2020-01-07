@@ -8,15 +8,20 @@ import android.util.Log
 import android.util.Size
 import android.view.*
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.camera.core.*
 import androidx.camera.view.TextureViewMeteringPointFactory
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.google.firebase.ml.vision.FirebaseVision
+import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
 import com.google.firebase.ml.vision.common.FirebaseVisionImageMetadata
+import com.persidius.eos.aurora.MainActivity
 import com.persidius.eos.aurora.R
+import com.persidius.eos.aurora.ui.recipient.RecipientFragment
+import io.sentry.Sentry
 import java.util.concurrent.Executors
 
 private const val REQUEST_CODE_PERMISSIONS = 1
@@ -26,6 +31,15 @@ class CameraScannerFragment : Fragment() {
     private val executor = Executors.newSingleThreadExecutor()
     private lateinit var viewFinder: TextureView
 
+    companion object {
+        /**
+         * Pop self from nav stack
+         */
+        const val ARG_POP_NAV = "popNav"
+    }
+
+    private var popNav: Boolean = false
+    private var debounce = false
     private fun startCamera() {
         val targetHeight = 1280
         val targetWidth = (viewFinder.width.toFloat() / viewFinder.height.toFloat() * targetHeight).toInt()
@@ -34,7 +48,6 @@ class CameraScannerFragment : Fragment() {
         }.build()
 
         val preview = Preview(previewConfig)
-
         preview.setOnPreviewOutputUpdateListener {
 
             val parent = viewFinder.parent as ViewGroup
@@ -51,10 +64,46 @@ class CameraScannerFragment : Fragment() {
         }.build()
 
         val analyzerUseCase = ImageAnalysis(analyzerConfig).apply {
-            setAnalyzer(executor, BarcodeAnalyzer())
+            setAnalyzer(executor, BarcodeAnalyzer { barcodes -> onBarcode(barcodes) })
         }
 
         CameraX.bindToLifecycle(this, preview, analyzerUseCase)
+    }
+
+
+    private fun onBarcode(barcodes: List<FirebaseVisionBarcode>) {
+        // rtn on debounce
+        if(debounce || barcodes.isEmpty()) { return }
+
+        debounce = true
+        if(barcodes.size > 1) {
+            // show dialogue w/ warning
+            val builder = AlertDialog.Builder(context!!)
+            builder.setTitle("Multiple coduri")
+            builder.setMessage("Au fost scanate multiple coduri. Pentru a evita ambiguitatea, asigura-te ca exista o singura eticheta in vederea camerei")
+            builder.setNeutralButton("Am Ințeles" ) { dialog, which ->
+                dialog.dismiss()
+                debounce = false
+            }
+            builder.show()
+        }
+
+        if(barcodes.size == 1) {
+            // nav to next destination
+            val navController = (activity as MainActivity).navController
+            val args = Bundle()
+            val code = barcodes[0].rawValue?.split(":")?.last()
+            args.apply {
+                putString(RecipientFragment.ARG_RECIPIENT_ID, code)
+            }
+
+            CameraX.unbindAll()
+
+            if(popNav) {
+                navController.popBackStack(R.id.nav_cameraScanner, true)
+            }
+            navController.navigate(R.id.nav_recipient, args)
+        }
     }
 
     private fun updateTransform() {
@@ -120,7 +169,8 @@ class CameraScannerFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
+        popNav = arguments?.getBoolean(ARG_POP_NAV, false) ?: false
+        debounce = false
         val root = inflater.inflate(R.layout.fragment_camera_scanner, container, false)
         viewFinder = root.findViewById(R.id.viewFinder)
 
@@ -139,7 +189,7 @@ class CameraScannerFragment : Fragment() {
 
 private const val ANALYSIS_INTERVAL = 200L
 
-private class BarcodeAnalyzer : ImageAnalysis.Analyzer {
+private class BarcodeAnalyzer(private val onBarcode: (List<FirebaseVisionBarcode>) -> Unit) : ImageAnalysis.Analyzer {
     private var lastAnalysis = 0L
     private fun degreesToFirebaseRotation(degrees: Int): Int = when(degrees) {
         0 -> FirebaseVisionImageMetadata.ROTATION_0
@@ -164,16 +214,9 @@ private class BarcodeAnalyzer : ImageAnalysis.Analyzer {
             val detector = FirebaseVision.getInstance().visionBarcodeDetector
 
             detector.detectInImage(image)
-            .addOnSuccessListener { barcodes ->
-                Log.d("barcode","Barcode ${barcodes.size}")
-                if(barcodes.size > 0) {
-                    for(barcode in barcodes) {
-                        Log.d("barcode", "Value: ${barcode.rawValue}, type: ${barcode.format}")
-                    }
-                }
-            }
+            .addOnSuccessListener { barcodes -> onBarcode(barcodes) }
             .addOnFailureListener {
-
+                Sentry.capture(it)
             }
         }
     }

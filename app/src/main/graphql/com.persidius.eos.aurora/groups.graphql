@@ -1,4 +1,4 @@
-query groups($updatedAfter: Int, $pageAfter: String){
+query groups($updatedAfter: Int, $pageAfter: String) {
     rawGroups(updatedAfter: $updatedAfter, pageAfter: $pageAfter, maxResultsPerPage: 2500) {
         id
         type

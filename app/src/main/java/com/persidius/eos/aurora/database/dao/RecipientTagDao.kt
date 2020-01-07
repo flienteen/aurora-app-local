@@ -23,4 +23,7 @@ interface RecipientTagDao {
 
     @Query("SELECT COUNT(tag) AS result FROM RecipientTag")
     fun getCount(): Maybe<LongQueryResult>
+
+    @Query("DELETE FROM RecipientTag WHERE recipientId = :recipientId and slot = :slot")
+    fun deleteSlot(recipientId: String, slot: Int): Completable
 }

@@ -4,10 +4,12 @@ import android.util.Log
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.Input
 import com.apollographql.apollo.api.Response
+import com.apollographql.apollo.rx2.rxMutate
 import com.apollographql.apollo.rx2.rxQuery
 import com.auth0.android.jwt.JWT
 import com.persidius.eos.aurora.*
 import com.persidius.eos.aurora.authorization.AuthorizationManager
+import com.persidius.eos.aurora.type.RecipientInput
 import com.persidius.eos.aurora.util.Optional
 import com.persidius.eos.aurora.util.Preferences
 import io.reactivex.Observable
@@ -115,5 +117,11 @@ object Eos {
         return client.value!!.rxQuery(RecLabelsQuery())
             .subscribeOn(Schedulers.io())
             .firstOrError()
+    }
+
+    fun editRecipient(id: String, createdAt: Int, recipient: RecipientInput): Single<Response<EditRecipientMutation.Data>> {
+       return client.value!!.rxMutate(EditRecipientMutation(
+           createdAt, id, recipient
+       )).subscribeOn(Schedulers.io())
     }
 }

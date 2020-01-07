@@ -1,11 +1,23 @@
 package com.persidius.eos.aurora.rfidService
 
+import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.*
+import android.graphics.Color
+import android.graphics.ColorFilter
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.util.Log
-import androidx.lifecycle.MutableLiveData
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.res.ResourcesCompat
+import androidx.lifecycle.*
 import androidx.preference.PreferenceManager
+import com.persidius.eos.aurora.R
+import io.reactivex.Observable
+import io.reactivex.subjects.PublishSubject
+import io.reactivex.subjects.Subject
+import kotlinx.android.synthetic.main.app_bar.*
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -24,9 +36,10 @@ class RFIDService(private val applicationContext: Context): BroadcastReceiver() 
 
     val liveState = MutableLiveData<State>(State.DISABLED)
     val liveData = MutableLiveData<String?>(null)
+    private val dataSubject: PublishSubject<String> = PublishSubject.create()
+    val observableData: Observable<String> = dataSubject
 
     // Mutating these, you need to hold the lock.
-
     /**
      * Whether to keep running the main loop, or shut it down.
      */
@@ -286,7 +299,10 @@ class RFIDService(private val applicationContext: Context): BroadcastReceiver() 
 
                     data ?: continue
 
-                    liveData.postValue(data.joinToString("") { "%02X".format(it) })
+                    val tag = data.joinToString("") { "%02X".format(it) }
+                    dataSubject.onNext(tag)
+                    liveData.postValue(tag)
+
                     Log.d("RFID", "Read data ${data.joinToString(" ") { "%02X".format(it)  }}")
                 }
 
@@ -336,5 +352,30 @@ class RFIDService(private val applicationContext: Context): BroadcastReceiver() 
 
     internal fun onDisconnect() {
         connected.compareAndSet(true, false)
+    }
+
+    // Subscribes action bar to turn to colors based on rfidService state
+    // in particular, we care about DISCONNECTED, CONNECTING, BT_DISABLED
+    // as BAD, and CONNECTED as GOOD.
+    fun subscribeToolbar(activity: AppCompatActivity, lifecycleOwner: LifecycleOwner) {
+        val toolbar = activity.toolbar
+
+        liveState.observe(lifecycleOwner, Observer { newState ->
+            // TODO: This is very buggy. Fix me.
+            Log.d("RFID", "newState update")
+            when(newState) {
+                State.CONNECTED,
+                State.DISABLED -> toolbar.background.clearColorFilter()
+
+                State.BT_DISABLED,
+                State.NOT_CONFIGURED,
+                State.CONNECTING ->
+                toolbar.background.colorFilter = PorterDuffColorFilter(
+                    ResourcesCompat.getColor(activity.resources, R.color.colorError, null),
+                    PorterDuff.Mode.SRC_IN
+                )
+
+            }
+        })
     }
 }

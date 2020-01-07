@@ -5,30 +5,30 @@
     <data>
         <variable
             name="tagSlot"
-            type="androidx.lifecycle.LiveData&lt;Integer&gt;" />
+            type="Integer" />
         <variable
             name="tagId"
             type="androidx.lifecycle.LiveData&lt;String&gt;" />
-
         <variable
-            name="parentModel"
-            type="com.persidius.eos.aurora.ui.recipient.RecipientViewModel" />
+            name="selected"
+            type="androidx.lifecycle.LiveData&lt;Boolean&gt;" />
     </data>
 
    <LinearLayout
        android:layout_width="match_parent"
        android:layout_height="wrap_content"
        android:orientation="horizontal"
-       android:onClick="@{() -> parentModel.setActiveTag(tagSlot)}"
+       android:padding="10sp"
+       android:clickable="true"
        >
 
         <TextView
-            android:layout_width="30dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@{tagSlot}"
+            android:text="@{`Tag ` + tagSlot + `:`}"
             android:gravity="center"
-            android:textStyle="bold"
-            android:textSize="20dp"
+            android:textSize="18dp"
+            android:typeface="@{selected ? `bold` : `normal` }"
             />
 
         <TextView
@@ -36,8 +36,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@{tagId}"
-            android:textSize="20dp"
+            android:textSize="18dp"
+            android:typeface="@{selected ? `bold` : `normal` }"
             />
-
     </LinearLayout>
 </layout>

@@ -74,9 +74,9 @@ class LFReader: RFIDDevice {
                     return if(read == 6) data.sliceArray(1..5) else null
                 }
                 0xFF -> {
-                    val data = ByteArray(4)
-                    val read = input.read(data, 0, 4)
-                    return if(read == 4) data else null
+                    val data = ByteArray(5)
+                    val read = input.read(data, 0, 5)
+                    return if(read == 5) data else null
                 }
                 else -> null
             }

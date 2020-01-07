@@ -6,6 +6,7 @@ import androidx.room.TypeConverters
 import com.persidius.eos.aurora.database.dao.*
 import com.persidius.eos.aurora.database.entities.*
 import com.persidius.eos.aurora.database.fts.ArteryFTS
+import com.persidius.eos.aurora.database.fts.GroupsFTS
 import com.persidius.eos.aurora.database.fts.RecipientFTS
 import com.persidius.eos.aurora.database.fts.UatFTS
 
@@ -13,7 +14,7 @@ import com.persidius.eos.aurora.database.fts.UatFTS
     entities = [County::class, Uat::class, UatFTS::class, Loc::class,
             Artery::class, ArteryFTS::class, RecommendedLabel::class, Session::class,
             Recipient::class, RecipientTag::class, RecipientFTS::class, RecipientPatch::class,
-            Groups::class, User::class
+            Groups::class, GroupsFTS::class, User::class
     ],
     version = 1
 )

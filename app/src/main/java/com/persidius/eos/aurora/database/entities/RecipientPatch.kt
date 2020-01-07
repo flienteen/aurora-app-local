@@ -20,13 +20,13 @@ data class RecipientPatch(
     val createdAt: Long,
     val createdBy: String,
 
-    val posLat: Float?,
-    val posLng: Float?,
+    val posLat: Double?,
+    val posLng: Double?,
 
     val stream: String?,
     val size: String?,
 
-    val addressString: String?,
+    val addressStreet: String?,
     val addressNumber: String?,
 
     val uatId: Int?,
@@ -35,7 +35,6 @@ data class RecipientPatch(
     val comments: String?,
     val active: Boolean?,
 
-    // TODO: Implement label add/remove format as well as tag add/remove fmt.
     val labels: List<Pair<ArrayOp, String>>,
     val tags: List<Triple<ArrayOp, Int, String>>,
     val groupId: String?

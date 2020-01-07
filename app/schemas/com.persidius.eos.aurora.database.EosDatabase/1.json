@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "4a363bf153ca1f2d49b979926d1c0a9f",
+    "identityHash": "686c21a8bd588f8556bfe2bfed085c3b",
     "entities": [
       {
         "tableName": "County",
@@ -611,7 +611,7 @@
       },
       {
         "tableName": "RecipientPatch",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `recipientId` TEXT NOT NULL, `sessionId` INTEGER, `createdAt` INTEGER NOT NULL, `createdBy` TEXT NOT NULL, `posLat` REAL, `posLng` REAL, `stream` TEXT, `size` TEXT, `addressString` TEXT, `addressNumber` TEXT, `uatId` INTEGER, `locId` INTEGER, `comments` TEXT, `active` INTEGER, `labels` TEXT NOT NULL, `tags` TEXT NOT NULL, `groupId` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `recipientId` TEXT NOT NULL, `sessionId` INTEGER, `createdAt` INTEGER NOT NULL, `createdBy` TEXT NOT NULL, `posLat` REAL, `posLng` REAL, `stream` TEXT, `size` TEXT, `addressStreet` TEXT, `addressNumber` TEXT, `uatId` INTEGER, `locId` INTEGER, `comments` TEXT, `active` INTEGER, `labels` TEXT NOT NULL, `tags` TEXT NOT NULL, `groupId` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
@@ -668,8 +668,8 @@
             "notNull": false
           },
           {
-            "fieldPath": "addressString",
-            "columnName": "addressString",
+            "fieldPath": "addressStreet",
+            "columnName": "addressStreet",
             "affinity": "TEXT",
             "notNull": false
           },
@@ -844,6 +844,41 @@
         "foreignKeys": []
       },
       {
+        "ftsVersion": "FTS4",
+        "ftsOptions": {
+          "tokenizer": "unicode61",
+          "tokenizerArgs": [],
+          "contentTable": "Groups",
+          "languageIdColumnName": "",
+          "matchInfo": "FTS4",
+          "notIndexedColumns": [],
+          "prefixSizes": [],
+          "preferredOrder": "ASC"
+        },
+        "contentSyncTriggers": [
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_GroupsFTS_BEFORE_UPDATE BEFORE UPDATE ON `Groups` BEGIN DELETE FROM `GroupsFTS` WHERE `docid`=OLD.`rowid`; END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_GroupsFTS_BEFORE_DELETE BEFORE DELETE ON `Groups` BEGIN DELETE FROM `GroupsFTS` WHERE `docid`=OLD.`rowid`; END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_GroupsFTS_AFTER_UPDATE AFTER UPDATE ON `Groups` BEGIN INSERT INTO `GroupsFTS`(`docid`, `id`) VALUES (NEW.`rowid`, NEW.`id`); END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_GroupsFTS_AFTER_INSERT AFTER INSERT ON `Groups` BEGIN INSERT INTO `GroupsFTS`(`docid`, `id`) VALUES (NEW.`rowid`, NEW.`id`); END"
+        ],
+        "tableName": "GroupsFTS",
+        "createSql": "CREATE VIRTUAL TABLE IF NOT EXISTS `${TABLE_NAME}` USING FTS4(`id` TEXT NOT NULL, tokenize=unicode61, content=`Groups`)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
         "tableName": "User",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `idNumber` TEXT NOT NULL, `labels` TEXT NOT NULL, `comments` TEXT NOT NULL, `active` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `groupId` TEXT, `type` TEXT NOT NULL, `billingType` TEXT NOT NULL, `persons` INTEGER, `countyId` INTEGER NOT NULL, `uatId` INTEGER NOT NULL, `locId` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
@@ -978,7 +1013,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4a363bf153ca1f2d49b979926d1c0a9f')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '686c21a8bd588f8556bfe2bfed085c3b')"
     ]
   }
 }
