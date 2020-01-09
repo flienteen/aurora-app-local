@@ -55,7 +55,6 @@ class CameraScannerFragment : Fragment() {
             parent.addView(viewFinder, 0)
 
             viewFinder.surfaceTexture = it.surfaceTexture
-            viewFinder.setOnTouchListener { v, e ->  onTouchToFocus(v, e) }
             updateTransform()
         }
 
@@ -97,11 +96,11 @@ class CameraScannerFragment : Fragment() {
                 putString(RecipientFragment.ARG_RECIPIENT_ID, code)
             }
 
-            CameraX.unbindAll()
-
-            if(popNav) {
+            // CameraX.unbindAll()
+           if(popNav) {
                 navController.popBackStack(R.id.nav_cameraScanner, true)
             }
+
             navController.navigate(R.id.nav_recipient, args)
         }
     }
@@ -122,23 +121,6 @@ class CameraScannerFragment : Fragment() {
         matrix.postRotate(-rotationDegrees.toFloat(), centerX, centerY)
 
         viewFinder.setTransform(matrix)
-    }
-
-    private fun onTouchToFocus(v: View, e: MotionEvent): Boolean {
-        Log.d("camera","Touch focus")
-        return when(e.action) {
-            MotionEvent.ACTION_UP -> {
-                val pointFactory =  TextureViewMeteringPointFactory(viewFinder)
-                val point = pointFactory.createPoint(e.x, e.y)
-
-                val action = FocusMeteringAction.Builder.from(point, FocusMeteringAction.MeteringMode.AF_AE_AWB)
-                action.setAutoCancelDuration(5, java.util.concurrent.TimeUnit.SECONDS)
-
-                CameraX.getCameraControl(CameraX.LensFacing.BACK).startFocusAndMetering(action.build())
-                true
-            }
-            else -> false
-        }
     }
 
     override fun onRequestPermissionsResult(
@@ -183,6 +165,12 @@ class CameraScannerFragment : Fragment() {
         viewFinder.addOnLayoutChangeListener {_, _, _, _, _, _, _, _, _ -> updateTransform() }
 
         return root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        CameraX.unbindAll()
+        Log.d("CAMERA", "VIEW DESTROYED")
     }
 }
 
