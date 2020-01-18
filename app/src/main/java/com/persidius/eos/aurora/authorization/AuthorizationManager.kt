@@ -1,15 +1,9 @@
 package com.persidius.eos.aurora.authorization
 
-import android.annotation.SuppressLint
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations.map
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.Worker
-import androidx.work.WorkerParameters
 import com.auth0.android.jwt.JWT
 import com.persidius.eos.aurora.BuildConfig
 import com.persidius.eos.aurora.util.Optional
@@ -21,11 +15,6 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
 import retrofit2.HttpException
-import java.time.Duration
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.util.*
 
 
 // TODO: Shared prefs should be moved into the Preferences object
@@ -180,8 +169,6 @@ class AuthorizationManager() {
         userApi = BehaviorSubject.createDefault(createUserAPI(Preferences.eosEnv.value!!))
         Preferences.eosEnv.subscribe { v -> userApi.onNext(createUserAPI(v)) }
 
-        SessionRefreshHandler(this)
-
         if (BuildConfig.DEBUG) {
             sessionToken.subscribe {
                 if (it.isPresent()) {
@@ -204,9 +191,9 @@ class AuthorizationManager() {
     }
 
     fun login(newUsername: String, newPassword: String) {
-//        if (isSignedIn()) {
-//            return
-//        }
+        // if (isSignedIn()) {
+        //    return
+        // }
 
         // don't allow changing usernames if we're locked.
         if (isLocked() && newUsername !== Preferences.amTokenUsername.value) {

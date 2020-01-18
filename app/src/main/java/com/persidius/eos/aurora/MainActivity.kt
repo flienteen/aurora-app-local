@@ -1,15 +1,16 @@
 package com.persidius.eos.aurora
 
+import android.content.Context
 import android.os.Bundle
-import android.util.Log
+import android.view.MotionEvent
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.Observer
 import androidx.navigation.NavController
-import androidx.navigation.Navigation
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
@@ -19,12 +20,11 @@ import com.google.android.gms.location.*
 import com.google.android.material.navigation.NavigationView
 import com.persidius.eos.aurora.authorization.AuthorizationManager
 import com.persidius.eos.aurora.authorization.Role
+import com.persidius.eos.aurora.authorization.SessionRefreshHandler
 import com.persidius.eos.aurora.eos.SyncManager
 import com.persidius.eos.aurora.eos.SyncState
 import com.persidius.eos.aurora.rfidService.RFIDService
 import java.text.SimpleDateFormat
-import java.time.Instant
-import java.time.format.DateTimeFormatter
 import java.util.*
 
 
@@ -61,13 +61,13 @@ class MainActivity : AppCompatActivity() {
     private fun bindHeaderView(navView: NavigationView) {
         val headerView = navView.getHeaderView(0)
         val usernameText = headerView.findViewById<TextView>(R.id.username)
-        val syncStatus  = headerView.findViewById<TextView>(R.id.syncStatus)
+        val syncStatus = headerView.findViewById<TextView>(R.id.syncStatus)
         val syncProgress = headerView.findViewById<TextView>(R.id.syncProgress)
         val lastSyncTime = headerView.findViewById<TextView>(R.id.lastSyncTime)
 
         // username is either <USERNAME> if logged in, or (Neautentificat) if no AM token
         am.session.sessionToken.observe(this, Observer { session ->
-            if(session == null) {
+            if (session == null) {
                 usernameText.text = "Neautentificat"
             } else {
                 usernameText.text = session.name
@@ -75,8 +75,8 @@ class MainActivity : AppCompatActivity() {
         })
 
         SyncManager.LiveData.lastSync.observe(this, Observer { newTime ->
-            if(newTime != null) {
-                if(newTime == 0L) {
+            if (newTime != null) {
+                if (newTime == 0L) {
                     lastSyncTime.text = "Ultima sincronizare: Niciodată"
                 } else {
                     val date = Date(newTime * 1000L)
@@ -87,13 +87,13 @@ class MainActivity : AppCompatActivity() {
         })
 
         SyncManager.LiveData.progress.observe(this, Observer { newProgress ->
-            if(newProgress != null) {
+            if (newProgress != null) {
                 syncProgress.text = "Progres: ${newProgress}"
             }
         })
 
         SyncManager.LiveData.state.observe(this, Observer { newState ->
-            if(newState != null) {
+            if (newState != null) {
                 fun progressVisible() {
                     syncProgress.visibility = View.VISIBLE
                 }
@@ -268,33 +268,38 @@ class MainActivity : AppCompatActivity() {
         val navView: NavigationView = findViewById(R.id.nav_view)
         _navController = findNavController(R.id.nav_host_fragment)
 
-
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
-         appBarConfiguration = AppBarConfiguration(setOf(R.id.nav_settings,
-              R.id.nav_status, R.id.nav_login, R.id.nav_searchRecipient), drawerLayout)
-
+        appBarConfiguration = AppBarConfiguration(setOf(R.id.nav_settings,
+            R.id.nav_status, R.id.nav_login, R.id.nav_searchRecipient), drawerLayout)
 
         setupActionBarWithNavController(_navController, appBarConfiguration)
         navView.setupWithNavController(_navController)
         bindHeaderView(navView)
 
-
         menu = DrawerMenu(navView)
         updateMenuItems(am.session.sessionToken.value)
-        am.session.sessionToken
-            .observe(this, Observer{
+        am.session.sessionToken.observe(this, Observer {
             updateMenuItems(it)
         })
-
         initLocationServices()
+        SessionRefreshHandler(this)
+    }
+
+    /** Hide keyboard when a field loses focus (tap outside) */
+    override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
+        if (currentFocus != null) {
+            val imm: InputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.hideSoftInputFromWindow(currentFocus!!.windowToken, 0)
+        }
+        return super.dispatchTouchEvent(ev)
     }
 
     /**
      * Updates menu items enabled/disabled state.
      */
     private fun updateMenuItems(s: AuthorizationManager.SessionToken?) {
-        if(s == null) {
+        if (s == null) {
             menu.taskSearch.isEnabled = false
             menu.groupSearch.isEnabled = false
             menu.recipientSearch.isEnabled = false
@@ -337,7 +342,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        if(customBackListener != null) {
+        if (customBackListener != null) {
             customBackListener!!()
             return false
         }
@@ -345,8 +350,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     internal val rfidService: RFIDService
-        get () = (application as AuroraApp).rfidService
+        get() = (application as AuroraApp).rfidService
 
     internal val am: AuthorizationManager
-        get () = (application as AuroraApp).authorizationManager
+        get() = (application as AuroraApp).authorizationManager
 }

@@ -1,39 +1,45 @@
 package com.persidius.eos.aurora.authorization
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import androidx.work.*
+import androidx.lifecycle.Observer
+import com.persidius.eos.aurora.MainActivity
+import com.persidius.eos.aurora.R
 import com.persidius.eos.aurora.util.Optional
 import com.persidius.eos.aurora.util.asOptional
 import io.reactivex.Observable
-import io.reactivex.disposables.Disposable
-import io.reactivex.observers.DisposableSingleObserver
-import io.reactivex.schedulers.Schedulers
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.util.*
 import kotlin.math.max
 
-class SessionRefreshHandler(val am: AuthorizationManager) {
+class SessionRefreshHandler(val activity: MainActivity) {
 
     private val debug = true // for testing, expiration = 1 min
     private val updateOffset = if (debug) 1 else 360L  // in minutes
 
+    private val am = activity.am
     private var isRunning = false
     private val handler = Handler(Looper.getMainLooper())
     private val updater = Runnable { scheduleUpdate() }
 
     init {
-        am.tokenObservable.subscribe { tkn ->
-            if (tkn.isPresent()) {
+        am.session.sessionToken.observe(activity, Observer { tkn ->
+            if (tkn != null && !tkn.jwt.isExpired(300) && noError()) {
                 start()
             } else {
                 stop()
+                activity.navController.navigate(R.id.nav_login)
             }
-        }
+        })
+
+        am.session.error.observe(activity, Observer {
+            if (it == AuthorizationManager.ErrorCode.LOGIN_FAILED_INVALID_CREDENTIALS) {
+                stop()
+                activity.navController.navigate(R.id.nav_login)
+            }
+        })
     }
 
     @SuppressLint("CheckResult")
@@ -80,6 +86,11 @@ class SessionRefreshHandler(val am: AuthorizationManager) {
         }
         isRunning = false
         handler.removeCallbacksAndMessages(null)
+    }
+
+    private fun noError(): Boolean {
+        val error = activity.am.session.error.value
+        return error == null || error == AuthorizationManager.ErrorCode.NO_ERROR
     }
 
     fun isRunning(): Boolean {

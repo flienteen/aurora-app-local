@@ -1,7 +1,6 @@
 package com.persidius.eos.aurora.ui.login
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,37 +14,41 @@ import com.persidius.eos.aurora.authorization.AuthorizationManager
 import com.persidius.eos.aurora.authorization.Role
 import com.persidius.eos.aurora.databinding.FragmentLoginBinding
 
+
 class LoginFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val binding: FragmentLoginBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_login, container, false)
         binding.lifecycleOwner = this
-        val activity: MainActivity = activity as MainActivity;
+        val activity: MainActivity = activity as MainActivity
         val viewModel = ViewModelProviders.of(this, LoginViewModelProviderFactory(activity.am)).get(LoginViewModel::class.java)
         binding.model = viewModel
-        activity.am.session.signedIn.observe(this, Observer<Boolean> { isSignedIn -> navigateAfterLogin(isSignedIn) })
+        initNavigation()
         return binding.root
     }
 
-    private fun navigateAfterLogin(isSignedIn: Boolean) {
-        if (!isSignedIn) {
-            return
-        }
-        val activity: MainActivity = activity as MainActivity
-        val loginObs = Observer<AuthorizationManager.SessionToken?> { sessionToken ->
-            if (sessionToken != null) {
-//                if (sessionToken.hasRole(Role.LOGISTICS_VIEW_TASK)) {
-//                    activity.navController.navigate(R.id.nav_searchTask)
-//                } else
-                if (sessionToken.hasRole(Role.LOGISTICS_VIEW_RECIPIENT)) {
+    private fun initNavigation() {
+        val activity = activity as MainActivity
+        activity.am.session.sessionToken.observe(this, Observer { tkn ->
+            if (tkn != null && !tkn.jwt.isExpired(300) && noError()) {
+                // if (tkn.hasRole(Role.LOGISTICS_VIEW_TASK)) {
+                // activity.navController.navigate(R.id.nav_searchTask)
+                // } else
+                if (tkn.hasRole(Role.LOGISTICS_VIEW_RECIPIENT)) {
                     activity.navController.navigate(R.id.nav_searchRecipient)
-                } else if (sessionToken.hasRole(Role.LOGISTICS_VIEW_USER)) {
+                } else if (tkn.hasRole(Role.LOGISTICS_VIEW_USER)) {
                     activity.navController.navigate(R.id.nav_searchUser)
-                } else if (sessionToken.hasRole(Role.LOGISTICS_VIEW_GROUPS)) {
+                } else if (tkn.hasRole(Role.LOGISTICS_VIEW_GROUPS)) {
                     activity.navController.navigate(R.id.nav_searchUser)
                 }
             }
-        }
-        activity.am.session.sessionToken.observe(this, loginObs)
+        })
     }
+
+    private fun noError(): Boolean {
+        val activity = activity as MainActivity
+        val error = activity.am.session.error.value
+        return error == null || error == AuthorizationManager.ErrorCode.NO_ERROR
+    }
+
 }
