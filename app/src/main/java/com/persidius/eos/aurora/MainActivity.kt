@@ -305,7 +305,7 @@ class MainActivity : AppCompatActivity() {
             menu.createTask.isEnabled = false
         } else {
             // TODO: Enable in R3
-            menu.taskSearch.isEnabled = false // s.hasRole(Role.LOGISTICS_VIEW_TASK)
+            menu.taskSearch.isEnabled = s.hasRole(Role.LOGISTICS_VIEW_TASK)
             menu.createTask.isEnabled = false /* s.hasRoles(
                 Role.LOGISTICS_CREATE_TASK,
                 Role.LOGISTICS_EDIT_TASK

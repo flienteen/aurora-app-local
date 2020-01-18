@@ -14,9 +14,10 @@ import com.persidius.eos.aurora.util.Preferences
 import io.sentry.Sentry
 import io.sentry.android.AndroidSentryClientFactory
 
-class AuroraApp: Application() {
+class AuroraApp : Application() {
     internal lateinit var rfidService: RFIDService
     internal lateinit var authorizationManager: AuthorizationManager
+
     override fun onCreate() {
         super.onCreate()
         Sentry.init(BuildConfig.SENTRY_DSN, AndroidSentryClientFactory(this))
