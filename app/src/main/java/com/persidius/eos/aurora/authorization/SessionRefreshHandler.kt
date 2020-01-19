@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
 import androidx.lifecycle.Observer
+import com.persidius.eos.aurora.BuildConfig
 import com.persidius.eos.aurora.MainActivity
 import com.persidius.eos.aurora.R
 import com.persidius.eos.aurora.util.Optional
@@ -14,11 +15,10 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import kotlin.math.max
 
-class SessionRefreshHandler(val activity: MainActivity) {
+/** Periodically check and refresh the token. In production 6 hours before the token expires, in debug every minute  */
+class SessionRefreshHandler(private val activity: MainActivity) {
 
-    private val debug = true // for testing, expiration = 1 min
-    private val updateOffset = if (debug) 1 else 360L  // in minutes
-
+    private val updateOffset = if (BuildConfig.DEBUG) 1 else 360L  // in minutes
     private val am = activity.am
     private var isRunning = false
     private val handler = Handler(Looper.getMainLooper())
@@ -64,7 +64,7 @@ class SessionRefreshHandler(val activity: MainActivity) {
     private fun getTokenExpirationInMinutes(): Observable<Optional<Long>> {
         return am.sessionToken.take(1).map { tkn ->
             if (tkn.isPresent()) {
-                if (debug) {
+                if (BuildConfig.DEBUG) {
                     return@map Optional(1L)
                 }
                 val exp = tkn.get().jwt.expiresAt
