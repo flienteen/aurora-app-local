@@ -22,11 +22,11 @@ class SessionRefreshHandler(val activity: MainActivity) {
     private val am = activity.am
     private var isRunning = false
     private val handler = Handler(Looper.getMainLooper())
-    private val updater = Runnable { scheduleUpdate() }
+    private val updater = Runnable { scheduleUpdate(true) }
 
     init {
         am.session.sessionToken.observe(activity, Observer { tkn ->
-            if (tkn != null && !tkn.jwt.isExpired(300) && noError()) {
+            if (tkn != null && !tkn.jwt.isExpired(300) && am.noError()) {
                 start()
             } else {
                 stop()
@@ -37,16 +37,20 @@ class SessionRefreshHandler(val activity: MainActivity) {
         am.session.error.observe(activity, Observer {
             if (it == AuthorizationManager.ErrorCode.LOGIN_FAILED_INVALID_CREDENTIALS) {
                 stop()
-                activity.navController.navigate(R.id.nav_login)
+                am.logout()
             }
+        })
+
+        am.session.signedIn.observe(activity, Observer {
+            // trigger update of isSignedIn otherwise logout does not work
         })
     }
 
     @SuppressLint("CheckResult")
-    private fun scheduleUpdate() {
+    private fun scheduleUpdate(doLogin: Boolean) {
         getTokenExpirationInMinutes().subscribe { expiration ->
             if (expiration.isPresent()) {
-                if (expiration.get() <= updateOffset) {
+                if (doLogin && expiration.get() <= updateOffset) {
                     am.autoLogin()
                 }
                 val nextUpdate = max(expiration.get() - updateOffset, updateOffset)
@@ -77,7 +81,7 @@ class SessionRefreshHandler(val activity: MainActivity) {
             return
         }
         isRunning = true
-        scheduleUpdate()
+        scheduleUpdate(false)
     }
 
     private fun stop() {
@@ -86,11 +90,6 @@ class SessionRefreshHandler(val activity: MainActivity) {
         }
         isRunning = false
         handler.removeCallbacksAndMessages(null)
-    }
-
-    private fun noError(): Boolean {
-        val error = activity.am.session.error.value
-        return error == null || error == AuthorizationManager.ErrorCode.NO_ERROR
     }
 
     fun isRunning(): Boolean {

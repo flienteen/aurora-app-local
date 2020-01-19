@@ -30,7 +30,7 @@ class LoginFragment : Fragment() {
     private fun initNavigation() {
         val activity = activity as MainActivity
         activity.am.session.sessionToken.observe(this, Observer { tkn ->
-            if (tkn != null && !tkn.jwt.isExpired(300) && noError()) {
+            if (tkn != null && !tkn.jwt.isExpired(300) && activity.am.noError()) {
                 // if (tkn.hasRole(Role.LOGISTICS_VIEW_TASK)) {
                 // activity.navController.navigate(R.id.nav_searchTask)
                 // } else
@@ -43,12 +43,6 @@ class LoginFragment : Fragment() {
                 }
             }
         })
-    }
-
-    private fun noError(): Boolean {
-        val activity = activity as MainActivity
-        val error = activity.am.session.error.value
-        return error == null || error == AuthorizationManager.ErrorCode.NO_ERROR
     }
 
 }

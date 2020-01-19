@@ -216,6 +216,7 @@ class AuthorizationManager() {
                     try {
                         val newToken = JWT(result.token)
                         if (!newToken.isExpired(TOKEN_LEEWAY)) {
+                            error.value = ErrorCode.NO_ERROR
                             token.onNext(newToken.asOptional())
                             Preferences.amTokenUsername.onNext(newUsername)
                             Preferences.amTokenPassword.onNext(newPassword)
@@ -224,7 +225,6 @@ class AuthorizationManager() {
                         Log.d("AM", "Exception @ sign in $e")
                         error.value = ErrorCode.LOGIN_FAILED_OTHER_ERROR
                     }
-                    error.value = ErrorCode.NO_ERROR
                     loggingIn.value = false
                 },
                 { e ->
@@ -269,6 +269,10 @@ class AuthorizationManager() {
         if (!isSignedIn()) {
             Preferences.amLocked.onNext(false)
         }
+    }
+
+    fun noError(): Boolean {
+        return session.error.value == null || session.error.value == ErrorCode.NO_ERROR
     }
 
     fun autoLogin() {
