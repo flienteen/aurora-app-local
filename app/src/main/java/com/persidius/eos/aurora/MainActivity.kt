@@ -1,6 +1,10 @@
 package com.persidius.eos.aurora
 
+import GpsUtils
+import GpsUtils.onGpsListener
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.MotionEvent
 import android.view.View
@@ -44,6 +48,7 @@ class MainActivity : AppCompatActivity() {
 
     // Accessible from fragments
     val navController get() = this._navController
+    private var isGPS: Boolean = false
 
     inner class DrawerMenu(n: NavigationView) {
         val taskSearch = n.menu.findItem(R.id.nav_searchTask)
@@ -238,7 +243,30 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    private fun checkGPS() {
+        GpsUtils(this).turnGPSOn(object : onGpsListener {
+            override fun gpsStatus(isGPSEnabled: Boolean) {
+                isGPS = isGPSEnabled
+            }
+        })
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == Activity.RESULT_OK) {
+            if (requestCode == GpsUtils.GPS_REQUEST) {
+                isGPS = true // flag maintain before get location
+            }
+        } else if (resultCode == Activity.RESULT_CANCELED) {
+            if (requestCode == GpsUtils.GPS_REQUEST) {
+                checkGPS()
+            }
+        }
+    }
+
     private fun initLocationServices() {
+        checkGPS()
+
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         val locationCallback: LocationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
@@ -268,10 +296,9 @@ class MainActivity : AppCompatActivity() {
         val navView: NavigationView = findViewById(R.id.nav_view)
         _navController = findNavController(R.id.nav_host_fragment)
 
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
+        // Passing each menu ID as a set of Ids because each menu should be considered as top level destinations.
         appBarConfiguration = AppBarConfiguration(setOf(R.id.nav_settings,
-            R.id.nav_status, R.id.nav_login, R.id.nav_searchRecipient), drawerLayout)
+            R.id.nav_status, R.id.nav_login, R.id.nav_searchRecipient, R.id.nav_searchTask), drawerLayout)
 
         setupActionBarWithNavController(_navController, appBarConfiguration)
         navView.setupWithNavController(_navController)
@@ -310,7 +337,7 @@ class MainActivity : AppCompatActivity() {
             menu.createTask.isEnabled = false
         } else {
             // TODO: Enable in R3
-            menu.taskSearch.isEnabled = s.hasRole(Role.LOGISTICS_VIEW_TASK)
+            menu.taskSearch.isEnabled = false //s.hasRole(Role.LOGISTICS_VIEW_TASK)
             menu.createTask.isEnabled = false /* s.hasRoles(
                 Role.LOGISTICS_CREATE_TASK,
                 Role.LOGISTICS_EDIT_TASK

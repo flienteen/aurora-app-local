@@ -7,6 +7,7 @@ import androidx.lifecycle.Observer
 import com.persidius.eos.aurora.BuildConfig
 import com.persidius.eos.aurora.MainActivity
 import com.persidius.eos.aurora.R
+import com.persidius.eos.aurora.eos.SyncManager
 import com.persidius.eos.aurora.util.Optional
 import com.persidius.eos.aurora.util.asOptional
 import io.reactivex.Observable
@@ -37,7 +38,8 @@ class SessionRefreshHandler(private val activity: MainActivity) {
         am.session.error.observe(activity, Observer {
             if (it == AuthorizationManager.ErrorCode.LOGIN_FAILED_INVALID_CREDENTIALS) {
                 stop()
-                am.logout()
+                val clearUser = SyncManager.isAbortable() && !am.isLocked()
+                am.forceLogut(clearUser, true)
             }
         })
 

@@ -31,9 +31,9 @@ class LoginFragment : Fragment() {
         val activity = activity as MainActivity
         activity.am.session.sessionToken.observe(this, Observer { tkn ->
             if (tkn != null && !tkn.jwt.isExpired(300) && activity.am.noError()) {
-                // if (tkn.hasRole(Role.LOGISTICS_VIEW_TASK)) {
-                // activity.navController.navigate(R.id.nav_searchTask)
-                // } else
+//                if (tkn.hasRole(Role.LOGISTICS_VIEW_TASK)) {
+//                    activity.navController.navigate(R.id.nav_searchTask)
+//                } else
                 if (tkn.hasRole(Role.LOGISTICS_VIEW_RECIPIENT)) {
                     activity.navController.navigate(R.id.nav_searchRecipient)
                 } else if (tkn.hasRole(Role.LOGISTICS_VIEW_USER)) {

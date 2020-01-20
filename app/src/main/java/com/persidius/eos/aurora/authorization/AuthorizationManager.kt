@@ -194,18 +194,15 @@ class AuthorizationManager() {
         // if (isSignedIn()) {
         //    return
         // }
-
         // don't allow changing usernames if we're locked.
         if (isLocked() && newUsername !== Preferences.amTokenUsername.value) {
             error.value = ErrorCode.LOGIN_FAILED_WRONG_USER
             return
         }
-
         // Don't allow multiple login attempts at once.
         if (loggingIn.value!!) {
             return
         }
-
         loggingIn.value = true
         userApi.value!!.Login(UserAPI.Credentials(newUsername, newPassword))
             .subscribeOn(Schedulers.io())
@@ -242,15 +239,23 @@ class AuthorizationManager() {
         if (isLocked()) {
             return
         }
-
         if (!isSignedIn()) {
             return
         }
-
         // dump all the state
         token.onNext(null.asOptional())
         Preferences.amTokenUsername.onNext("")
         Preferences.amTokenPassword.onNext("")
+    }
+
+    fun forceLogut(clearUser: Boolean = true, clearPass: Boolean = true) {
+        token.onNext(null.asOptional())
+        if (clearUser) {
+            Preferences.amTokenUsername.onNext("")
+        }
+        if (clearPass) {
+            Preferences.amTokenPassword.onNext("")
+        }
     }
 
     /**
@@ -278,6 +283,8 @@ class AuthorizationManager() {
     fun autoLogin() {
         val email: LiveData<String> = Preferences.amTokenUsername.asLiveData()
         val pass: LiveData<String> = Preferences.amTokenPassword.asLiveData()
+//        val email: LiveData<String> = MutableLiveData("asd")
+//        val pass: LiveData<String> = MutableLiveData("asd")
         login(email.value!!, pass.value!!)
     }
 

@@ -3,50 +3,92 @@ package com.persidius.eos.aurora.ui.tasks
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.util.Log
+import android.view.*
 import androidx.databinding.DataBindingUtil
-import androidx.databinding.ViewDataBinding
-import com.persidius.eos.aurora.databinding.FragmentTasksBinding
-
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.persidius.eos.aurora.MainActivity
 import com.persidius.eos.aurora.R
+import com.persidius.eos.aurora.database.Database
+import com.persidius.eos.aurora.database.entities.Loc
+import com.persidius.eos.aurora.database.entities.Recipient
+import com.persidius.eos.aurora.database.entities.Uat
+import com.persidius.eos.aurora.databinding.FragmentTasksBinding
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
 
 class TasksFragment : Fragment() {
-//    companion object {
-//        const val ARG_TASKS_ID = "tasksId"
-//        const val ARG_SESSION_ID = "sessionId"
-//    }
 
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
     private var listener: OnFragmentInteractionListener? = null
-
     private lateinit var viewModel: TasksViewModel
     private var sessionId: Int? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        // Inflate the layout for this fragment
+        setHasOptionsMenu(true)
         val binding = DataBindingUtil.inflate<FragmentTasksBinding>(inflater, R.layout.fragment_tasks, container, false)
+        binding.lifecycleOwner = this
+
+        val adapter = TasksAdapter(itemClickListener = { r ->
+        })
+
+        val viewModel = ViewModelProviders.of(this, TasksViewModelProviderFactory(adapter))
+            .get(TasksViewModel::class.java)
+
+        binding.model = viewModel
+
+        viewModel.searchTerm.observe(this, Observer<String> { term ->
+            if (term.length > 1) {
+                Log.d("SearchRecipient", term)
+                // add wildcards
+                Database.recipient.search("*$term*")
+                    .subscribeOn(Schedulers.computation())
+                    .observeOn(Schedulers.io())
+                    .map { results ->
+                        val locIds = results.map { r -> r.locId }.distinct()
+                        val uatIds = results.map { r -> r.uatId }.distinct()
+
+                        val locs = Database.loc.getByIds(locIds)
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(Schedulers.io())
+                            .blockingGet()
+                            .associateBy { l -> l.id }
+
+                        val uats = Database.uat.getByIds(uatIds)
+                            .subscribeOn(Schedulers.io())
+                            .blockingGet()
+                            .associateBy { u -> u.id }
+
+                        results.map { r -> Triple(r, uats.getValue(r.uatId), locs.getValue(r.locId)) }
+                    }
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe({ results ->
+                        viewModel.results.value = results
+                        viewModel.adapter.setData(results)
+                        Log.d("SearchRecipient", "${results.size} results")
+
+                    }, { t -> Log.e("SearchRecipient", "Search for recipient errored", t) })
+            } else {
+                viewModel.results.postValue(listOf())
+            }
+        })
+
+        binding.resultList.adapter = viewModel.adapter
+        binding.resultList.layoutManager = LinearLayoutManager(context)
+        viewModel.results.observe(this, Observer<List<Triple<Recipient, Uat, Loc>>> { data ->
+            viewModel.adapter.setData(data)
+        })
+
         return binding.root
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+    }
+
     fun onButtonPressed(uri: Uri) {
         listener?.onFragmentInteraction(uri)
     }
@@ -55,8 +97,6 @@ class TasksFragment : Fragment() {
         super.onAttach(context)
         if (context is OnFragmentInteractionListener) {
             listener = context
-        } else {
-//            throw RuntimeException(context.toString() + " must implement OnFragmentInteractionListener")
         }
     }
 
@@ -65,39 +105,23 @@ class TasksFragment : Fragment() {
         listener = null
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     *
-     *
-     * See the Android Training lesson [Communicating with Other Fragments]
-     * (http://developer.android.com/training/basics/fragments/communicating.html)
-     * for more information.
-     */
     interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
         fun onFragmentInteraction(uri: Uri)
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment TasksFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            TasksFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.search_task_menu, menu)
+
+        val itemOpenMap = menu.findItem(R.id.action_open_map)
+        itemOpenMap.setOnMenuItemClickListener {
+            mainActivity().navController.navigate(R.id.nav_taskMap)
+            true
+        }
+
+        super.onCreateOptionsMenu(menu, inflater)
+    }
+
+    private fun mainActivity(): MainActivity {
+        return activity as MainActivity
     }
 }
