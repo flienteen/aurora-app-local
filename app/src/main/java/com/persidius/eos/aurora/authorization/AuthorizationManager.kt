@@ -2,7 +2,6 @@ package com.persidius.eos.aurora.authorization
 
 import android.util.Log
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.LiveDataReactiveStreams
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations.map
 import com.auth0.android.jwt.JWT
@@ -11,7 +10,6 @@ import com.persidius.eos.aurora.util.Optional
 import com.persidius.eos.aurora.util.Preferences
 import com.persidius.eos.aurora.util.asLiveData
 import com.persidius.eos.aurora.util.asOptional
-import io.reactivex.BackpressureStrategy
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
@@ -32,7 +30,7 @@ import retrofit2.HttpException
  *
  */
 
-class AuthorizationManager {
+class AuthorizationManager() {
 
     private companion object {
         val COUNTY_REX = Regex("^c[0-9]+$")
@@ -82,7 +80,7 @@ class AuthorizationManager {
             this@AuthorizationManager.token.asLiveData()
         ) { v -> v.value }
 
-        val sessionToken: LiveData<SessionToken?> = map<Optional<SessionToken>, SessionToken?> (
+        val sessionToken: LiveData<SessionToken?> = map<Optional<SessionToken>, SessionToken?>(
             this@AuthorizationManager.sessionToken.asLiveData()
         ) { v ->
             Log.d("AM", "Set ST Value: $v, thread: ${Thread.currentThread().id}")
@@ -97,14 +95,13 @@ class AuthorizationManager {
         val error: LiveData<ErrorCode> = this@AuthorizationManager.error
     }
 
-
     // token user/pass
     private val token: BehaviorSubject<Optional<JWT>> = BehaviorSubject.createDefault<Optional<JWT>>(null.asOptional())
     val tokenObservable = token as Observable<Optional<JWT>>
     val sessionToken: Observable<Optional<SessionToken>> = token.map { v -> jwtToSessionToken(v) }
 
     private fun jwtToSessionToken(tkn: Optional<JWT>): Optional<SessionToken> {
-        if(!tkn.isPresent()) {
+        if (!tkn.isPresent()) {
             return null.asOptional()
         } else {
             val roleCodes = tkn.get().getClaim("auz").asList(String::class.java)
@@ -159,21 +156,22 @@ class AuthorizationManager {
 
         try {
             token.onNext(JWT(Preferences.amToken.value!!).asOptional())
-        } catch(e: Exception) {
+        } catch (e: Exception) {
             token.onNext(null.asOptional())
         }
 
         token.subscribe { tkn ->
-            Preferences.amToken.onNext(if(tkn.isPresent()) tkn.get().toString() else "") }
+            Preferences.amToken.onNext(if (tkn.isPresent()) tkn.get().toString() else "")
+        }
 
         // UserAPI observable
         Log.d("AM", "${Preferences.eosEnv.value!!}")
         userApi = BehaviorSubject.createDefault(createUserAPI(Preferences.eosEnv.value!!))
         Preferences.eosEnv.subscribe { v -> userApi.onNext(createUserAPI(v)) }
 
-        if(BuildConfig.DEBUG) {
-            sessionToken.subscribe{
-                if(it.isPresent()) {
+        if (BuildConfig.DEBUG) {
+            sessionToken.subscribe {
+                if (it.isPresent()) {
                     it.get().printRoles()
                 }
             }
@@ -193,73 +191,78 @@ class AuthorizationManager {
     }
 
     fun login(newUsername: String, newPassword: String) {
-        if(isSignedIn()) {
-            return
-        }
-
+        // if (isSignedIn()) {
+        //    return
+        // }
         // don't allow changing usernames if we're locked.
-        if(isLocked() && newUsername !== Preferences.amTokenUsername.value) {
+        if (isLocked() && newUsername !== Preferences.amTokenUsername.value) {
             error.value = ErrorCode.LOGIN_FAILED_WRONG_USER
             return
         }
-
         // Don't allow multiple login attempts at once.
-        if(loggingIn.value!!) {
+        if (loggingIn.value!!) {
             return
         }
-
         loggingIn.value = true
         userApi.value!!.Login(UserAPI.Credentials(newUsername, newPassword))
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .firstOrError()
             .subscribe(
-            { result ->
-                try {
-                    val newToken = JWT(result.token)
-                    if(!newToken.isExpired(TOKEN_LEEWAY)) {
-                        token.onNext(newToken.asOptional())
-                        Preferences.amTokenUsername.onNext(newUsername)
-                        Preferences.amTokenPassword.onNext(newPassword)
+                { result ->
+                    try {
+                        val newToken = JWT(result.token)
+                        if (!newToken.isExpired(TOKEN_LEEWAY)) {
+                            error.value = ErrorCode.NO_ERROR
+                            token.onNext(newToken.asOptional())
+                            Preferences.amTokenUsername.onNext(newUsername)
+                            Preferences.amTokenPassword.onNext(newPassword)
+                        }
+                    } catch (e: Exception) {
+                        Log.d("AM", "Exception @ sign in $e")
+                        error.value = ErrorCode.LOGIN_FAILED_OTHER_ERROR
                     }
-                } catch(e: Exception) {
-                    Log.d("AM", "Exception @ sign in $e")
+                    loggingIn.value = false
+                },
+                { e ->
                     error.value = ErrorCode.LOGIN_FAILED_OTHER_ERROR
-                }
-                error.value = ErrorCode.NO_ERROR
-                loggingIn.value = false
-            },
-            {e ->
-                error.value = ErrorCode.LOGIN_FAILED_OTHER_ERROR
-                if(e is HttpException && e.code() == 403) {
+                    if (e is HttpException && e.code() == 403) {
                         error.value = ErrorCode.LOGIN_FAILED_INVALID_CREDENTIALS
+                    }
+                    loggingIn.value = false
                 }
-                loggingIn.value = false
-            }
-        )
+            )
     }
 
     fun logout() {
         // Can't logout when locked
-        if(isLocked()) {
+        if (isLocked()) {
             return
         }
-
-        if(!isSignedIn()) {
+        if (!isSignedIn()) {
             return
         }
-
         // dump all the state
         token.onNext(null.asOptional())
         Preferences.amTokenUsername.onNext("")
         Preferences.amTokenPassword.onNext("")
     }
 
+    fun forceLogut(clearUser: Boolean = true, clearPass: Boolean = true) {
+        token.onNext(null.asOptional())
+        if (clearUser) {
+            Preferences.amTokenUsername.onNext("")
+        }
+        if (clearPass) {
+            Preferences.amTokenPassword.onNext("")
+        }
+    }
+
     /**
      * Lock the manager, not allowing accounts to be swapped
      */
     fun lock() {
-        if(isSignedIn()) {
+        if (isSignedIn()) {
             Preferences.amLocked.onNext(true)
         }
     }
@@ -268,8 +271,21 @@ class AuthorizationManager {
      * Unlock the authManager, allowing accounts to be switched & logouts to be performed.
      */
     fun unlock() {
-        if(!isSignedIn()) {
+        if (!isSignedIn()) {
             Preferences.amLocked.onNext(false)
         }
     }
+
+    fun noError(): Boolean {
+        return session.error.value == null || session.error.value == ErrorCode.NO_ERROR
+    }
+
+    fun autoLogin() {
+        val email: LiveData<String> = Preferences.amTokenUsername.asLiveData()
+        val pass: LiveData<String> = Preferences.amTokenPassword.asLiveData()
+//        val email: LiveData<String> = MutableLiveData("asd")
+//        val pass: LiveData<String> = MutableLiveData("asd")
+        login(email.value!!, pass.value!!)
+    }
+
 }

@@ -1,12 +1,18 @@
 package com.persidius.eos.aurora.ui.login
 
+import android.R
 import android.util.Log
 import android.view.View
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import androidx.lifecycle.Transformations.map
 import androidx.lifecycle.ViewModel
+import com.auth0.android.jwt.JWT
+import com.persidius.eos.aurora.MainActivity
 import com.persidius.eos.aurora.authorization.AuthorizationManager
+import com.persidius.eos.aurora.authorization.Role
+import com.persidius.eos.aurora.util.Preferences
 
 class LoginViewModel(private val am: AuthorizationManager): ViewModel() {
     val email: MutableLiveData<String> = MutableLiveData(am.session.email.value!!)
@@ -24,6 +30,7 @@ class LoginViewModel(private val am: AuthorizationManager): ViewModel() {
     fun login(@Suppress("UNUSED_PARAMETER") v: View) {
         am.login(email.value!!, pass.value!!)
     }
+
 }
 
 

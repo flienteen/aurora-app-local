@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".ui.tasks.TasksFragment">
+
+    <data>
+
+        <import type="android.view.View" />
+
+        <variable
+            name="model"
+            type="com.persidius.eos.aurora.ui.tasks.TasksViewModel" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- Search box -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:background="@color/colorPrimary"
+            android:orientation="horizontal">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="14sp"
+                android:theme="@style/AppTheme.Inverted"
+                app:hintEnabled="false">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/search"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@null"
+                    android:ems="10"
+                    android:hint="Căută cod/adresă"
+                    android:inputType="textVisiblePassword|textNoSuggestions"
+                    android:text="@={model.searchTerm}" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+
+        <!-- Results -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0sp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="0sp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Niciun rezultat :("
+                android:textSize="20sp"
+                android:visibility="@{(model.results.size() == 0 &amp;&amp; model.searchTerm.length > 1) ? View.VISIBLE : View.GONE}" />
+
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/resultList"
+                android:layout_width="match_parent"
+                android:layout_height="0sp"
+                android:layout_weight="1"
+                android:visibility="@{(model.results.size() > 0) ? View.VISIBLE : View.GONE}" />
+        </LinearLayout>
+    </LinearLayout>
+
+</layout>

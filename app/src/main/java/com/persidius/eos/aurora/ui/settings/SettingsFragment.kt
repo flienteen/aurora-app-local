@@ -7,6 +7,7 @@ import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
+import com.auth0.android.jwt.JWT
 import com.persidius.eos.aurora.BuildConfig
 import com.persidius.eos.aurora.MainActivity
 import com.persidius.eos.aurora.R
@@ -18,7 +19,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         setPreferencesFromResource(R.xml.preferences, rootKey)
 
         findPreference<Preference>("version")?.summaryProvider = Preference.SummaryProvider<Preference> {
-            "${BuildConfig.VERSION_NAME} ${if(BuildConfig.DEBUG) "debug" else ""}"
+            "${BuildConfig.VERSION_NAME} ${if (BuildConfig.DEBUG) "debug" else ""}"
         }
 
         val mainActivity = activity!! as MainActivity
@@ -42,7 +43,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
 
         val rfidStateObserver = Observer<RFIDService.State> { newState ->
-            val name = when(newState) {
+            val name = when (newState) {
                 RFIDService.State.DISABLED -> "Dezactivat"
                 RFIDService.State.BT_DISABLED -> "Bluetooth Dezactivat"
                 RFIDService.State.NOT_CONFIGURED -> "Neconfigurat"
@@ -72,7 +73,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
             Log.d("SETTINGS", "$locked, $signedIn")
 
-            if(!locked) {
+            if (!locked) {
                 // if not locked, enable eosServer
                 findPreference<ListPreference>("eosEnv")?.isEnabled = !signedIn
                 findPreference<Preference>("logout")?.isEnabled = signedIn

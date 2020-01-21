@@ -1,5 +1,6 @@
 package com.persidius.eos.aurora.ui.login
 
+import com.persidius.eos.aurora.MainActivity
 import com.persidius.eos.aurora.authorization.AuthorizationManager
 import com.persidius.eos.aurora.util.GenericViewModelProviderFactory
 

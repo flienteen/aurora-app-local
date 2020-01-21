@@ -35,9 +35,13 @@
         android:label="Autentificare"
         tools:layout="@layout/fragment_login" >
         <action
-            android:id="@+id/action_nav_login_to_nav_status"
-            app:destination="@id/nav_status"
-            app:popUpTo="@+id/nav_status" />
+            android:id="@+id/action_nav_login_to_nav_tasks"
+            app:destination="@id/nav_searchTask"
+            app:popUpTo="@+id/nav_searchTask" />
+        <action
+            android:id="@+id/action_nav_login_to_nav_recipient"
+            app:destination="@id/nav_recipient"
+            app:popUpTo="@+id/nav_recipient" />
     </fragment>
     <action
         android:id="@+id/action_global_nav_login"
@@ -64,6 +68,30 @@
         android:label="RecipientFragment" >
         <argument
             android:name="recipientId"
+            app:argType="string" />
+        <argument
+            android:name="sessionId"
+            app:argType="integer" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_searchTask"
+        android:name="com.persidius.eos.aurora.ui.tasks.TasksFragment"
+        android:label="Cautare task"
+        tools:layout="@layout/fragment_tasks">
+        <argument
+            android:name="tasksId"
+            app:argType="string" />
+        <argument
+            android:name="sessionId"
+            app:argType="integer" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_taskMap"
+        android:name="com.persidius.eos.aurora.ui.map.MapFragment"
+        android:label="Harta task-uri"
+        tools:layout="@layout/fragment_map">
+        <argument
+            android:name="tasksId"
             app:argType="string" />
         <argument
             android:name="sessionId"
