@@ -11,7 +11,6 @@ import com.persidius.eos.aurora.BuildConfig
 import com.persidius.eos.aurora.authorization.AuthorizationManager
 import com.persidius.eos.aurora.authorization.Role
 import com.persidius.eos.aurora.database.Database
-import com.persidius.eos.aurora.database.LongQueryResult
 import com.persidius.eos.aurora.eos.tasks.*
 import com.persidius.eos.aurora.util.Optional
 import com.persidius.eos.aurora.util.Preferences
@@ -26,8 +25,6 @@ import io.reactivex.subjects.BehaviorSubject
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.math.max
-import kotlin.math.min
 
 
 // SyncManager performs crap related to
@@ -46,6 +43,7 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
     private val lastSync: BehaviorSubject<Long> = Preferences.smLastSync
 
     private val lastRecipientUpdate = Preferences.smLastRecipientUpdate
+    private val lastTaskUpdate = Preferences.smLastTaskUpdate
     private val lastUserUpdate = Preferences.smLastUserUpdate
     private val lastGroupUpdate = Preferences.smLastGroupUpdate
 
@@ -188,7 +186,6 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
                 } else { null }
             }
 
-
             SyncState.SYNC_GROUPS -> {
                 val session = am.sessionToken.blockingFirst().value
                 if(session == null) {
@@ -212,7 +209,6 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
                             lastGroupUpdate.onNext(lastUpdate - delta)
                         }
                 } else { null }
-
             }
 
             SyncState.SYNC_USERS -> {
@@ -236,18 +232,34 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
                             lastUserUpdate.onNext(lastUpdate - delta)
                         }
                 } else { null }
+            }
 
-                // Since SYNC_USERS is the last stage of a successful SYNC before entering
-                // the SYNCHRONIZED state, we set
-                // lastSyncTime here
+            SyncState.SYNC_TASKS -> {
+                val session = am.sessionToken.blockingFirst().value
+                if(session == null) {
+                    onAbort()
+                    return
+                }
+
+                exec = if(session.hasRole(Role.LOGISTICS_VIEW_TASK)) {
+                    val startTime = System.currentTimeMillis() / 1000L
+                    SyncTasks.execute(progress = progress)
+                        .doOnComplete {
+                            val endTime = System.currentTimeMillis() / 1000L
+                            val delta = endTime - startTime
+
+                            val lastUpdate = Database.task.lastUpdatedAt().subscribeOn(Schedulers.io())
+                                .blockingGet().result
+
+                            lastTaskUpdate.onNext(lastUpdate - delta)
+                        }
+                } else { null }
+
+                // Since SYNC_TASKS is the last stage of a successful SYNC before entering the SYNCHRONIZED state, we set lastSyncTime here
                 exec?.doOnComplete {
                     lastSync.onNext(System.currentTimeMillis() / 1000L)
                 }
 
-            }
-
-            SyncState.SYNC_TASKS -> {
-                // TODO: Implement me
             }
 
             SyncState.UPDATE_TASKS -> {
@@ -282,6 +294,9 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
                     Database.user.getCount().subscribeOn(Schedulers.io()).map {
                             r -> Pair("Users", r)
                     },
+                    Database.task.getCount().subscribeOn(Schedulers.io()).map {
+                            r -> Pair("Tasks", r)
+                    },
                     Database.uat.getCount().subscribeOn(Schedulers.io()).map {
                             r -> Pair("UATs", r)
                     },
@@ -297,9 +312,11 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
             }
 
             SyncState.ABORTED -> {
-                // Clean entire database
-                // EXCEPT patch & task update tables
+                // Clean entire database EXCEPT patch & task update tables
                 exec = Database.groups.deleteAll().subscribeOn(Schedulers.computation())
+                    .andThen(
+                        Database.task.deleteAll().subscribeOn(Schedulers.computation())
+                    )
                     .andThen(
                         Database.recipient.deleteAll().subscribeOn(Schedulers.computation())
                     )
@@ -322,6 +339,7 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
                         try {
                             Log.d("SM", "Finished cleaning DB. Resetting time markers")
                             lastSync.onNext(0L)
+                            lastTaskUpdate.onNext(0L)
                             lastRecipientUpdate.onNext(0L)
                             lastUserUpdate.onNext(0L)
                             lastGroupUpdate.onNext(0L)

@@ -48,8 +48,8 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
-            buildConfigField "String", "SENTRY_DSN", "\"https://52b4afd3232f4655a2d009fc228fe61f@sentry.persidius.com/3\""
-            buildConfigField "Boolean", "ENABLE_HTTP_LOGGING", "false"
+            buildConfigField "String", "SENTRY_DSN", "\"\""
+            buildConfigField "Boolean", "ENABLE_HTTP_LOGGING", "true"
         }
     }
     compileOptions {
@@ -71,7 +71,7 @@ android {
 apollo {
     generateKotlinModels = true
     customTypeMapping = [
-            "Timestamp": "kotlin.lang.Long"
+            "Timestamp": "kotlin.Long"
     ]
 }
 
@@ -143,4 +143,5 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
     implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:8.6.0'
+    implementation 'com.facebook.stetho:stetho:1.5.1'
 }

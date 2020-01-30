@@ -5,21 +5,20 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.persidius.eos.aurora.database.dao.*
 import com.persidius.eos.aurora.database.entities.*
-import com.persidius.eos.aurora.database.fts.ArteryFTS
-import com.persidius.eos.aurora.database.fts.GroupsFTS
-import com.persidius.eos.aurora.database.fts.RecipientFTS
-import com.persidius.eos.aurora.database.fts.UatFTS
+import com.persidius.eos.aurora.database.fts.*
 
 @Database(
     entities = [County::class, Uat::class, UatFTS::class, Loc::class,
-            Artery::class, ArteryFTS::class, RecommendedLabel::class, Session::class,
-            Recipient::class, RecipientTag::class, RecipientFTS::class, RecipientPatch::class,
-            Groups::class, GroupsFTS::class, User::class
+        Artery::class, ArteryFTS::class, RecommendedLabel::class, Session::class,
+        Recipient::class, RecipientTag::class, RecipientFTS::class, RecipientPatch::class,
+        Task::class, TaskFTS::class,
+        Groups::class, GroupsFTS::class, User::class
     ],
-    version = 1
+    version = 2,
+    exportSchema = true
 )
 @TypeConverters(Converters::class)
-abstract class EosDatabase: RoomDatabase() {
+abstract class EosDatabase : RoomDatabase() {
     abstract fun countyDao(): CountyDao
 
     abstract fun uatDao(): UatDao
@@ -29,6 +28,8 @@ abstract class EosDatabase: RoomDatabase() {
     abstract fun arteryDao(): ArteryDao
 
     abstract fun recipientDao(): RecipientDao
+
+    abstract fun taskDao(): TaskDao
 
     abstract fun recipientTagDao(): RecipientTagDao
 

@@ -90,8 +90,13 @@ class AuthorizationManager() {
         val locked: LiveData<Boolean> = Preferences.amLocked.asLiveData()
 
         val signedIn: LiveData<Boolean> = map<JWT?, Boolean>(token) { !((it?.isExpired(TOKEN_LEEWAY)) ?: true) }
-        val loggingIn: LiveData<Boolean> = this@AuthorizationManager.loggingIn
 
+        val tokenValidObs: Observable<Optional<SessionToken?>> = this@AuthorizationManager.sessionToken.map<Optional<SessionToken?>> {
+            if (it.isPresent() && !it.get().jwt.isExpired(TOKEN_LEEWAY)) Optional(it.get()) else null.asOptional()
+        }
+        val tokenValid: LiveData<SessionToken?> = map<Optional<SessionToken?>, SessionToken>(tokenValidObs.asLiveData()) { v -> v.value }
+
+        val loggingIn: LiveData<Boolean> = this@AuthorizationManager.loggingIn
         val error: LiveData<ErrorCode> = this@AuthorizationManager.error
     }
 

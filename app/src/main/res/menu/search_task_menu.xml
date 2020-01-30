@@ -1,15 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     tools:context=".MainActivity">
 
     <item
+        android:id="@+id/action_status"
+        android:title="Status"
+        app:actionViewClass="com.persidius.eos.aurora.ui.components.MultiSelectionSpinner"
+        app:showAsAction="always"/>
+
+    <item
         android:id="@+id/action_open_map"
-        android:icon="@drawable/ic_task_24dp"
+        android:icon="@drawable/ic_map_24dp"
         android:iconTint="@color/colorBackground"
         android:orderInCategory="1"
-        android:title="Map"
-        app:showAsAction="always"
-        />
+        android:title="@string/map"
+        app:showAsAction="always" />
 </menu>

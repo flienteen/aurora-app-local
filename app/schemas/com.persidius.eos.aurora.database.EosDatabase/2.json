@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 1,
-    "identityHash": "acccf103fd8f0d84b707ba7952acacfc",
+    "version": 2,
+    "identityHash": "e411f1d1ee584f5002399ed4bd4b863f",
     "entities": [
       {
         "tableName": "County",
@@ -750,25 +750,25 @@
       },
       {
         "tableName": "Task",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `gid` TEXT NOT NULL, `assignedTo` TEXT NOT NULL, `validFrom` INTEGER NOT NULL, `validTo` INTEGER NOT NULL, `updatedBy` TEXT NOT NULL, `updatedAt` INTEGER NOT NULL, `status` TEXT NOT NULL, `posLat` REAL NOT NULL, `posLng` REAL NOT NULL, `comments` TEXT NOT NULL, `uatId` INTEGER NOT NULL, `locId` INTEGER NOT NULL, `countyId` INTEGER NOT NULL, `groupId` TEXT NOT NULL, `userId` TEXT NOT NULL, `stream` TEXT NOT NULL, `size` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `gid` TEXT, `assignedTo` TEXT, `validFrom` INTEGER NOT NULL, `validTo` INTEGER NOT NULL, `updatedBy` TEXT NOT NULL, `updatedAt` INTEGER NOT NULL, `status` TEXT NOT NULL, `posLat` REAL, `posLng` REAL, `comments` TEXT NOT NULL, `uatId` INTEGER NOT NULL, `locId` INTEGER NOT NULL, `countyId` INTEGER NOT NULL, `groups` TEXT NOT NULL, `users` TEXT NOT NULL, `recipients` TEXT NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
-            "affinity": "TEXT",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
             "fieldPath": "gid",
             "columnName": "gid",
             "affinity": "TEXT",
-            "notNull": true
+            "notNull": false
           },
           {
             "fieldPath": "assignedTo",
             "columnName": "assignedTo",
             "affinity": "TEXT",
-            "notNull": true
+            "notNull": false
           },
           {
             "fieldPath": "validFrom",
@@ -804,13 +804,13 @@
             "fieldPath": "posLat",
             "columnName": "posLat",
             "affinity": "REAL",
-            "notNull": true
+            "notNull": false
           },
           {
             "fieldPath": "posLng",
             "columnName": "posLng",
             "affinity": "REAL",
-            "notNull": true
+            "notNull": false
           },
           {
             "fieldPath": "comments",
@@ -837,26 +837,20 @@
             "notNull": true
           },
           {
-            "fieldPath": "groupId",
-            "columnName": "groupId",
+            "fieldPath": "groups",
+            "columnName": "groups",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "userId",
-            "columnName": "userId",
+            "fieldPath": "users",
+            "columnName": "users",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "stream",
-            "columnName": "stream",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "size",
-            "columnName": "size",
+            "fieldPath": "recipients",
+            "columnName": "recipients",
             "affinity": "TEXT",
             "notNull": true
           }
@@ -918,15 +912,39 @@
         "contentSyncTriggers": [
           "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_TaskFTS_BEFORE_UPDATE BEFORE UPDATE ON `Task` BEGIN DELETE FROM `TaskFTS` WHERE `docid`=OLD.`rowid`; END",
           "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_TaskFTS_BEFORE_DELETE BEFORE DELETE ON `Task` BEGIN DELETE FROM `TaskFTS` WHERE `docid`=OLD.`rowid`; END",
-          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_TaskFTS_AFTER_UPDATE AFTER UPDATE ON `Task` BEGIN INSERT INTO `TaskFTS`(`docid`, `id`) VALUES (NEW.`rowid`, NEW.`id`); END",
-          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_TaskFTS_AFTER_INSERT AFTER INSERT ON `Task` BEGIN INSERT INTO `TaskFTS`(`docid`, `id`) VALUES (NEW.`rowid`, NEW.`id`); END"
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_TaskFTS_AFTER_UPDATE AFTER UPDATE ON `Task` BEGIN INSERT INTO `TaskFTS`(`docid`, `id`, `status`, `groups`, `users`, `recipients`) VALUES (NEW.`rowid`, NEW.`id`, NEW.`status`, NEW.`groups`, NEW.`users`, NEW.`recipients`); END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_TaskFTS_AFTER_INSERT AFTER INSERT ON `Task` BEGIN INSERT INTO `TaskFTS`(`docid`, `id`, `status`, `groups`, `users`, `recipients`) VALUES (NEW.`rowid`, NEW.`id`, NEW.`status`, NEW.`groups`, NEW.`users`, NEW.`recipients`); END"
         ],
         "tableName": "TaskFTS",
-        "createSql": "CREATE VIRTUAL TABLE IF NOT EXISTS `${TABLE_NAME}` USING FTS4(`id` TEXT NOT NULL, tokenize=unicode61, content=`Task`)",
+        "createSql": "CREATE VIRTUAL TABLE IF NOT EXISTS `${TABLE_NAME}` USING FTS4(`id` INTEGER NOT NULL, `status` TEXT NOT NULL, `groups` TEXT NOT NULL, `users` TEXT NOT NULL, `recipients` TEXT NOT NULL, tokenize=unicode61, content=`Task`)",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "groups",
+            "columnName": "groups",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "users",
+            "columnName": "users",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recipients",
+            "columnName": "recipients",
             "affinity": "TEXT",
             "notNull": true
           }
@@ -1203,7 +1221,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'acccf103fd8f0d84b707ba7952acacfc')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e411f1d1ee584f5002399ed4bd4b863f')"
     ]
   }
 }

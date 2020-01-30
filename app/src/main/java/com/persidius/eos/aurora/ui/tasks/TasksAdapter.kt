@@ -13,18 +13,17 @@ import androidx.databinding.adapters.Converters.convertColorToColorStateList
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.RecyclerView
 import com.persidius.eos.aurora.database.entities.Loc
-import com.persidius.eos.aurora.database.entities.Recipient
+import com.persidius.eos.aurora.database.entities.Task
 import com.persidius.eos.aurora.database.entities.Uat
-import com.persidius.eos.aurora.databinding.RecipientSearchResultItemBinding
+import com.persidius.eos.aurora.databinding.TaskSearchResultItemBinding
 import com.persidius.eos.aurora.util.StreamColors
 
-class TasksAdapter(private var data: List<Triple<Recipient, Uat, Loc>> = listOf(), private val itemClickListener: (Recipient) -> Unit) : RecyclerView.Adapter<TasksAdapter.ResultViewHolder>() {
+class TasksAdapter(private var data: List<Triple<Task, Uat, Loc>> = listOf(), private val itemClickListener: (Task) -> Unit) : RecyclerView.Adapter<TasksAdapter.ResultViewHolder>() {
 
-    inner class ResultViewHolder(val binding: RecipientSearchResultItemBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class ResultViewHolder(val binding: TaskSearchResultItemBinding) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(item: Triple<Recipient, Uat, Loc>, itemClickListener: (Recipient) -> Unit) {
-            binding.color = ColorStateList.valueOf(StreamColors.from(item.first.stream).color.toArgb())
-            binding.recipient = item.first
+        fun bind(item: Triple<Task, Uat, Loc>, itemClickListener: (Task) -> Unit) {
+            binding.task = item.first
             binding.uat = item.second
             binding.loc = item.third
 
@@ -39,7 +38,7 @@ class TasksAdapter(private var data: List<Triple<Recipient, Uat, Loc>> = listOf(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ResultViewHolder {
         val inflater = LayoutInflater.from(parent.context)
-        val binding = RecipientSearchResultItemBinding.inflate(inflater, parent, false)
+        val binding = TaskSearchResultItemBinding.inflate(inflater, parent, false)
         return ResultViewHolder(binding)
     }
 
@@ -50,7 +49,7 @@ class TasksAdapter(private var data: List<Triple<Recipient, Uat, Loc>> = listOf(
 
     override fun getItemCount() = data.size
 
-    fun setData(newData: List<Triple<Recipient, Uat, Loc>>) {
+    fun setData(newData: List<Triple<Task, Uat, Loc>>) {
         this.data = newData
         notifyDataSetChanged()
     }

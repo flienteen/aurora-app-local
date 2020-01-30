@@ -3,6 +3,7 @@ package com.persidius.eos.aurora.authorization
 import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.lifecycle.Observer
 import com.persidius.eos.aurora.BuildConfig
 import com.persidius.eos.aurora.MainActivity
@@ -11,6 +12,8 @@ import com.persidius.eos.aurora.eos.SyncManager
 import com.persidius.eos.aurora.util.Optional
 import com.persidius.eos.aurora.util.asOptional
 import io.reactivex.Observable
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -19,15 +22,18 @@ import kotlin.math.max
 /** Periodically check and refresh the token. In production 6 hours before the token expires, in debug every minute  */
 class SessionRefreshHandler(private val activity: MainActivity) {
 
-    private val updateOffset = if (BuildConfig.DEBUG) 1 else 360L  // in minutes
+    private val updateOffset = 360L  // in minutes
     private val am = activity.am
     private var isRunning = false
     private val handler = Handler(Looper.getMainLooper())
     private val updater = Runnable { scheduleUpdate(true) }
 
     init {
-        am.session.sessionToken.observe(activity, Observer { tkn ->
-            if (tkn != null && !tkn.jwt.isExpired(300) && am.noError()) {
+        am.session.tokenValid.observe(activity, Observer { tkn ->
+            if (tkn != null && am.noError()) {
+                if (isRunning) {
+                    Log.i("SessionRefreshHandler", "Logging in success")
+                }
                 start()
             } else {
                 stop()
@@ -39,24 +45,24 @@ class SessionRefreshHandler(private val activity: MainActivity) {
             if (it == AuthorizationManager.ErrorCode.LOGIN_FAILED_INVALID_CREDENTIALS) {
                 stop()
                 val clearUser = SyncManager.isAbortable() && !am.isLocked()
-                am.forceLogut(clearUser, true)
+                am.forceLogut(clearUser)
+                Log.i("SessionRefreshHandler", "Invalid credentials => logging out, clear user: $clearUser")
             }
-        })
-
-        am.session.signedIn.observe(activity, Observer {
-            // trigger update of isSignedIn otherwise logout does not work
         })
     }
 
     @SuppressLint("CheckResult")
     private fun scheduleUpdate(doLogin: Boolean) {
-        getTokenExpirationInMinutes().subscribe { expiration ->
+        getTokenExpirationInMinutes().observeOn(AndroidSchedulers.mainThread()).subscribe { expiration ->
             if (expiration.isPresent()) {
-                if (doLogin && expiration.get() <= updateOffset) {
+                val offset = if (BuildConfig.DEBUG) expiration.get() else updateOffset
+                if (doLogin && expiration.get() <= offset) {
+                    Log.i("SessionRefreshHandler", "Attempting relogin")
                     am.autoLogin()
                 }
-                val nextUpdate = max(expiration.get() - updateOffset, updateOffset)
+                val nextUpdate = max(expiration.get() - offset, 1)
                 handler.postDelayed(updater, nextUpdate * 60000)
+                Log.i("SessionRefreshHandler", "Token expires in ${expiration.get()} minutes. Next update in $nextUpdate minutes.")
             } else {
                 stop()
             }
@@ -64,12 +70,9 @@ class SessionRefreshHandler(private val activity: MainActivity) {
     }
 
     private fun getTokenExpirationInMinutes(): Observable<Optional<Long>> {
-        return am.sessionToken.take(1).map { tkn ->
+        return am.session.tokenValidObs.observeOn(Schedulers.computation()).take(1).map<Optional<Long>> { tkn ->
             if (tkn.isPresent()) {
-                if (BuildConfig.DEBUG) {
-                    return@map Optional(1L)
-                }
-                val exp = tkn.get().jwt.expiresAt
+                val exp = tkn.get()?.jwt?.expiresAt
                 val expiresAt = LocalDateTime.from(exp?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDateTime())
                 val todayTime = LocalDateTime.now()
                 return@map Duration.between(todayTime, expiresAt).toMinutes().asOptional()
@@ -83,6 +86,7 @@ class SessionRefreshHandler(private val activity: MainActivity) {
             return
         }
         isRunning = true
+        Log.i("SessionRefreshHandler", "Started")
         scheduleUpdate(false)
     }
 
@@ -92,6 +96,7 @@ class SessionRefreshHandler(private val activity: MainActivity) {
         }
         isRunning = false
         handler.removeCallbacksAndMessages(null)
+        Log.i("SessionRefreshHandler", "Stopped")
     }
 
     fun isRunning(): Boolean {

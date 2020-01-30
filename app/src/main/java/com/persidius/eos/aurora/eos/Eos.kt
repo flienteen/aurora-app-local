@@ -4,11 +4,13 @@ import android.util.Log
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.Input
 import com.apollographql.apollo.api.Response
+import com.apollographql.apollo.interceptor.ApolloInterceptor
 import com.apollographql.apollo.rx2.rxMutate
 import com.apollographql.apollo.rx2.rxQuery
 import com.auth0.android.jwt.JWT
 import com.persidius.eos.aurora.*
 import com.persidius.eos.aurora.authorization.AuthorizationManager
+import com.persidius.eos.aurora.type.CustomType
 import com.persidius.eos.aurora.type.RecipientInput
 import com.persidius.eos.aurora.util.Optional
 import com.persidius.eos.aurora.util.Preferences
@@ -32,7 +34,7 @@ object Eos {
         // with that token we can change the Authorization header
         am.tokenObservable.withLatestFrom(Preferences.eosEnv)
             .map { v -> createApolloClient(v.first, v.second) }
-            .subscribe (
+            .subscribe(
                 { v -> client.onNext(v) },
                 { t -> client.onError(t) },
                 { client.onComplete() }
@@ -43,10 +45,10 @@ object Eos {
     // the the shared pref observable.
     // and emit a new client each time the AM header changes.
     private fun createApolloClient(token: Optional<JWT>, serverDomain: String): ApolloClient {
-        Log.d("EOS", "Create client w/ token ${if(token.isPresent()) token.get() else null}, domain $serverDomain")
+        Log.d("EOS", "Create client w/ token ${if (token.isPresent()) token.get() else null}, domain $serverDomain")
         val httpClient = OkHttpClient.Builder()
 
-        if(token.isPresent()) {
+        if (token.isPresent()) {
             // add the authorization header
             httpClient.addInterceptor { chain ->
                 val req = chain.request()
@@ -56,17 +58,27 @@ object Eos {
             }
         }
 
-        if(BuildConfig.ENABLE_HTTP_LOGGING) {
+        if (BuildConfig.ENABLE_HTTP_LOGGING) {
             val interceptor = HttpLoggingInterceptor()
-            interceptor.level = HttpLoggingInterceptor.Level.BODY
-
+            interceptor.level = HttpLoggingInterceptor.Level.BASIC
             httpClient.addInterceptor(interceptor)
+            //                .addInterceptor { chain ->
+//                val req = chain.request()
+//                val response = chain.proceed(req)
+//                val message = response.message()
+//                if (message.isEmpty()) {
+//                    val builder = req.newBuilder().method(req.method(), req.body())
+//                    chain.proceed(builder.build())
+//                } else {
+//                    response
+//                }
+//            }
         }
 
         val apolloClient = ApolloClient.builder()
             .serverUrl("https://eos-graph.$serverDomain")
             .okHttpClient(httpClient.build())
-            // .addCustomTypeAdapter(CustomType.Timestamp, TimestampScalarType)
+            .addCustomTypeAdapter(CustomType.TIMESTAMP, TimestampScalarType)
 
         return apolloClient.build()
     }
@@ -101,6 +113,12 @@ object Eos {
             .firstOrError()
     }
 
+    fun queryTasks(pageAfter: Int? = null): Single<Response<TaskSearchQuery.Data>> {
+        return client.value!!.rxQuery(TaskSearchQuery(Input.fromNullable(pageAfter)))
+            .subscribeOn(Schedulers.io())
+            .firstOrError()
+    }
+
     fun queryUsers(updatedAfter: Int?, pageAfter: String? = null): Single<Response<UsersQuery.Data>> {
         return client.value!!.rxQuery(UsersQuery(Input.fromNullable(updatedAfter), Input.fromNullable(pageAfter)))
             .subscribeOn(Schedulers.io())
@@ -120,8 +138,8 @@ object Eos {
     }
 
     fun editRecipient(id: String, createdAt: Int, recipient: RecipientInput): Single<Response<EditRecipientMutation.Data>> {
-       return client.value!!.rxMutate(EditRecipientMutation(
-           createdAt, id, recipient
-       )).subscribeOn(Schedulers.io())
+        return client.value!!.rxMutate(EditRecipientMutation(
+            createdAt, id, recipient
+        )).subscribeOn(Schedulers.io())
     }
 }

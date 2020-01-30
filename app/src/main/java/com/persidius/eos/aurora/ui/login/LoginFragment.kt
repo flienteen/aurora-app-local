@@ -29,12 +29,11 @@ class LoginFragment : Fragment() {
 
     private fun initNavigation() {
         val activity = activity as MainActivity
-        activity.am.session.sessionToken.observe(this, Observer { tkn ->
-            if (tkn != null && !tkn.jwt.isExpired(300) && activity.am.noError()) {
-//                if (tkn.hasRole(Role.LOGISTICS_VIEW_TASK)) {
-//                    activity.navController.navigate(R.id.nav_searchTask)
-//                } else
-                if (tkn.hasRole(Role.LOGISTICS_VIEW_RECIPIENT)) {
+        activity.am.session.tokenValid.observe(this, Observer { tkn ->
+            if (tkn != null && activity.am.noError()) {
+                if (tkn.hasRole(Role.LOGISTICS_VIEW_TASK)) {
+                    activity.navController.navigate(R.id.nav_searchTask)
+                } else if (tkn.hasRole(Role.LOGISTICS_VIEW_RECIPIENT)) {
                     activity.navController.navigate(R.id.nav_searchRecipient)
                 } else if (tkn.hasRole(Role.LOGISTICS_VIEW_USER)) {
                     activity.navController.navigate(R.id.nav_searchUser)

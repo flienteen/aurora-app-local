@@ -20,6 +20,7 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
+import com.facebook.stetho.Stetho
 import com.google.android.gms.location.*
 import com.google.android.material.navigation.NavigationView
 import com.persidius.eos.aurora.authorization.AuthorizationManager
@@ -286,7 +287,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        Stetho.initializeWithDefaults(this)
         setContentView(R.layout.activity_main)
 
         val toolbar: Toolbar = findViewById(R.id.toolbar)
@@ -337,7 +338,7 @@ class MainActivity : AppCompatActivity() {
             menu.createTask.isEnabled = false
         } else {
             // TODO: Enable in R3
-            menu.taskSearch.isEnabled = false //s.hasRole(Role.LOGISTICS_VIEW_TASK)
+            menu.taskSearch.isEnabled = s.hasRole(Role.LOGISTICS_VIEW_TASK)
             menu.createTask.isEnabled = false /* s.hasRoles(
                 Role.LOGISTICS_CREATE_TASK,
                 Role.LOGISTICS_EDIT_TASK

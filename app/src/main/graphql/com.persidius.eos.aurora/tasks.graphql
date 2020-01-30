@@ -1,0 +1,33 @@
+query taskSearch($pageAfter:Int) {
+    tasks(maxResultsPerPage: 200, pageAfter: $pageAfter) {
+        id
+        gid
+        assignedTo
+        validFrom
+        validTo
+        updatedBy
+        updatedAt
+        status
+        posLat
+        posLng
+        comments
+        uat {
+            id
+        }
+        loc {
+            id
+        }
+        county {
+            id
+        }
+        recipients {
+            id
+        }
+        groups {
+            id
+        }
+        users {
+            id
+        }
+    }
+}
