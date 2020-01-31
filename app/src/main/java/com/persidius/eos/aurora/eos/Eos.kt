@@ -60,23 +60,13 @@ object Eos {
 
         if (BuildConfig.ENABLE_HTTP_LOGGING) {
             val interceptor = HttpLoggingInterceptor()
-            interceptor.level = HttpLoggingInterceptor.Level.BASIC
+            interceptor.level = HttpLoggingInterceptor.Level.NONE
             httpClient.addInterceptor(interceptor)
-            //                .addInterceptor { chain ->
-//                val req = chain.request()
-//                val response = chain.proceed(req)
-//                val message = response.message()
-//                if (message.isEmpty()) {
-//                    val builder = req.newBuilder().method(req.method(), req.body())
-//                    chain.proceed(builder.build())
-//                } else {
-//                    response
-//                }
-//            }
         }
 
+        val serverUrl = if (serverDomain.endsWith("persidius.dev")) "https://d-eos-graph.$serverDomain" else "https://eos-graph.$serverDomain"
         val apolloClient = ApolloClient.builder()
-            .serverUrl("https://eos-graph.$serverDomain")
+            .serverUrl(serverUrl)
             .okHttpClient(httpClient.build())
             .addCustomTypeAdapter(CustomType.TIMESTAMP, TimestampScalarType)
 

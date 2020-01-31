@@ -29,6 +29,7 @@ import com.persidius.eos.aurora.authorization.SessionRefreshHandler
 import com.persidius.eos.aurora.eos.SyncManager
 import com.persidius.eos.aurora.eos.SyncState
 import com.persidius.eos.aurora.rfidService.RFIDService
+import com.persidius.eos.aurora.ui.map.MapManager
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -312,6 +313,7 @@ class MainActivity : AppCompatActivity() {
         })
         initLocationServices()
         SessionRefreshHandler(this)
+        MapManager(this)
     }
 
     /** Hide keyboard when a field loses focus (tap outside) */

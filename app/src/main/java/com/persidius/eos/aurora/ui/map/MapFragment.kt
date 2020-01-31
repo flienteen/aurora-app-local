@@ -27,19 +27,13 @@ import io.reactivex.schedulers.Schedulers
 
 class MapFragment : Fragment() {
 
-    private val mapToken = "pk.eyJ1IjoiYWxleG5pY3VsYSIsImEiOiJjazVsNG5tejAwMWZzM3FxaTZqZW1qeWIzIn0.a0suQh0bx3TQRT4oGIuNdA"
+    private val searchRadius = 5.0 // 5.0 degrees is roughly 600km
 
     private var listener: OnFragmentInteractionListener? = null
 
     private lateinit var viewModel: MapViewModel
     private lateinit var mapView: MapView
     private lateinit var map: MapboxMap
-    private val searchRadius = 5.0 // 5.0 degrees is roughly 600km
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        Mapbox.getInstance(activity?.applicationContext!!, mapToken)
-    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         setHasOptionsMenu(true)
@@ -57,11 +51,10 @@ class MapFragment : Fragment() {
         mapView.getMapAsync { mapBoxMap ->
             this.map = mapBoxMap
             this.map.setStyle(Style.MAPBOX_STREETS) {
+                showNearbyLocations()
             }
-            showNearbyLocations()
         }
     }
-
 
     private fun showNearbyLocations() {
         val activity = activity as MainActivity
@@ -85,6 +78,9 @@ class MapFragment : Fragment() {
     }
 
     private fun zoomLatLngs(latLngs: List<LatLng>) {
+        if (latLngs.isEmpty()) {
+            return
+        }
         val latLngBounds = LatLngBounds.Builder().includes(latLngs).build()
         map.moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 50))
     }
@@ -141,12 +137,15 @@ class MapFragment : Fragment() {
     }
 
     interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
         fun onFragmentInteraction(uri: Uri)
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.task_map_menu, menu)
         super.onCreateOptionsMenu(menu, inflater)
+    }
+
+    private fun mainActivity(): MainActivity {
+        return activity as MainActivity
     }
 }
