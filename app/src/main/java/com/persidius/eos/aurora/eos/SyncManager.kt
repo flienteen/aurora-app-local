@@ -34,9 +34,9 @@ import java.util.concurrent.atomic.AtomicReference
 // 1. OnDemand - in response to user actions
 // 2. Periodic (scheduled via WorkManager)
 
-object SyncManager: ConnectivityManager.OnNetworkActiveListener {
+object SyncManager : ConnectivityManager.OnNetworkActiveListener {
 
-    private val interval = Observable.interval(0L, if(BuildConfig.DEBUG) 60L else 300L, TimeUnit.SECONDS)
+    private val interval = Observable.interval(0L, if (BuildConfig.DEBUG) 60L else 300L, TimeUnit.SECONDS)
         .subscribeOn(Schedulers.io())
 
     private val state: BehaviorSubject<SyncState> = Preferences.smSyncState
@@ -63,7 +63,7 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
 
 
     private fun toState(nextState: SyncState?, force: Boolean = false) {
-        if(nextState != null) {
+        if (nextState != null) {
             if (state.value != nextState) {
                 state.onNext(nextState)
             }
@@ -149,7 +149,7 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
                 exec = Database.uat.getAll()
                     .subscribeOn(Schedulers.computation())
                     .map { uats -> uats.map { u -> u.id } }
-                    .flatMapCompletable {uatIds-> DownloadLocs.execute(progress, uatIds) }
+                    .flatMapCompletable { uatIds -> DownloadLocs.execute(progress, uatIds) }
             }
 
             SyncState.DL_ARTERY -> {
@@ -164,12 +164,12 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
 
             SyncState.SYNC_RECIPIENTS -> {
                 val session = am.sessionToken.blockingFirst().value
-                if(session == null) {
+                if (session == null) {
                     onAbort()
                     return
                 }
 
-                exec = if(session.hasRole(Role.LOGISTICS_VIEW_RECIPIENT)) {
+                exec = if (session.hasRole(Role.LOGISTICS_VIEW_RECIPIENT)) {
                     val startTime = System.currentTimeMillis() / 1000L
                     SyncRecipients.execute(progress = progress,
                         withTags = session.hasRole(Role.LOGISTICS_VIEW_TAGS),
@@ -183,17 +183,19 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
 
                             lastRecipientUpdate.onNext(lastUpdate - delta)
                         }
-                } else { null }
+                } else {
+                    null
+                }
             }
 
             SyncState.SYNC_GROUPS -> {
                 val session = am.sessionToken.blockingFirst().value
-                if(session == null) {
+                if (session == null) {
                     onAbort()
                     return
                 }
 
-                exec = if(session.hasRole(Role.LOGISTICS_VIEW_GROUPS)) {
+                exec = if (session.hasRole(Role.LOGISTICS_VIEW_GROUPS)) {
                     val startTime = System.currentTimeMillis() / 1000L
 
                     SyncGroups.execute(progress = progress,
@@ -208,17 +210,19 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
 
                             lastGroupUpdate.onNext(lastUpdate - delta)
                         }
-                } else { null }
+                } else {
+                    null
+                }
             }
 
             SyncState.SYNC_USERS -> {
                 val session = am.sessionToken.blockingFirst().value
-                if(session == null) {
+                if (session == null) {
                     onAbort()
                     return
                 }
 
-                exec = if(session.hasRole(Role.LOGISTICS_VIEW_USER)) {
+                exec = if (session.hasRole(Role.LOGISTICS_VIEW_USER)) {
                     val startTime = System.currentTimeMillis() / 1000L
                     SyncUsers.execute(progress = progress,
                         updatedAfter = lastUserUpdate.value?.toInt() ?: 0)
@@ -231,19 +235,21 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
 
                             lastUserUpdate.onNext(lastUpdate - delta)
                         }
-                } else { null }
+                } else {
+                    null
+                }
             }
 
             SyncState.SYNC_TASKS -> {
                 val session = am.sessionToken.blockingFirst().value
-                if(session == null) {
+                if (session == null) {
                     onAbort()
                     return
                 }
 
-                exec = if(session.hasRole(Role.LOGISTICS_VIEW_TASK)) {
+                exec = if (session.hasRole(Role.LOGISTICS_VIEW_TASK)) {
                     val startTime = System.currentTimeMillis() / 1000L
-                    SyncTasks.execute(progress = progress)
+                    SyncTasks.execute(progress = progress, updatedAfter = lastTaskUpdate.value?.toInt() ?: 0)
                         .doOnComplete {
                             val endTime = System.currentTimeMillis() / 1000L
                             val delta = endTime - startTime
@@ -253,7 +259,9 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
 
                             lastTaskUpdate.onNext(lastUpdate - delta)
                         }
-                } else { null }
+                } else {
+                    null
+                }
 
                 // Since SYNC_TASKS is the last stage of a successful SYNC before entering the SYNCHRONIZED state, we set lastSyncTime here
                 exec?.doOnComplete {
@@ -279,32 +287,32 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
                 // of the Database
 
                 Maybe.mergeArray(
-                    Database.recipient.getCount().subscribeOn(Schedulers.io()).map {
-                            r -> Pair("Recipients", r)
+                    Database.recipient.getCount().subscribeOn(Schedulers.io()).map { r ->
+                        Pair("Recipients", r)
                     },
-                    Database.recipientTag.getCount().subscribeOn(Schedulers.io()).map {
-                            r -> Pair("Recipient Tags", r)
+                    Database.recipientTag.getCount().subscribeOn(Schedulers.io()).map { r ->
+                        Pair("Recipient Tags", r)
                     },
-                    Database.groups.getCount().subscribeOn(Schedulers.io()).map {
-                            r -> Pair("Groups", r)
+                    Database.groups.getCount().subscribeOn(Schedulers.io()).map { r ->
+                        Pair("Groups", r)
                     },
-                    Database.county.getCount().subscribeOn(Schedulers.io()).map {
-                            r -> Pair("Counties", r)
+                    Database.county.getCount().subscribeOn(Schedulers.io()).map { r ->
+                        Pair("Counties", r)
                     },
-                    Database.user.getCount().subscribeOn(Schedulers.io()).map {
-                            r -> Pair("Users", r)
+                    Database.user.getCount().subscribeOn(Schedulers.io()).map { r ->
+                        Pair("Users", r)
                     },
-                    Database.task.getCount().subscribeOn(Schedulers.io()).map {
-                            r -> Pair("Tasks", r)
+                    Database.task.getCount().subscribeOn(Schedulers.io()).map { r ->
+                        Pair("Tasks", r)
                     },
-                    Database.uat.getCount().subscribeOn(Schedulers.io()).map {
-                            r -> Pair("UATs", r)
+                    Database.uat.getCount().subscribeOn(Schedulers.io()).map { r ->
+                        Pair("UATs", r)
                     },
-                    Database.loc.getCount().subscribeOn(Schedulers.io()).map {
-                            r -> Pair("Locs", r)
+                    Database.loc.getCount().subscribeOn(Schedulers.io()).map { r ->
+                        Pair("Locs", r)
                     },
-                    Database.artery.getCount().subscribeOn(Schedulers.io()).map {
-                            r -> Pair("Arteries", r)
+                    Database.artery.getCount().subscribeOn(Schedulers.io()).map { r ->
+                        Pair("Arteries", r)
                     }
                 ).subscribe { p ->
                     Log.d("SM", "DB Summary (${p.first}): ${p.second.result}")
@@ -352,7 +360,7 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
             SyncState.INIT -> {
                 // If we entered INIT & we've got a solid token
                 val session = am.sessionToken.blockingFirst().value
-                if(session != null) {
+                if (session != null) {
                     // call doInit & exit exec flow.
                     doInit()
                     return
@@ -375,7 +383,7 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
         }
 
 
-        if(exec != null) {
+        if (exec != null) {
             transitionSub.set(
                 exec
                     .subscribeOn(Schedulers.io())
@@ -383,13 +391,13 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
                         Log.d("SM", "State executable done [for state = $newState]")
                         onNext()
                     }, { t ->
-                        if(t is ApolloNetworkException) {
+                        if (t is ApolloNetworkException) {
                             Log.e("SM", "Detected internet is down")
                             onInternetError()
 
                         } else {
                             // We're fucked.
-                            if(isAbortable()) {
+                            if (isAbortable()) {
                                 Log.e("SM", "Aborting due to error", t)
                                 onAbort()
                             } else {
@@ -416,7 +424,7 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
         this.am = am
 
         // Subscribe to state changes
-        state.subscribe ({ newState -> onEnterState(newState) }, { t -> Log.e("SM", "Error: state error, $t", t) })
+        state.subscribe({ newState -> onEnterState(newState) }, { t -> Log.e("SM", "Error: state error, $t", t) })
 
         // Monitor the token state, if we go from Null to a valid token, init sync.
         val sub = am.tokenObservable
@@ -440,12 +448,12 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
         progress.subscribe { newVal -> Log.d("SM", "Progress: $newVal") }
 
         // Every X minutes desync the app.
-        interval.subscribe {doDesynchronize() }
+        interval.subscribe { doDesynchronize() }
 
         val connectivityManager = applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE)
                 as ConnectivityManager
 
-        connectivityManager?.registerDefaultNetworkCallback(object: ConnectivityManager.NetworkCallback() {
+        connectivityManager?.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
                 this@SyncManager.onNetworkActive()
             }
@@ -454,7 +462,7 @@ object SyncManager: ConnectivityManager.OnNetworkActiveListener {
 
     override fun onNetworkActive() {
         Log.d("SM", "Network Active, internetActive=${internetActive.get()}")
-        if(!internetActive.get()) {
+        if (!internetActive.get()) {
             onInternet()
         }
     }

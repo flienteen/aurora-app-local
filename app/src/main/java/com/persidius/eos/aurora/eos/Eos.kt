@@ -103,8 +103,8 @@ object Eos {
             .firstOrError()
     }
 
-    fun queryTasks(pageAfter: Int? = null): Single<Response<TaskSearchQuery.Data>> {
-        return client.value!!.rxQuery(TaskSearchQuery(Input.fromNullable(pageAfter)))
+    fun queryTasks(updatedAfter: Int? = null, pageAfter: Int? = null): Single<Response<TaskSearchQuery.Data>> {
+        return client.value!!.rxQuery(TaskSearchQuery(Input.fromNullable(updatedAfter), Input.fromNullable(pageAfter)))
             .subscribeOn(Schedulers.io())
             .firstOrError()
     }

@@ -13,13 +13,12 @@ import org.json.JSONObject
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
-class MapManager(val activity: MainActivity) {
+class MapManager(val activity: MainActivity, reset: Boolean = false) {
 
     private val mapToken = "pk.eyJ1IjoiYWxleG5pY3VsYSIsImEiOiJjazVsNG5tejAwMWZzM3FxaTZqZW1qeWIzIn0.a0suQh0bx3TQRT4oGIuNdA"
     private val logTag = "MapManager"
     private val regionNameSibiu = "sibiu"
     private val regionBoundsSibiu = listOf(LatLng(46.27, 24.93) /*Northeast*/, LatLng(45.50, 23.62)/*Southwest*/)
-    private val resetRegions = false
     private var offlineManager: OfflineManager
     private val offlineReady = MutableLiveData<Boolean>()
 
@@ -32,7 +31,7 @@ class MapManager(val activity: MainActivity) {
                 downloadOfflineRegion()
             }
         })
-        if (resetRegions) {
+        if (reset) {
             deleteAllOfflineRegions()
         } else {
             offlineReady.value = true

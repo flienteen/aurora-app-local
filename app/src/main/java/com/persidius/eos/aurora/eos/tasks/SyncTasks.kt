@@ -12,7 +12,7 @@ import io.reactivex.subjects.BehaviorSubject
 import java.util.*
 
 object SyncTasks {
-    fun execute(progress: BehaviorSubject<Int>): Completable {
+    fun execute(progress: BehaviorSubject<Int>, updatedAfter: Int = 0): Completable {
         progress.onNext(0)
 
         val data = Observable.create<List<TaskSearchQuery.Task>> { emitter ->
@@ -20,7 +20,7 @@ object SyncTasks {
             var items: List<TaskSearchQuery.Task>
             try {
                 do {
-                    items = Eos.queryTasks(pageAfter)
+                    items = Eos.queryTasks(updatedAfter, pageAfter)
                         .observeOn(Schedulers.io())
                         .map { result ->
                             if (result.data() != null) result.data()!!.tasks else listOf()

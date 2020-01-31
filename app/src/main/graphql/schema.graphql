@@ -306,7 +306,7 @@ type Query {
         uatIds: [Int!]
     ): [TaskSearchResult!]!
     "Note: since conditions are additive, you cannot search by ID or GID in the same query, you must use separate queries"
-    tasks(assignedTo: [String!], countyIds: [Int!], gids: [String!], ids: [Int!], maxResultsPerPage: Int, pageAfter: Int, status: [TaskStatus!], uatIds: [Int!]): [Task!]!
+    tasks(assignedTo: [String!], countyIds: [Int!], gids: [String!], ids: [Int!], maxResultsPerPage: Int, pageAfter: Int, updatedAfter: Int, status: [TaskStatus!], uatIds: [Int!]): [Task!]!
     uats(countyIds: [Int!]): [Uat!]!
     users(
         active: [Boolean!],
