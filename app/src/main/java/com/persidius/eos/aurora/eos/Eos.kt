@@ -4,7 +4,6 @@ import android.util.Log
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.Input
 import com.apollographql.apollo.api.Response
-import com.apollographql.apollo.interceptor.ApolloInterceptor
 import com.apollographql.apollo.rx2.rxMutate
 import com.apollographql.apollo.rx2.rxQuery
 import com.auth0.android.jwt.JWT
@@ -12,9 +11,9 @@ import com.persidius.eos.aurora.*
 import com.persidius.eos.aurora.authorization.AuthorizationManager
 import com.persidius.eos.aurora.type.CustomType
 import com.persidius.eos.aurora.type.RecipientInput
+import com.persidius.eos.aurora.type.TaskInput
 import com.persidius.eos.aurora.util.Optional
 import com.persidius.eos.aurora.util.Preferences
-import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.rxkotlin.withLatestFrom
 import io.reactivex.schedulers.Schedulers
@@ -130,6 +129,12 @@ object Eos {
     fun editRecipient(id: String, createdAt: Int, recipient: RecipientInput): Single<Response<EditRecipientMutation.Data>> {
         return client.value!!.rxMutate(EditRecipientMutation(
             createdAt, id, recipient
+        )).subscribeOn(Schedulers.io())
+    }
+
+    fun updateTask(gid: String, id: Int, updatedAt: Int, task: TaskInput): Single<Response<UpdateTaskMutation.Data>> {
+        return client.value!!.rxMutate(UpdateTaskMutation(
+            Input.fromNullable(gid), id, updatedAt, task
         )).subscribeOn(Schedulers.io())
     }
 }

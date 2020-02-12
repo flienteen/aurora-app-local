@@ -18,7 +18,7 @@ interface TaskDao {
     fun deleteAll(): Completable
 
     @Query("SELECT * FROM Task WHERE id = :taskId")
-    fun getById(taskId: String): Maybe<Task>
+    fun getById(taskId: Int): Maybe<Task>
 
     @Query("SELECT MAX(updatedAt) AS result FROM Task LIMIT 1")
     fun lastUpdatedAt(): Maybe<LongQueryResult>

@@ -66,4 +66,6 @@ object Database {
 
     val recipientPatch get() = eos.recipientPatchDao()
 
+    val taskPatch get() = eos.taskPatchDao()
+
 }

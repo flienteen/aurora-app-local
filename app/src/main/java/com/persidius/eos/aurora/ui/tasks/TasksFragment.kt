@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.persidius.eos.aurora.MainActivity
 import com.persidius.eos.aurora.R
+import com.persidius.eos.aurora.authorization.Role
 import com.persidius.eos.aurora.database.Database
 import com.persidius.eos.aurora.database.entities.Loc
 import com.persidius.eos.aurora.database.entities.Task
@@ -19,6 +20,7 @@ import com.persidius.eos.aurora.database.entities.Uat
 import com.persidius.eos.aurora.databinding.FragmentTasksBinding
 import com.persidius.eos.aurora.ui.components.MultiSelectionSpinner
 import com.persidius.eos.aurora.ui.components.MultiSelectionSpinner.OnSpinnerEventsListener
+import com.persidius.eos.aurora.ui.task.TaskFragment
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 
@@ -26,18 +28,23 @@ import io.reactivex.schedulers.Schedulers
 class TasksFragment : Fragment() {
 
     private lateinit var viewModel: TasksViewModel
+    private lateinit var mainActivity: MainActivity
+
     private var statusSpinner: MultiSelectionSpinner? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        mainActivity = activity as MainActivity
         setHasOptionsMenu(true)
         val binding = DataBindingUtil.inflate<FragmentTasksBinding>(inflater, R.layout.fragment_tasks, container, false)
         binding.lifecycleOwner = this
 
         val adapter = TasksAdapter(itemClickListener = { r ->
-            //            val navController = mainActivity().navController
-//            val args = Bundle()
-//            args.putString(RecipientFragment.ARG_RECIPIENT_ID, r.id)
-//            navController.navigate(R.id.nav_recipient, args)
+            if (isTaskEditable(r)) {
+                val navController = mainActivity.navController
+                val args = Bundle()
+                args.putInt(TaskFragment.ARG_TASK_ID, r.id)
+                navController.navigate(R.id.nav_task, args)
+            }
         })
 
         viewModel = ViewModelProviders.of(this, TasksViewModelProviderFactory(adapter)).get(TasksViewModel::class.java)
@@ -55,6 +62,12 @@ class TasksFragment : Fragment() {
         })
 
         return binding.root
+    }
+
+    private fun isTaskEditable(task: Task): Boolean {
+        val token = mainActivity.am.session.tokenValid.value
+        val email = mainActivity.am.session.email.value
+        return token != null && token.hasRole(Role.LOGISTICS_EDIT_TASK) && task.assignedTo == email
     }
 
     private fun getStatusSearchTerm(): String {
@@ -109,10 +122,7 @@ class TasksFragment : Fragment() {
         initStatusSpinner(menu)
         val itemOpenMap = menu.findItem(R.id.action_open_map)
         itemOpenMap.setOnMenuItemClickListener {
-            //            val args = Bundle()
-//            args.putString("locations", "bla")
-//            mainActivity().navController.navigate(R.id.nav_taskMap,args)
-            mainActivity().navController.navigate(R.id.nav_taskMap)
+            mainActivity.navController.navigate(R.id.nav_taskMap)
             true
         }
         super.onCreateOptionsMenu(menu, inflater)
@@ -139,7 +149,4 @@ class TasksFragment : Fragment() {
         statusSpinner = spinner
     }
 
-    private fun mainActivity(): MainActivity {
-        return activity as MainActivity
-    }
 }

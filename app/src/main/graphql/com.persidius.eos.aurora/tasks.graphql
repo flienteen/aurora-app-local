@@ -1,5 +1,5 @@
 query taskSearch($updatedAfter: Int, $pageAfter:Int) {
-    tasks(updatedAfter: $updatedAfter, maxResultsPerPage: 200, pageAfter: $pageAfter) {
+    tasks(updatedAfter: $updatedAfter, maxResultsPerPage: 2500, pageAfter: $pageAfter) {
         id
         gid
         assignedTo

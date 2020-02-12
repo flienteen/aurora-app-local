@@ -26,9 +26,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
-
-// SyncManager performs crap related to
-// keeping the remote server & local DB in synchrony.
+// SyncManager performs crap related to keeping the remote server & local DB in synchrony.
 
 // This is performed via 2 channels:
 // 1. OnDemand - in response to user actions
@@ -36,7 +34,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 object SyncManager : ConnectivityManager.OnNetworkActiveListener {
 
-    private val interval = Observable.interval(0L, if (BuildConfig.DEBUG) 60L else 300L, TimeUnit.SECONDS)
+    private val interval = Observable.interval(0L, if (BuildConfig.DEBUG) 30L else 300L, TimeUnit.SECONDS)
         .subscribeOn(Schedulers.io())
 
     private val state: BehaviorSubject<SyncState> = Preferences.smSyncState
@@ -60,7 +58,6 @@ object SyncManager : ConnectivityManager.OnNetworkActiveListener {
     }
 
     private lateinit var am: AuthorizationManager
-
 
     private fun toState(nextState: SyncState?, force: Boolean = false) {
         if (nextState != null) {
@@ -98,7 +95,6 @@ object SyncManager : ConnectivityManager.OnNetworkActiveListener {
         if (!isAbortable()) {
             return false
         }
-
         onAbort()
         return true
     }
@@ -107,14 +103,12 @@ object SyncManager : ConnectivityManager.OnNetworkActiveListener {
         if (state.value != SyncState.INIT) {
             return false
         }
-
         // Transition to next state (which is other[0])
         toState(SyncState.Next.getValue(SyncState.INIT).other[0]!!)
         return true
     }
 
-    // Desynchronize either because of time or
-    // because of user edits
+    // Desynchronize either because of time or because of user edits
     fun doDesynchronize() {
         if (state.value == SyncState.SYNCHRONIZED) {
             toState(SyncState.OUT_OF_SYNC)

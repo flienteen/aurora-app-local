@@ -1,8 +1,6 @@
 package com.persidius.eos.aurora
 
-import GpsUtils
-import GpsUtils.onGpsListener
-import android.app.Activity
+import com.persidius.eos.aurora.ui.util.GpsUtils
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -36,8 +34,8 @@ import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var gpsUtils: GpsUtils
     private lateinit var appBarConfiguration: AppBarConfiguration
-
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var _navController: NavController
 
@@ -47,10 +45,8 @@ class MainActivity : AppCompatActivity() {
     val lat: Double get() = _lat
     val lng: Double get() = _lng
 
-
     // Accessible from fragments
     val navController get() = this._navController
-    private var isGPS: Boolean = false
 
     inner class DrawerMenu(n: NavigationView) {
         val taskSearch = n.menu.findItem(R.id.nav_searchTask)
@@ -245,34 +241,16 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    private fun checkGPS() {
-        GpsUtils(this).turnGPSOn(object : onGpsListener {
-            override fun gpsStatus(isGPSEnabled: Boolean) {
-                isGPS = isGPSEnabled
-            }
-        })
-    }
-
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == Activity.RESULT_OK) {
-            if (requestCode == GpsUtils.GPS_REQUEST) {
-                isGPS = true // flag maintain before get location
-            }
-        } else if (resultCode == Activity.RESULT_CANCELED) {
-            if (requestCode == GpsUtils.GPS_REQUEST) {
-                checkGPS()
-            }
-        }
+        gpsUtils.handleActivityResult(requestCode, resultCode, data)
     }
 
     private fun initLocationServices() {
-        checkGPS()
-
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         val locationCallback: LocationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
-                for (location in locationResult?.locations) {
+                for (location in locationResult.locations) {
                     _lat = location.latitude
                     _lng = location.longitude
                 }
@@ -288,7 +266,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Stetho.initializeWithDefaults(this)
+        if (BuildConfig.DEBUG) {
+            Stetho.initializeWithDefaults(this)
+        }
         setContentView(R.layout.activity_main)
 
         val toolbar: Toolbar = findViewById(R.id.toolbar)
@@ -299,8 +279,9 @@ class MainActivity : AppCompatActivity() {
         _navController = findNavController(R.id.nav_host_fragment)
 
         // Passing each menu ID as a set of Ids because each menu should be considered as top level destinations.
-        appBarConfiguration = AppBarConfiguration(setOf(R.id.nav_settings,
-            R.id.nav_status, R.id.nav_login, R.id.nav_searchRecipient, R.id.nav_searchTask), drawerLayout)
+        appBarConfiguration = AppBarConfiguration(
+            setOf(R.id.nav_settings, R.id.nav_status, R.id.nav_login, R.id.nav_searchRecipient, R.id.nav_searchTask), drawerLayout
+        )
 
         setupActionBarWithNavController(_navController, appBarConfiguration)
         navView.setupWithNavController(_navController)
@@ -311,15 +292,18 @@ class MainActivity : AppCompatActivity() {
         am.session.sessionToken.observe(this, Observer {
             updateMenuItems(it)
         })
-        initLocationServices()
+
         SessionRefreshHandler(this)
         MapManager(this)
+        gpsUtils = GpsUtils(this)
+        initLocationServices()
     }
 
     /** Hide keyboard when a field loses focus (tap outside) */
     override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
         if (currentFocus != null) {
-            val imm: InputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            val imm: InputMethodManager =
+                getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             imm.hideSoftInputFromWindow(currentFocus!!.windowToken, 0)
         }
         return super.dispatchTouchEvent(ev)

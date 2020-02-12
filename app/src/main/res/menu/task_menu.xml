@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".MainActivity">
+
+<!--    <item-->
+<!--        android:id="@+id/action_id"-->
+<!--        android:title="taskId"-->
+<!--        app:showAsAction="always"/>-->
+
+<!--    <item-->
+<!--        android:id="@+id/action_groups"-->
+<!--        android:icon="@drawable/ic_done_white_24dp"-->
+<!--        android:iconTint="@color/colorBackground"-->
+<!--        android:title="Grupuri"-->
+<!--        app:showAsAction="always" />-->
+
+    <item
+        android:id="@+id/action_done"
+        android:icon="@drawable/ic_done_white_24dp"
+        android:iconTint="@color/colorBackground"
+        android:orderInCategory="1"
+        android:title="Salvează"
+        app:showAsAction="always"
+        />
+</menu>

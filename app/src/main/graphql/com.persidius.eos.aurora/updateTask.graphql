@@ -1,0 +1,5 @@
+mutation updateTask($gid: String, $id: Int!, $updatedAt:Int!, $task: TaskInput!) {
+    updateTask(gid:$gid, id: $id, updatedAt: $updatedAt, task: $task) {
+        id
+    }
+}

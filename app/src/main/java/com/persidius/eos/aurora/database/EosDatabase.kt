@@ -11,7 +11,7 @@ import com.persidius.eos.aurora.database.fts.*
     entities = [County::class, Uat::class, UatFTS::class, Loc::class,
         Artery::class, ArteryFTS::class, RecommendedLabel::class, Session::class,
         Recipient::class, RecipientTag::class, RecipientFTS::class, RecipientPatch::class,
-        Task::class, TaskFTS::class,
+        Task::class, TaskFTS::class, TaskPatch::class,
         Groups::class, GroupsFTS::class, User::class
     ],
     version = 2,
@@ -40,6 +40,8 @@ abstract class EosDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
 
     abstract fun recipientPatchDao(): RecipientPatchDao
+
+    abstract fun taskPatchDao(): TaskPatchDao
 
     abstract fun sessionDao(): SessionDao
 }

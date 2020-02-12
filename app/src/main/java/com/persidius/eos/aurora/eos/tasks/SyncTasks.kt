@@ -41,8 +41,7 @@ object SyncTasks {
             .subscribeOn(Schedulers.io())
             .observeOn(Schedulers.io())
 
-        // We do stuff in doOnNext so that only
-        // when OBSERVING the operation is doOnNext executed.
+        // We do stuff in doOnNext so that only when OBSERVING the operation is doOnNext executed.
         return data.doOnNext { results ->
             val tasks = results
                 .map { r ->
