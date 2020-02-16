@@ -9,6 +9,6 @@ class TaskViewModel : ViewModel() {
     val comments: MutableLiveData<String> = MutableLiveData()
     val groups: MutableLiveData<String> = MutableLiveData()
     val users: MutableLiveData<String> = MutableLiveData()
-    val recipients: MutableLiveData<List<String>> = MutableLiveData()
+    val recipients: MutableLiveData<MutableList<String>> = MutableLiveData(ArrayList())
     var task: Task? = null
 }

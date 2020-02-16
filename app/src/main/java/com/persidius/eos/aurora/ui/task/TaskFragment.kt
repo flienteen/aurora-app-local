@@ -1,9 +1,12 @@
 package com.persidius.eos.aurora.ui.task
 
 import android.annotation.SuppressLint
+import android.content.DialogInterface
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.widget.ArrayAdapter
+import android.widget.ListView
 import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.databinding.DataBindingUtil
@@ -15,8 +18,7 @@ import com.persidius.eos.aurora.database.Database
 import com.persidius.eos.aurora.database.entities.Task
 import com.persidius.eos.aurora.database.entities.TaskPatch
 import com.persidius.eos.aurora.databinding.FragmentTaskBinding
-import com.persidius.eos.aurora.util.ArrayOp
-import com.persidius.eos.aurora.util.Tuple2
+import com.persidius.eos.aurora.ui.searchRecipient.SearchRecipientFragment
 import com.persidius.eos.aurora.util.Tuple3
 import io.reactivex.Completable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -34,6 +36,7 @@ class TaskFragment : Fragment() {
 
     private lateinit var viewModel: TaskViewModel
     private lateinit var mainActivity: MainActivity
+    private lateinit var listView: ListView
     private var sessionId: Int? = null
 
     @SuppressLint("CheckResult")
@@ -68,9 +71,36 @@ class TaskFragment : Fragment() {
 
         mainActivity.setOnBackListener { this@TaskFragment.onBack() }
         mainActivity.onBackPressedDispatcher.addCallback { this@TaskFragment.onBack() }
-
+        createRecipientListView(binding.root)
         loadData(taskId)
         return binding.root
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.task_menu, menu)
+        menu.findItem(R.id.action_done).setOnMenuItemClickListener {
+            onSave()
+            true
+        }
+
+        menu.findItem(R.id.action_add_recipient).setOnMenuItemClickListener {
+            val recipientSearch = SearchRecipientFragment()
+            recipientSearch.show(fragmentManager!!, "Recipienti")
+            recipientSearch.dismissListener = DialogInterface.OnDismissListener {
+                if (recipientSearch.dialogResult != null) {
+                    viewModel.recipients.value?.add(recipientSearch.dialogResult!!.id)
+                    listView.invalidateViews()
+                }
+            }
+            true
+        }
+        super.onCreateOptionsMenu(menu, inflater)
+    }
+
+    private fun createRecipientListView(root: View) {
+        listView = root.findViewById(R.id.recipients) as ListView
+        val adapter = ArrayAdapter(activity!!, android.R.layout.simple_list_item_1, viewModel.recipients.value!!)
+        listView.adapter = adapter
     }
 
     @SuppressLint("CheckResult")
@@ -85,7 +115,8 @@ class TaskFragment : Fragment() {
                 val task = data
                 viewModel.task = data
                 viewModel.comments.value = task.comments
-                viewModel.recipients.value = task.recipients
+                viewModel.recipients.value?.addAll(task.recipients)
+                listView.invalidateViews()
             }, { t ->
                 Log.e("TaskFragment", "Error", t)
                 Sentry.capture(t)
@@ -134,15 +165,6 @@ class TaskFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         mainActivity.clearOnBackListener()
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.task_menu, menu)
-        menu.findItem(R.id.action_done).setOnMenuItemClickListener {
-            onSave()
-            true
-        }
-        super.onCreateOptionsMenu(menu, inflater)
     }
 
     private fun onSave() {

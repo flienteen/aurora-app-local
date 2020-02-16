@@ -5,6 +5,7 @@
     tools:context=".ui.Recipient.RecipientFragment">
 
     <data>
+
         <variable
             name="model"
             type="com.persidius.eos.aurora.ui.task.TaskViewModel" />
@@ -31,22 +32,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@={model.comments}">
-                    <requestFocus />
+                    <!--                    <requestFocus />-->
                 </AutoCompleteTextView>
             </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputLayout
+            <ListView
                 android:id="@+id/recipients"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Recipienti">
-
-                <AutoCompleteTextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="">
-                </AutoCompleteTextView>
-            </com.google.android.material.textfield.TextInputLayout>
+                android:layout_height="200dp" />
 
         </LinearLayout>
     </ScrollView>
