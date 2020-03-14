@@ -19,5 +19,9 @@ data class TaskPatch(
     val updatedAt: Int,
     val sessionId: Long?,
     val comments: String?,
-    val recipients: List<String>?
+    val recipients: List<String>?,
+    val uatId: Int?,
+    val locId: Int?,
+    val posLat: Double?,
+    val posLng: Double?
 )

@@ -36,6 +36,42 @@
                 </AutoCompleteTextView>
             </com.google.android.material.textfield.TextInputLayout>
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="0sp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="UAT" >
+
+                    <com.persidius.eos.aurora.ui.components.InstantAutoComplete
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textNoSuggestions|textFilter"
+                        android:text="@={model.uat}"
+                        android:id="@+id/uat"
+                        />
+
+                </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="0sp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="Localitate" >
+
+                    <com.persidius.eos.aurora.ui.components.InstantAutoComplete
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textNoSuggestions|textFilter"
+                        android:text="@={model.loc}"
+                        android:id="@+id/loc"
+                        />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+
             <ListView
                 android:id="@+id/recipients"
                 android:layout_width="match_parent"

@@ -11,15 +11,20 @@ import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.persidius.eos.aurora.MainActivity
 import com.persidius.eos.aurora.R
 import com.persidius.eos.aurora.database.Database
+import com.persidius.eos.aurora.database.entities.Loc
 import com.persidius.eos.aurora.database.entities.Task
 import com.persidius.eos.aurora.database.entities.TaskPatch
+import com.persidius.eos.aurora.database.entities.Uat
 import com.persidius.eos.aurora.databinding.FragmentTaskBinding
 import com.persidius.eos.aurora.ui.searchRecipient.SearchRecipientFragment
+import com.persidius.eos.aurora.ui.util.FoldingArrayAdapter
 import com.persidius.eos.aurora.util.Tuple3
+import com.persidius.eos.aurora.util.then
 import io.reactivex.Completable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
@@ -72,7 +77,7 @@ class TaskFragment : Fragment() {
         mainActivity.setOnBackListener { this@TaskFragment.onBack() }
         mainActivity.onBackPressedDispatcher.addCallback { this@TaskFragment.onBack() }
         createRecipientListView(binding.root)
-        loadData(taskId)
+        loadData(taskId, binding)
         return binding.root
     }
 
@@ -104,19 +109,67 @@ class TaskFragment : Fragment() {
     }
 
     @SuppressLint("CheckResult")
-    private fun loadData(taskId: Int) {
+    private fun loadData(taskId: Int, binding: FragmentTaskBinding) {
         Database.task.getById(taskId)
             .subscribeOn(Schedulers.io())
-//            .observeOn(Schedulers.io())
+            .observeOn(Schedulers.io())
+            .flatMap { task ->
+                Database.uat.getByCountyIds(listOf(task.countyId, 0))
+                    .map { uats -> task then uats }
+            }
+            .flatMap { data ->
+                Database.loc.getByIds(listOf(data.first.locId))
+                    .subscribeOn(Schedulers.io())
+                    .map { loc -> data then loc }
+            }
+            .flatMap { data ->
+                Database.uat.getByIds(listOf(data.first.uatId))
+                    .subscribeOn(Schedulers.io())
+                    .map { uat -> data then uat }
+            }
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({ data ->
                 viewModel = ViewModelProviders.of(this).get(TaskViewModel::class.java)
 
-                val task = data
-                viewModel.task = data
+                val task = data.first
+                viewModel.task = task
                 viewModel.comments.value = task.comments
                 viewModel.recipients.value?.addAll(task.recipients)
                 listView.invalidateViews()
+
+                viewModel.uat.observe(this, Observer<String> { newVal ->
+                    val uat = viewModel.uats.value?.filter { u -> u.name == newVal }?.firstOrNull()
+                    if (uat != null) {
+                        Database.loc.getByUatIds(listOf(uat.id))
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe { locs ->
+                                viewModel.locs.value = locs
+
+                                // If loc is not found in locs array, choose.
+                                if (!locs.any { l -> l.name == viewModel.loc.value }) {
+                                    if (locs.size == 1) {
+                                        viewModel.loc.value = locs.first().name
+                                    } else {
+                                        viewModel.loc.value = ""
+                                    }
+                                }
+                            }
+                    } else {
+                        viewModel.locs.value = listOf()
+                    }
+                })
+
+                viewModel.uats.observe(this, Observer<List<Uat>> { newVal ->
+                    binding.uat.setAdapter(FoldingArrayAdapter(activity!!, android.R.layout.select_dialog_item, newVal.map { u -> u.name }))
+                    binding.uat.validator = (binding.uat.adapter as FoldingArrayAdapter).getValidator("Nedefinit")
+                })
+
+                viewModel.locs.observe(this, Observer<List<Loc>> { newVal ->
+                    binding.loc.setAdapter(FoldingArrayAdapter(activity!!, android.R.layout.select_dialog_item, newVal.map { l -> l.name }))
+                    binding.loc.validator = (binding.loc.adapter as FoldingArrayAdapter).getValidator("Nedefinit")
+                })
+
             }, { t ->
                 Log.e("TaskFragment", "Error", t)
                 Sentry.capture(t)
@@ -192,7 +245,11 @@ class TaskFragment : Fragment() {
                 System.currentTimeMillis().toInt(),
                 session.id,
                 changes.comments,
-                changes.recipients
+                changes.recipients,
+                changes.uatId,
+                changes.locId,
+                changes.posLat,
+                changes.posLng
             )
             Log.d("TASK", "Creating patch")
 
@@ -222,13 +279,13 @@ class TaskFragment : Fragment() {
             assignedTo = r.assignedTo,
             validFrom = r.validFrom,
             validTo = r.validTo,
-            posLat = r.posLat,
-            posLng = r.posLng,
+            posLat = p.posLat ?: r.posLat,
+            posLng = p.posLng ?: r.posLng,
             updatedAt = r.updatedAt,
             updatedBy = r.updatedBy,
             status = r.status,
-            uatId = r.uatId,
-            locId = r.locId,
+            uatId = p.uatId ?: r.uatId,
+            locId = p.locId ?: r.locId,
             countyId = r.countyId,
             groups = r.groups,
             users = r.users,
@@ -238,14 +295,23 @@ class TaskFragment : Fragment() {
         return Database.task.insert(listOf(newTask)).subscribeOn(Schedulers.io())
     }
 
-    private data class TaskChangedValues(val comments: String? = null, val recipients: List<String> = listOf()) {
-        fun hasChanges() = comments != null || recipients.isNotEmpty()
+    private data class TaskChangedValues(
+        val comments: String? = null,
+        val recipients: List<String> = listOf(),
+        val locId: Int? = null,
+        val uatId: Int? = null,
+        val posLat: Double? = null,
+        val posLng: Double? = null
+    ) {
+        fun hasChanges() = comments != null || locId != null || uatId != null || posLat != null || posLng != null || recipients.isNotEmpty()
     }
 
     // Generates a patch if necessary.
     private fun getChanges(): TaskChangedValues {
         val vmComments = viewModel.comments.value!!
         val vmRecipients = viewModel.recipients.value!!
+        val vmUatId = viewModel.uats.value?.find { u -> u.name == viewModel.uat.value }?.id ?: 0
+        val vmLocId = viewModel.locs.value?.find { l -> l.name == viewModel.loc.value }?.id ?: 0
 
         if (viewModel.task == null) {
             return TaskChangedValues()
@@ -253,7 +319,9 @@ class TaskFragment : Fragment() {
         val r = viewModel.task!!
         val ret = TaskChangedValues(
             comments = if (r.comments == vmComments) null else vmComments,
-            recipients = if (r.recipients == vmRecipients) listOf() else vmRecipients
+            recipients = if (r.recipients == vmRecipients) listOf() else vmRecipients,
+            uatId = if (r.uatId == vmUatId) null else vmUatId,
+            locId = if (r.locId == vmLocId) null else vmLocId
         )
         Log.d("TASK", "Changes: $ret")
         return ret

@@ -313,7 +313,7 @@ class MainActivity : AppCompatActivity() {
      * Updates menu items enabled/disabled state.
      */
     private fun updateMenuItems(s: AuthorizationManager.SessionToken?) {
-        if (s == null) {
+        if (s == null || !am.isTokenValid(s)) {
             menu.taskSearch.isEnabled = false
             menu.groupSearch.isEnabled = false
             menu.recipientSearch.isEnabled = false

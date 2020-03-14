@@ -37,6 +37,7 @@ class SessionRefreshHandler(private val activity: MainActivity) {
                 start()
             } else {
                 stop()
+                am.forceLogout()
                 activity.navController.navigate(R.id.nav_login)
             }
         })
@@ -44,9 +45,8 @@ class SessionRefreshHandler(private val activity: MainActivity) {
         am.session.error.observe(activity, Observer {
             if (it == AuthorizationManager.ErrorCode.LOGIN_FAILED_INVALID_CREDENTIALS) {
                 stop()
-                val clearUser = SyncManager.isAbortable() && !am.isLocked()
-                am.forceLogut(clearUser)
-                Log.i("SessionRefreshHandler", "Invalid credentials => logging out, clear user: $clearUser")
+                am.forceLogout()
+                Log.i("SessionRefreshHandler", "Invalid credentials => logging out")
             }
         })
     }

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "2b37105340092cb0d65825f905adf0ac",
+    "identityHash": "950500dc23ea8d5b5bf1174e208840b2",
     "entities": [
       {
         "tableName": "County",
@@ -958,7 +958,7 @@
       },
       {
         "tableName": "TaskPatch",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `gid` TEXT, `taskId` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `sessionId` INTEGER, `comments` TEXT, `recipients` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `gid` TEXT, `taskId` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `sessionId` INTEGER, `comments` TEXT, `recipients` TEXT, `uatId` INTEGER, `locId` INTEGER, `posLat` REAL, `posLng` REAL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -1000,6 +1000,30 @@
             "fieldPath": "recipients",
             "columnName": "recipients",
             "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "uatId",
+            "columnName": "uatId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "locId",
+            "columnName": "locId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "posLat",
+            "columnName": "posLat",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "posLng",
+            "columnName": "posLng",
+            "affinity": "REAL",
             "notNull": false
           }
         ],
@@ -1294,7 +1318,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2b37105340092cb0d65825f905adf0ac')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '950500dc23ea8d5b5bf1174e208840b2')"
     ]
   }
 }

@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations.map
 import com.auth0.android.jwt.JWT
 import com.persidius.eos.aurora.BuildConfig
+import com.persidius.eos.aurora.eos.SyncManager
 import com.persidius.eos.aurora.util.Optional
 import com.persidius.eos.aurora.util.Preferences
 import com.persidius.eos.aurora.util.asLiveData
@@ -92,7 +93,7 @@ class AuthorizationManager() {
         val signedIn: LiveData<Boolean> = map<JWT?, Boolean>(token) { !((it?.isExpired(TOKEN_LEEWAY)) ?: true) }
 
         val tokenValidObs: Observable<Optional<SessionToken?>> = this@AuthorizationManager.sessionToken.map<Optional<SessionToken?>> {
-            if (it.isPresent() && !it.get().jwt.isExpired(TOKEN_LEEWAY)) Optional(it.get()) else null.asOptional()
+            if (it.isPresent() && isTokenValid(it.get())) Optional(it.get()) else null.asOptional()
         }
         val tokenValid: LiveData<SessionToken?> = map<Optional<SessionToken?>, SessionToken>(tokenValidObs.asLiveData()) { v -> v.value }
 
@@ -195,6 +196,10 @@ class AuthorizationManager() {
         return session.signedIn.value ?: false
     }
 
+    fun isTokenValid(token: SessionToken?): Boolean {
+        return token != null && !token.jwt.isExpired(TOKEN_LEEWAY)
+    }
+
     fun login(newUsername: String, newPassword: String) {
         // if (isSignedIn()) {
         //    return
@@ -253,14 +258,16 @@ class AuthorizationManager() {
         Preferences.amTokenPassword.onNext("")
     }
 
-    fun forceLogut(clearUser: Boolean = true, clearPass: Boolean = true) {
+    fun forceLogout() {
+        if (token.value == null || !token.value!!.isPresent()) {
+            return
+        }
+        val clearUser = SyncManager.isAbortable() && !isLocked()
         token.onNext(null.asOptional())
         if (clearUser) {
             Preferences.amTokenUsername.onNext("")
         }
-        if (clearPass) {
-            Preferences.amTokenPassword.onNext("")
-        }
+        Preferences.amTokenPassword.onNext("")
     }
 
     /**
