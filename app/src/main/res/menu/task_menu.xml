@@ -6,8 +6,8 @@
 
     <item
         android:id="@+id/action_add_recipient"
-        android:icon="@drawable/ic_create_task_24dp"
-        android:iconTint="@android:color/white"
+        android:icon="@drawable/ic_add_recipient_24"
+        android:iconTint="@color/colorBackground"
         android:orderInCategory="1"
         android:title="Adaugare"
         app:showAsAction="always"

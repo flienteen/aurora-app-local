@@ -12,8 +12,8 @@ class TaskViewModel : ViewModel() {
     val groups: MutableLiveData<String> = MutableLiveData()
     val users: MutableLiveData<String> = MutableLiveData()
     val recipients: MutableLiveData<MutableList<String>> = MutableLiveData(ArrayList())
-    val uat: MutableLiveData<String> = MutableLiveData()
-    val loc: MutableLiveData<String> = MutableLiveData()
+    val uat: MutableLiveData<String> = MutableLiveData("")
+    val loc: MutableLiveData<String> = MutableLiveData("")
     var task: Task? = null
 
     var uats: MutableLiveData<List<Uat>> = MutableLiveData(listOf())

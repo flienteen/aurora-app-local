@@ -115,6 +115,9 @@ open class SearchRecipientFragment : DialogFragment() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        if (isModal) {
+            return
+        }
         inflater.inflate(R.menu.search_recipient_menu, menu)
         menu.findItem(R.id.action_scan_camera).setOnMenuItemClickListener {
             // we want to pop stack when doing camera scan

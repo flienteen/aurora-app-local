@@ -40,10 +40,9 @@ class TasksFragment : Fragment() {
 
         val adapter = TasksAdapter(itemClickListener = { r ->
             if (isTaskEditable(r)) {
-                val navController = mainActivity.navController
                 val args = Bundle()
                 args.putInt(TaskFragment.ARG_TASK_ID, r.id)
-                navController.navigate(R.id.nav_task, args)
+                mainActivity.navController.navigate(R.id.nav_task, args)
             }
         })
 

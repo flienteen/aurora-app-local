@@ -5,7 +5,6 @@ import android.content.DialogInterface
 import android.os.Bundle
 import android.util.Log
 import android.view.*
-import android.widget.ArrayAdapter
 import android.widget.ListView
 import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
@@ -93,7 +92,10 @@ class TaskFragment : Fragment() {
             recipientSearch.show(fragmentManager!!, "Recipienti")
             recipientSearch.dismissListener = DialogInterface.OnDismissListener {
                 if (recipientSearch.dialogResult != null) {
-                    viewModel.recipients.value?.add(recipientSearch.dialogResult!!.id)
+                    val recipientId = recipientSearch.dialogResult!!.id
+                    if (!getRecipients().contains(recipientId)) {
+                        getRecipients().add(recipientId)
+                    }
                     listView.invalidateViews()
                 }
             }
@@ -102,9 +104,13 @@ class TaskFragment : Fragment() {
         super.onCreateOptionsMenu(menu, inflater)
     }
 
+    private fun getRecipients(): MutableList<String> {
+        return viewModel.recipients.value!!
+    }
+
     private fun createRecipientListView(root: View) {
         listView = root.findViewById(R.id.recipients) as ListView
-        val adapter = ArrayAdapter(activity!!, android.R.layout.simple_list_item_1, viewModel.recipients.value!!)
+        val adapter = RecipientListAdapter(mainActivity, getRecipients())
         listView.adapter = adapter
     }
 
@@ -134,7 +140,11 @@ class TaskFragment : Fragment() {
                 val task = data.first
                 viewModel.task = task
                 viewModel.comments.value = task.comments
-                viewModel.recipients.value?.addAll(task.recipients)
+
+                val set = LinkedHashSet(getRecipients())
+                set.addAll(task.recipients)
+                getRecipients().clear()
+                getRecipients().addAll(set)
                 listView.invalidateViews()
 
                 viewModel.uat.observe(this, Observer<String> { newVal ->
@@ -309,7 +319,7 @@ class TaskFragment : Fragment() {
     // Generates a patch if necessary.
     private fun getChanges(): TaskChangedValues {
         val vmComments = viewModel.comments.value!!
-        val vmRecipients = viewModel.recipients.value!!
+        val vmRecipients = getRecipients()
         val vmUatId = viewModel.uats.value?.find { u -> u.name == viewModel.uat.value }?.id ?: 0
         val vmLocId = viewModel.locs.value?.find { l -> l.name == viewModel.loc.value }?.id ?: 0
 
