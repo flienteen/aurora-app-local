@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 object SyncManager : ConnectivityManager.OnNetworkActiveListener {
 
-    private val interval = Observable.interval(0L, if (BuildConfig.DEBUG) 30L else 300L, TimeUnit.SECONDS)
+    private val interval = Observable.interval(0L, if (BuildConfig.DEBUG) 180L else 300L, TimeUnit.SECONDS)
         .subscribeOn(Schedulers.io())
 
     private val state: BehaviorSubject<SyncState> = Preferences.smSyncState

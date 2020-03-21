@@ -138,17 +138,17 @@ object SyncPatchGroups {
                             patch.taskId,
                             patch.updatedAt,
                             TaskInput(
-                                Input.optional(null),
-                                Input.optional(null),
-                                Input.optional(null),
-                                Input.optional(null),
+                                Input.absent(),
+                                Input.absent(),
+                                Input.absent(),
+                                Input.absent(),
                                 Input.optional(patch.comments),
                                 Input.optional(patch.recipients),
-                                Input.optional(null),
-                                Input.optional(null),
-                                Input.optional(null),
-                                Input.optional(null),
-                                Input.optional(null)
+                                Input.absent(),
+                                Input.absent(),
+                                Input.optional(patch.locId),
+                                Input.optional(patch.uatId),
+                                Input.absent()
                             )
                         ).map { response ->
                             response.data()

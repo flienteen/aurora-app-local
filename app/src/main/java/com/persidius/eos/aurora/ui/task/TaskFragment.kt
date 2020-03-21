@@ -140,6 +140,9 @@ class TaskFragment : Fragment() {
                 val task = data.first
                 viewModel.task = task
                 viewModel.comments.value = task.comments
+                viewModel.uats.value = data.second
+                viewModel.loc.value = data.third[0].name
+                viewModel.uat.value = data.fourth[0].name
 
                 val set = LinkedHashSet(getRecipients())
                 set.addAll(task.recipients)
@@ -210,7 +213,7 @@ class TaskFragment : Fragment() {
 
     private fun onBack() {
         val changes = getChanges()
-        if (changes.hasChanges()) {
+        if (activity != null && changes.hasChanges()) {
             // Pop an alert dialogue. on "OK" continue w/ nav back else forget about it
             val builder = AlertDialog.Builder(activity!!)
             builder.setTitle("Schimbări Nesalvate")
@@ -313,7 +316,7 @@ class TaskFragment : Fragment() {
         val posLat: Double? = null,
         val posLng: Double? = null
     ) {
-        fun hasChanges() = comments != null || locId != null || uatId != null || posLat != null || posLng != null || recipients.isNotEmpty()
+        fun hasChanges() = comments != null || locId != null || uatId != null || recipients.isNotEmpty()
     }
 
     // Generates a patch if necessary.
@@ -326,12 +329,12 @@ class TaskFragment : Fragment() {
         if (viewModel.task == null) {
             return TaskChangedValues()
         }
-        val r = viewModel.task!!
+        //val r = viewModel.task!!
         val ret = TaskChangedValues(
-            comments = if (r.comments == vmComments) null else vmComments,
-            recipients = if (r.recipients == vmRecipients) listOf() else vmRecipients,
-            uatId = if (r.uatId == vmUatId) null else vmUatId,
-            locId = if (r.locId == vmLocId) null else vmLocId
+            comments = vmComments, //if (r.comments == vmComments) null else vmComments,
+            recipients = vmRecipients, //if (r.recipients == vmRecipients) listOf() else vmRecipients,
+            uatId = vmUatId, //if (r.uatId == vmUatId) null else vmUatId,
+            locId = vmLocId //if (r.locId == vmLocId) null else vmLocId
         )
         Log.d("TASK", "Changes: $ret")
         return ret

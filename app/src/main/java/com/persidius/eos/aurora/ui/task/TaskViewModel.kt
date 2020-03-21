@@ -8,14 +8,13 @@ import com.persidius.eos.aurora.database.entities.Uat
 
 class TaskViewModel : ViewModel() {
 
+    var task: Task? = null
     val comments: MutableLiveData<String> = MutableLiveData()
     val groups: MutableLiveData<String> = MutableLiveData()
     val users: MutableLiveData<String> = MutableLiveData()
     val recipients: MutableLiveData<MutableList<String>> = MutableLiveData(ArrayList())
     val uat: MutableLiveData<String> = MutableLiveData("")
     val loc: MutableLiveData<String> = MutableLiveData("")
-    var task: Task? = null
-
     var uats: MutableLiveData<List<Uat>> = MutableLiveData(listOf())
     var locs: MutableLiveData<List<Loc>> = MutableLiveData(listOf())
 }

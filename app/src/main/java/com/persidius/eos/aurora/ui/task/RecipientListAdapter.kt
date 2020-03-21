@@ -6,10 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.BaseAdapter
-import android.widget.Button
-import android.widget.ListView
-import android.widget.TextView
+import android.widget.*
 import com.persidius.eos.aurora.MainActivity
 import com.persidius.eos.aurora.R
 import com.persidius.eos.aurora.ui.recipient.RecipientFragment
@@ -37,7 +34,7 @@ class RecipientListAdapter(private val context: Context, private val recipients:
         val view = inflater.inflate(R.layout.recipient_list_item, parent, false)
         val txtRecipient = view.findViewById(R.id.txtRecipient) as TextView
         txtRecipient.text = getItem(position)
-        val btnRecipient = view.findViewById(R.id.btnRemove) as Button
+        val btnRecipient = view.findViewById(R.id.btnRemove) as ImageButton
 
         view.setOnClickListener {
             val args = Bundle()
