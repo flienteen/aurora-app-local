@@ -138,10 +138,10 @@ object SyncPatchGroups {
                             patch.taskId,
                             patch.updatedAt,
                             TaskInput(
-                                Input.absent(),
-                                Input.absent(),
-                                Input.absent(),
-                                Input.absent(),
+                                Input.optional(patch.assignedTo),
+                                Input.optional(TaskStatus.safeValueOf(patch.taskStatus)),
+                                Input.optional(patch.posLat),
+                                Input.optional(patch.posLng),
                                 Input.optional(patch.comments),
                                 Input.optional(patch.recipients),
                                 Input.absent(),
@@ -151,7 +151,7 @@ object SyncPatchGroups {
                                 Input.absent()
                             )
                         ).map { response ->
-                            response.data()
+                            true // response.data is null which would give an error if returned
                         }.doOnSuccess {
                             Database.session.setUploaded(session.id, true, null)
                                 .subscribeOn(Schedulers.io())

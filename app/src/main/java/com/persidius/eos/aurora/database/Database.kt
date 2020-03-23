@@ -21,7 +21,7 @@ object Database {
             _db.execSQL("CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_TaskFTS_BEFORE_DELETE BEFORE DELETE ON `Task` BEGIN DELETE FROM `TaskFTS` WHERE `docid`=OLD.`rowid`; END")
             _db.execSQL("CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_TaskFTS_AFTER_UPDATE AFTER UPDATE ON `Task` BEGIN INSERT INTO `TaskFTS`(`docid`, `id`, `status`, `groups`, `users`, `recipients`) VALUES (NEW.`rowid`, NEW.`id`, NEW.`status`, NEW.`groups`, NEW.`users`, NEW.`recipients`); END")
             _db.execSQL("CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_TaskFTS_AFTER_INSERT AFTER INSERT ON `Task` BEGIN INSERT INTO `TaskFTS`(`docid`, `id`, `status`, `groups`, `users`, `recipients`) VALUES (NEW.`rowid`, NEW.`id`, NEW.`status`, NEW.`groups`, NEW.`users`, NEW.`recipients`); END")
-            _db.execSQL("CREATE TABLE IF NOT EXISTS `TaskPatch` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `gid` TEXT, `taskId` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `sessionId` INTEGER, `comments` TEXT, `recipients` TEXT, `uatId` INTEGER, `locId` INTEGER, `posLat` REAL, `posLng` REAL)")
+            _db.execSQL("CREATE TABLE IF NOT EXISTS `TaskPatch` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `gid` TEXT, `taskId` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `sessionId` INTEGER, `taskStatus` TEXT NOT NULL, `assignedTo` TEXT NOT NULL, `comments` TEXT, `recipients` TEXT, `uatId` INTEGER, `locId` INTEGER, `posLat` REAL, `posLng` REAL)")
             _db.execSQL("CREATE INDEX IF NOT EXISTS `index_TaskPatch_sessionId` ON `TaskPatch` (`sessionId`)")
             _db.execSQL("CREATE INDEX IF NOT EXISTS `index_TaskPatch_taskId` ON `TaskPatch` (`taskId`)")
         }

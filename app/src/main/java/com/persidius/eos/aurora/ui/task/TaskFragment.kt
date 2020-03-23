@@ -257,6 +257,8 @@ class TaskFragment : Fragment() {
                 viewModel.task!!.id,
                 System.currentTimeMillis().toInt(),
                 session.id,
+                changes.taskStatus,
+                changes.assignedTo,
                 changes.comments,
                 changes.recipients,
                 changes.uatId,
@@ -314,7 +316,9 @@ class TaskFragment : Fragment() {
         val locId: Int? = null,
         val uatId: Int? = null,
         val posLat: Double? = null,
-        val posLng: Double? = null
+        val posLng: Double? = null,
+        val taskStatus: String = "",
+        val assignedTo: String = ""
     ) {
         fun hasChanges() = comments != null || locId != null || uatId != null || recipients.isNotEmpty()
     }
@@ -325,6 +329,10 @@ class TaskFragment : Fragment() {
         val vmRecipients = getRecipients()
         val vmUatId = viewModel.uats.value?.find { u -> u.name == viewModel.uat.value }?.id ?: 0
         val vmLocId = viewModel.locs.value?.find { l -> l.name == viewModel.loc.value }?.id ?: 0
+        val taskStatus = viewModel.task!!.status
+        val assignedTo = mainActivity.am.session.email.value!!
+        val lat = mainActivity.lat
+        val lng = mainActivity.lng
 
         if (viewModel.task == null) {
             return TaskChangedValues()
@@ -334,7 +342,11 @@ class TaskFragment : Fragment() {
             comments = vmComments, //if (r.comments == vmComments) null else vmComments,
             recipients = vmRecipients, //if (r.recipients == vmRecipients) listOf() else vmRecipients,
             uatId = vmUatId, //if (r.uatId == vmUatId) null else vmUatId,
-            locId = vmLocId //if (r.locId == vmLocId) null else vmLocId
+            locId = vmLocId, //if (r.locId == vmLocId) null else vmLocId
+            posLat = lat,
+            posLng = lng,
+            taskStatus = taskStatus,
+            assignedTo = assignedTo
         )
         Log.d("TASK", "Changes: $ret")
         return ret

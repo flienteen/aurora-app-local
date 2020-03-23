@@ -18,6 +18,8 @@ data class TaskPatch(
     val taskId: Int,
     val updatedAt: Int,
     val sessionId: Long?,
+    val taskStatus: String,
+    val assignedTo: String,
     val comments: String?,
     val recipients: List<String>?,
     val uatId: Int?,
