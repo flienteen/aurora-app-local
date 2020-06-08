@@ -1,0 +1,6 @@
+mutation updateRecipient($eosId: String!, $input: RecipientUpdateInput!) {
+    updateRecipient(eosId: $eosId, input: $input) {
+        eosId
+        id
+    }
+}

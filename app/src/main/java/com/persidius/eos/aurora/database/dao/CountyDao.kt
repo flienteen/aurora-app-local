@@ -1,7 +1,6 @@
 package com.persidius.eos.aurora.database.dao
 
 import androidx.room.*
-import com.persidius.eos.aurora.database.LongQueryResult
 import com.persidius.eos.aurora.database.entities.County
 import io.reactivex.Completable
 import io.reactivex.Maybe
@@ -21,5 +20,5 @@ interface CountyDao {
     fun getAll(): Maybe<List<County>>
 
     @Query("SELECT COUNT(id) AS result FROM County")
-    fun getCount(): Maybe<LongQueryResult>
+    fun getCount(): Maybe<Int>
 }

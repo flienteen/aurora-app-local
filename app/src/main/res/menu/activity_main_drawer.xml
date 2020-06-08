@@ -7,24 +7,9 @@
         <item android:title="Start">
             <menu>
                 <item
-                    android:id="@+id/nav_searchTask"
-                    android:icon="@drawable/ic_task_24dp"
-                    android:title="@string/tasks"
-                    />
-                <item
                     android:id="@+id/nav_searchRecipient"
                     android:icon="@drawable/ic_bin_24dp"
                     android:title="@string/bin"
-                    />
-                <item
-                    android:id="@+id/nav_searchUser"
-                    android:icon="@drawable/ic_user_24dp"
-                    android:title="@string/user"
-                    />
-                <item
-                    android:id="@+id/nav_searchGroup"
-                    android:icon="@drawable/ic_group_24dp"
-                    android:title="@string/group"
                     />
             </menu>
         </item>
@@ -32,19 +17,14 @@
     <item android:title="@string/flows">
         <menu>
             <item
-                android:id="@+id/nav_createEconomicAgentFlow"
-                android:icon="@drawable/ic_create_economic_agent_24dp"
-                android:title="@string/add_economic_agents" />
-            <item
-                android:id="@+id/nav_createTaskFlow"
-                android:icon="@drawable/ic_create_task_24dp"
-                android:title="@string/create_task" />
-            <item
                 android:id="@+id/nav_cameraScanner"
                 android:icon="@drawable/ic_add_bins_24dp"
                 android:title="@string/add_recipients" />
         </menu>
     </item>
+    <item android:id="@+id/nav_login"
+        android:title="Login"
+        />
     <item
         android:id="@+id/nav_settings"
         android:icon="@drawable/ic_settings_24dp"

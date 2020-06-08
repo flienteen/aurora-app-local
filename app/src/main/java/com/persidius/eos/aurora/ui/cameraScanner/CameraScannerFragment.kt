@@ -10,24 +10,17 @@ import android.view.*
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.camera.core.*
-import androidx.camera.view.TextureViewMeteringPointFactory
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode
-import com.google.firebase.ml.vision.common.FirebaseVisionImage
-import com.google.firebase.ml.vision.common.FirebaseVisionImageMetadata
 import com.persidius.eos.aurora.MainActivity
 import com.persidius.eos.aurora.R
 import com.persidius.eos.aurora.ui.recipient.RecipientFragment
-import io.sentry.Sentry
 import java.util.concurrent.Executors
 
-private const val REQUEST_CODE_PERMISSIONS = 1
-private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
-
 class CameraScannerFragment : Fragment() {
+
     private val executor = Executors.newSingleThreadExecutor()
     private lateinit var viewFinder: TextureView
 
@@ -36,6 +29,9 @@ class CameraScannerFragment : Fragment() {
          * Pop self from nav stack
          */
         const val ARG_POP_NAV = "popNav"
+
+        private const val REQUEST_CODE_PERMISSIONS = 1
+        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     }
 
     private var popNav: Boolean = false
@@ -77,7 +73,7 @@ class CameraScannerFragment : Fragment() {
         debounce = true
         if(barcodes.size > 1) {
             // show dialogue w/ warning
-            val builder = AlertDialog.Builder(context!!)
+            val builder = AlertDialog.Builder(requireContext())
             builder.setTitle("Multiple coduri")
             builder.setMessage("Au fost scanate multiple coduri. Pentru a evita ambiguitatea, asigura-te ca exista o singura eticheta in vederea camerei")
             builder.setNeutralButton("Am Ințeles" ) { dialog, which ->
@@ -159,7 +155,7 @@ class CameraScannerFragment : Fragment() {
         if(allPermissionsGranted()) {
             viewFinder.post { startCamera() }
         } else {
-            ActivityCompat.requestPermissions(activity!!, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
+            ActivityCompat.requestPermissions(requireActivity(), REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
 
         viewFinder.addOnLayoutChangeListener {_, _, _, _, _, _, _, _, _ -> updateTransform() }
@@ -171,41 +167,5 @@ class CameraScannerFragment : Fragment() {
         super.onDestroyView()
         CameraX.unbindAll()
         Log.d("CAMERA", "VIEW DESTROYED")
-    }
-}
-
-
-private const val ANALYSIS_INTERVAL = 200L
-
-private class BarcodeAnalyzer(private val onBarcode: (List<FirebaseVisionBarcode>) -> Unit) : ImageAnalysis.Analyzer {
-    private var lastAnalysis = 0L
-    private fun degreesToFirebaseRotation(degrees: Int): Int = when(degrees) {
-        0 -> FirebaseVisionImageMetadata.ROTATION_0
-        90 -> FirebaseVisionImageMetadata.ROTATION_90
-        180 -> FirebaseVisionImageMetadata.ROTATION_180
-        270 -> FirebaseVisionImageMetadata.ROTATION_270
-        else -> throw Exception("Rotation is not 0, 90, 180 or 270")
-    }
-
-    override fun analyze(imageProxy: ImageProxy?, degrees: Int) {
-        val currentTimestamp = System.currentTimeMillis()
-
-        if(currentTimestamp - lastAnalysis < ANALYSIS_INTERVAL) {
-            return
-        }
-
-        val mediaImage = imageProxy?.image
-        val imageRotation = degreesToFirebaseRotation(degrees)
-        if(mediaImage != null) {
-            lastAnalysis = currentTimestamp
-            val image = FirebaseVisionImage.fromMediaImage(mediaImage, imageRotation)
-            val detector = FirebaseVision.getInstance().visionBarcodeDetector
-
-            detector.detectInImage(image)
-            .addOnSuccessListener { barcodes -> onBarcode(barcodes) }
-            .addOnFailureListener {
-                Sentry.capture(it)
-            }
-        }
     }
 }

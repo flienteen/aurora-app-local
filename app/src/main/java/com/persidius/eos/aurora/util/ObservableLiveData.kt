@@ -1,5 +1,6 @@
 package com.persidius.eos.aurora.util
 
+import android.annotation.SuppressLint
 import android.os.Looper
 import android.util.Log
 import androidx.lifecycle.LiveData
@@ -7,8 +8,7 @@ import androidx.lifecycle.MutableLiveData
 import io.reactivex.Observable
 import io.reactivex.subjects.BehaviorSubject
 
-
-fun <T> Observable<T>.asLiveData(): LiveData<T?> {
+@SuppressLint("CheckResult") fun <T> Observable<T>.asLiveData(): LiveData<T?> {
     val ld = MutableLiveData<T>(null)
 
     val sub = this.subscribe { newVal ->
@@ -26,7 +26,7 @@ fun <T> Observable<T>.asLiveData(): LiveData<T?> {
     return ld
 }
 
-fun <T> Observable<T>.asLiveData(defaultValue: T): LiveData<T> {
+@SuppressLint("CheckResult") fun <T> Observable<T>.asLiveData(defaultValue: T): LiveData<T> {
     val ld = MutableLiveData<T>(defaultValue)
 
     val sub = this.subscribe { newVal ->
@@ -41,7 +41,7 @@ fun <T> Observable<T>.asLiveData(defaultValue: T): LiveData<T> {
     return ld
 }
 
-fun <T> BehaviorSubject<T>.asLiveData(): LiveData<T> {
+@SuppressLint("CheckResult") fun <T> BehaviorSubject<T>.asLiveData(): LiveData<T> {
     val ld = MutableLiveData<T>(this.value!!)
     val sub = this.subscribe { newVal ->
         if(Looper.getMainLooper().isCurrentThread) {

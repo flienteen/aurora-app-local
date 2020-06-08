@@ -8,8 +8,8 @@ import com.persidius.eos.aurora.database.entities.Group
 @Fts4(contentEntity = Group::class,
     tokenizer = FtsOptions.TOKENIZER_UNICODE61)
 @Entity(
-    tableName = "GroupsFTS"
+    tableName = "GroupFTS"
 )
-data class GroupsFTS(
-    val id: String
+data class GroupFTS(
+    val eosId: String
 )

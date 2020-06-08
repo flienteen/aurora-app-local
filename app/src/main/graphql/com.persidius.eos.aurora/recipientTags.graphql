@@ -1,2 +1,16 @@
-query tags($pageSize: Int!, $pageNumber: Int, $afterId: Int) {
-    recipientTags(historicalRecordType: CURRENT_ONLY,
+query recipientTags($pageSize: Int!, $pageNumber: Int, $afterId: Int) {
+    recipientTags(historicalRecordType: CURRENT_ONLY, pageSize: $pageSize,
+        pageNumber: $pageNumber, afterId: $afterId) {
+        total
+        pageNumber
+        pageSize
+        items {
+            tag
+            slot
+            id
+            recipient {
+                eosId
+            }
+        }
+    }
+}

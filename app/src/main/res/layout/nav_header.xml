@@ -32,12 +32,6 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Sincronizat acum 3 minute"
-        android:textColor="@color/colorBackground"
-        android:id="@+id/lastSyncTime" />
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
         android:text="Progres: 0"
         android:textColor="@color/colorBackground"
         android:id="@+id/syncProgress" />

@@ -1,11 +1,9 @@
 package com.persidius.eos.aurora.ui.recipient
 
-import android.widget.AutoCompleteTextView
-import androidx.lifecycle.LiveData
+import android.view.View
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.persidius.eos.aurora.database.entities.*
-import com.persidius.eos.aurora.util.Tuple2
 
 class RecipientViewModel: ViewModel() {
 
@@ -25,11 +23,11 @@ class RecipientViewModel: ViewModel() {
     // this is it.
 
     // Tags represented by slots (index -1), e.g. slot 1 = index 0; there is no slot 0.
-    var originalTags: List<RecipientTag> = listOf()
-    var tags: List<RecipientTag> = listOf()
-
-    // tags used w/ the list
-    val displayTags: MutableLiveData<List<Tuple2<MutableLiveData<String>, MutableLiveData<Boolean>>>> = MutableLiveData(listOf())
+    val tagSelected: MutableLiveData<Int> = MutableLiveData(0)
+    val tagSlots: MutableLiveData<Int> = MutableLiveData(1)
+    val tag0: MutableLiveData<String?> = MutableLiveData("")
+    val tag1: MutableLiveData<String?> = MutableLiveData("")
+    var tags: List<RecipientTag>? = null
 
     val addressStreet: MutableLiveData<String> = MutableLiveData()
     val addressNumber: MutableLiveData<String> = MutableLiveData()
@@ -51,4 +49,12 @@ class RecipientViewModel: ViewModel() {
 
     val streamSelectable: MutableLiveData<Boolean> = MutableLiveData(true)
     val sizeSelectable: MutableLiveData<Boolean> = MutableLiveData(true)
+
+    fun selectTag0(v: View) {
+        tagSelected.value = 0
+    }
+
+    fun selectTag1(v: View) {
+        tagSelected.value = 1
+    }
 }

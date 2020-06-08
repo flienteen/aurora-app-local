@@ -8,35 +8,35 @@ import android.view.*
 import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.databinding.DataBindingUtil
-import androidx.fragment.app.Fragment
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import com.persidius.eos.aurora.MainActivity
 import com.persidius.eos.aurora.R
 import com.persidius.eos.aurora.database.Database
 import com.persidius.eos.aurora.database.entities.*
 import com.persidius.eos.aurora.databinding.FragmentRecipientBinding
 import com.persidius.eos.aurora.ui.util.FoldingArrayAdapter
-import com.persidius.eos.aurora.ui.util.GroupIdAdapter
-import com.persidius.eos.aurora.util.*
+import com.persidius.eos.aurora.util.AutoDisposeFragment
+import com.persidius.eos.aurora.util.RecipientSize
+import com.persidius.eos.aurora.util.RecipientStream
+import com.persidius.eos.aurora.util.then
+import com.uber.autodispose.autoDispose
 import io.reactivex.Completable
-import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.sentry.Sentry
 import kotlinx.android.synthetic.main.app_bar.*
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
 
-class RecipientFragment: Fragment() {
+class RecipientFragment: AutoDisposeFragment() {
     companion object {
         const val ARG_RECIPIENT_ID = "recipientId"
-        const val ARG_SESSION_ID = "sessionId"
     }
-
     private lateinit var viewModel: RecipientViewModel
-    private var sessionId: Int? = null
 
     private fun onBack() {
         val changes = getChanges()
@@ -44,7 +44,7 @@ class RecipientFragment: Fragment() {
             // Pop an alert dialogue.
             // on "OK" continue w/ nav back
             // else forget about it
-            val builder = AlertDialog.Builder(activity!!)
+            val builder = AlertDialog.Builder(requireActivity())
             builder.setTitle("Schimbări Nesalvate")
             builder.setMessage("Există modificări făcute la recipientul actual. Sigur dorești să navighezi inapoi fără le salvezi?")
             builder.setPositiveButton("Da") { _, _ ->
@@ -68,8 +68,6 @@ class RecipientFragment: Fragment() {
 
         // Get the arguments
         val recipientId = arguments?.getString(ARG_RECIPIENT_ID)
-        sessionId = arguments?.getInt(ARG_SESSION_ID)
-        if(sessionId == 0) { sessionId = null }
 
         val mainActivity = (requireActivity() as MainActivity)
         val toolbar = mainActivity.toolbar
@@ -80,7 +78,7 @@ class RecipientFragment: Fragment() {
         binding.lifecycleOwner = this
 
         if(recipientId == null) {
-            val builder = AlertDialog.Builder(context!!)
+            val builder = AlertDialog.Builder(requireContext())
             builder.setTitle("Eroare")
                 .setMessage("Recipientul are valoarea nulă (recipientId = null)")
             builder.setNegativeButton("Am Înțeles") { _, _ ->
@@ -101,11 +99,6 @@ class RecipientFragment: Fragment() {
                     .map { uats -> recipient then uats }
             }
             .flatMap { data ->
-                Database.recipientTag.getByRecipientId(data.first.id)
-                    .subscribeOn(Schedulers.io())
-                    .map { tags -> data then tags }
-            }
-            .flatMap { data ->
                 Database.loc.getByIds(listOf(data.first.locId))
                     .subscribeOn(Schedulers.io())
                     .map { loc -> data then loc }
@@ -121,38 +114,47 @@ class RecipientFragment: Fragment() {
                     .subscribeOn(Schedulers.io())
                     .map { labels -> data then labels }
             }
+            .flatMap {
+                data ->
+                Database.recipientTags.getByRecipientId(data.first.eosId)
+                    .subscribeOn(Schedulers.io())
+                    .map { tags -> data then tags }.toMaybe()
+            }
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe ({ data ->
-                viewModel = ViewModelProviders
-                .of(this)
-                .get(RecipientViewModel::class.java)
+            .autoDispose(this)
+            .subscribe({ data ->
+                viewModel = ViewModelProvider(this)
+                    .get(RecipientViewModel::class.java)
 
                 val recipient = data.first
 
                 viewModel.recipient = data.first
+                viewModel.tags = data.sixth
                 viewModel.addressStreet.value = recipient.addressStreet
                 viewModel.addressNumber.value = recipient.addressNumber
                 viewModel.comments.value = recipient.comments
-                viewModel.labels.value = recipient.labels
-                viewModel.tags = data.third
+                viewModel.labels.value = recipient.labels.keys.toList()
 
-                // Clone by mapping & reinit-ing objects
-                viewModel.originalTags = data.third.map {
-                    rt -> RecipientTag(rt.tag, rt.recipientId, rt.slot)
-                }
+                val size = RecipientSize.fromDisplayName(recipient.size) ?: RecipientSize.SIZE_120L
 
-                viewModel.uat.observe(this, Observer<String> { newVal ->
+                viewModel.tag0.value = viewModel.tags?.firstOrNull { t -> t.slot == 0 }?.tag ?: ""
+                viewModel.tag1.value = viewModel.tags?.firstOrNull { t -> t.slot == 1 }?.tag ?: ""
+                viewModel.tagSelected.value = 0
+                viewModel.tagSlots.value = size.slots
 
-                    val uat = viewModel.uats.value?.filter { u -> u.name == newVal }?.firstOrNull()
-                    if(uat != null) {
+                viewModel.uat.observe(viewLifecycleOwner, Observer { newVal ->
+
+                    val uat = viewModel.uats.value?.firstOrNull { u -> u.name == newVal }
+                    if (uat != null) {
                         Database.loc.getByUatIds(listOf(uat.id))
                             .subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
+                            .autoDispose(this)
                             .subscribe { locs ->
                                 viewModel.locs.value = locs
 
                                 // If loc is not found in locs array, choose.
-                                if(!locs.any { l -> l.name == viewModel.loc.value }) {
+                                if (!locs.any { l -> l.name == viewModel.loc.value }) {
                                     if (locs.size == 1) {
                                         viewModel.loc.value = locs.first().name
                                     } else {
@@ -165,20 +167,20 @@ class RecipientFragment: Fragment() {
                     }
                 })
 
-                viewModel.uats.observe(this, Observer<List<Uat>> { newVal ->
+                viewModel.uats.observe(viewLifecycleOwner, Observer { newVal ->
                     binding.uat.setAdapter(
                         FoldingArrayAdapter(
-                            activity!!,
+                            requireActivity(),
                             android.R.layout.select_dialog_item,
                             newVal.map { u -> u.name })
                     )
                     binding.uat.validator = (binding.uat.adapter as FoldingArrayAdapter).getValidator("Nedefinit")
                 })
 
-                viewModel.locs.observe(this, Observer<List<Loc>> { newVal ->
+                viewModel.locs.observe(viewLifecycleOwner, Observer { newVal ->
                     binding.loc.setAdapter(
                         FoldingArrayAdapter(
-                            activity!!,
+                            requireActivity(),
                             android.R.layout.select_dialog_item,
                             newVal.map { l -> l.name }
                         )
@@ -186,53 +188,24 @@ class RecipientFragment: Fragment() {
                     binding.loc.validator = (binding.loc.adapter as FoldingArrayAdapter).getValidator("Nedefinit")
                 })
 
-
                 viewModel.uats.value = data.second
-                viewModel.uat.value = data.fifth[0].name
-                viewModel.loc.value = data.fourth[0].name
-                viewModel.recLabels.value = data.sixth
+                viewModel.uat.value = data.fourth[0].name
+                viewModel.loc.value = data.third[0].name
+                viewModel.recLabels.value = data.fifth
 
-                viewModel.size.observe(this, Observer<String> { newSize ->
-                    val slotCount = when(newSize) {
-                        "120L", "240L" -> 1
-                        "1.100L" -> 2
-                        else -> 2
+                // Ensure we're always displaying the correct tags
+                viewModel.size.observe(viewLifecycleOwner, Observer { newSize ->
+                    val newRecipientSize = RecipientSize.fromDisplayName(newSize) ?: RecipientSize.SIZE_120L
+                    viewModel.tagSlots.value = newRecipientSize.slots
+                    if(newRecipientSize.slots - 1 <= (viewModel.tagSelected.value ?: 0)) {
+                        viewModel.tagSelected.value = 0
                     }
-
-
-                    // init a mutable list
-                    val displayTags = Array(slotCount) { Tuple2(MutableLiveData(""), MutableLiveData(false)) }
-                    viewModel.tags.forEach { t ->
-                        if(t.slot <= slotCount) {
-                            displayTags[t.slot - 1].first.value = t.tag
-                        }
-                    }
-
-                    displayTags[0].second.value = true
-                    viewModel.displayTags.value = displayTags.asList()
-
-                    binding.tagList.adapter = TagListAdapter(
-                        context!!,
-                        displayTags.asList() as List<Tuple2<LiveData<String>, LiveData<Boolean>>>,
-                        this,
-                        onTagClick = { slot ->
-                            Log.d("tag", "Selecting slot ${slot}")
-                            val displayTags = viewModel.displayTags.value
-                            if(displayTags != null) {
-                                // select tag in slot X, deselect everything else
-                                for (tag in displayTags) {
-                                    tag.second.postValue(false)
-                                }
-                                displayTags[slot - 1].second.postValue(true)
-                            }
-                        }
-                    )
                 })
 
                 binding.stream.inputType = InputType.TYPE_NULL
                 binding.stream.setAdapter(
                     FoldingArrayAdapter(
-                        activity!!,
+                        requireActivity(),
                         android.R.layout.select_dialog_item,
                         RecipientStream.values()
                             .filter { v -> v !== RecipientStream.UNK }
@@ -243,7 +216,7 @@ class RecipientFragment: Fragment() {
                 binding.size.inputType = InputType.TYPE_NULL
                 binding.size.setAdapter(
                     FoldingArrayAdapter(
-                        activity!!,
+                        requireActivity(),
                         android.R.layout.select_dialog_item,
                         RecipientSize.getVisibleSizes()
                     )
@@ -251,32 +224,35 @@ class RecipientFragment: Fragment() {
                 binding.size.validator = (binding.size.adapter as FoldingArrayAdapter).getValidator(RecipientSize.SIZE_120L.displayName)
 
                 // Convert recipient stream to display name
-                viewModel.stream.value = try { RecipientStream.valueOf(recipient.stream).displayName } catch (t: Throwable) { "" }
+                viewModel.stream.value = try {
+                    RecipientStream.valueOf(recipient.stream).displayName
+                } catch (t: Throwable) {
+                    ""
+                }
                 viewModel.size.value = recipient.size
 
-                subscription = (activity as MainActivity).rfidService.observableData
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe { newVal ->
-                    // find the selectedTag slot
-                    viewModel.displayTags.value?.forEachIndexed { ix, t ->
-                        if(t.second.value == true) {
-                            t.first.value = newVal
+                subscription = (activity as MainActivity).btSvc.tags
+                .observeOn(AndroidSchedulers.mainThread())
+                .autoDispose(this)
+                .subscribe { newVal ->
 
-                            // Find oldTag by slot & update it (or insert it on the contrary).
-                            val slot = ix + 1
-                            val oldTag = viewModel.tags.find { t -> t.slot == slot }
-                            val newTag = RecipientTag(newVal, recipient.id, slot)
-                            viewModel.tags = if(oldTag != null) { viewModel.tags.filter { t -> t.slot != slot }
-                            } else { viewModel.tags } + newTag
+                    when(viewModel.tagSelected.value ?: 0) {
+                        0 -> viewModel.tag0.value = newVal
+                        1 -> viewModel.tag1.value = newVal
+                    }
+
+                    if(viewModel.tag0.value == viewModel.tag1.value) {
+                        // If both tags have the same value,
+                        // null the one not selected.
+                        when(viewModel.tagSelected.value ?: 0) {
+                            0 -> viewModel.tag1.value = ""
+                            1 -> viewModel.tag0.value = ""
                         }
                     }
-                    val selected = viewModel.displayTags.value?.find { t -> t.second.value == true }
-
-                    selected?.first?.value = newVal
                 }
 
                 viewModel.groupId.value = recipient.groupId ?: ""
-                val groupAdapter = GroupIdAdapter(context!!, android.R.layout.select_dialog_item)
+                val groupAdapter = GroupIdAdapter(requireContext(), android.R.layout.select_dialog_item)
                 binding.group.setAdapter(groupAdapter)
                 binding.group.validator = groupAdapter.getValidator()
 
@@ -284,7 +260,7 @@ class RecipientFragment: Fragment() {
             }, { t ->
                 Log.e("RecipientFragment", "Error", t)
                 Sentry.capture(t)
-                val builder = AlertDialog.Builder(context!!)
+                val builder = AlertDialog.Builder(requireContext())
                 builder.setTitle("Eroare")
                 builder.setMessage("A avut loc o eroare. ")
                 builder.setNeutralButton("Am ințeles") { _, _ ->
@@ -296,7 +272,7 @@ class RecipientFragment: Fragment() {
                 builder.show()
             }, {
                 // OnComplete means some of the data wasn't loaded.
-                val builder = AlertDialog.Builder(context!!)
+                val builder = AlertDialog.Builder(requireContext())
                 builder.setTitle("Recipient Inexistent")
                 builder.setMessage("Recipientul cu codul $recipientId nu a fost găsit")
                 builder.setNeutralButton("Am ințeles") { _, _ ->
@@ -307,13 +283,12 @@ class RecipientFragment: Fragment() {
                 }
                 builder.show()
             })
-
         return binding.root
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        (activity!! as MainActivity).clearOnBackListener()
+        (requireActivity() as MainActivity).clearOnBackListener()
         subscription?.dispose()
     }
 
@@ -330,14 +305,12 @@ class RecipientFragment: Fragment() {
     private fun onSave() {
         val changes = getChanges()
 
-
         // If no tags are scanned, warn the user
-        val vmTags = viewModel.displayTags.value!!.mapIndexed { index, tuple2 ->
-            Tuple2(index + 1, tuple2.first.value!!)
-        }.filter { t -> t.second.isNotEmpty() }
+        val noTags = (viewModel.tag0.value?.isEmpty() ?: true) && (
+                viewModel.tag1.value?.isEmpty() ?: true)
 
-        if(vmTags.isEmpty()) {
-            val builder = AlertDialog.Builder(activity!!)
+        if(noTags) {
+            val builder = AlertDialog.Builder(requireActivity())
             builder.setTitle("Atenție")
             builder.setMessage("Nu a fost scanat niciun tag pentru acest recipient")
             builder.setPositiveButton("Am înțeles") { _, _ ->
@@ -360,68 +333,42 @@ class RecipientFragment: Fragment() {
     private fun executeSave(
         changes: RecipientChangedValues
     ) {
-        // Step 1> Obtain a SessionID
-        Log.d("RECIPIENT", "sessionId = $sessionId")
-        val obs = if(sessionId == null) {
-            Database.session.createSession()
-                .subscribeOn(Schedulers.io())
-        } else {
-            Database.session.getById(sessionId!!)
-                .subscribeOn(Schedulers.io())
+        Log.d("RECIP_FRAG", "ExeSave")
+        // Push the updates in the update db
+        val mainActivity = (requireActivity() as MainActivity)
+        val createdBy = mainActivity.authMgr.session.email.blockingFirst().value ?: "No Email"
+        val posLat = mainActivity.location.lat
+        val posLng = mainActivity.location.lng
+
+        var c: Completable = Completable.complete()
+
+        if(changes.hasRecipientUpdate()) {
+            val upd = changes.getRecipientUpdate(createdBy, posLat, posLng)
+            c = c
+            .andThen (Database.recipientUpdates.insert(upd).subscribeOn(Schedulers.io()).ignoreElement())
+            .andThen(applyRecipientUpdate(viewModel.recipient!!, upd))
         }
 
-        val sub = obs.flatMapSingle {session ->
-            val mainActivity = (requireActivity() as MainActivity)
-            val patch = RecipientPatch(
-                0,
-                viewModel.recipient!!.id,
-                session.id,
-                System.currentTimeMillis() / 1000,
-                mainActivity.am.session.email.value!!,
-                mainActivity.lat,
-                mainActivity.lng,
-                changes.stream,
-                changes.size,
-                changes.addressStreet,
-                changes.addressNumber,
-                changes.uatId,
-                changes.locId,
-                changes.comments,
-                null,
-                listOf(),
-                changes.tags,
-                if(changes.groupId == "") "000000" else changes.groupId
-            )
-            Log.d("RECIPIENT", "Creating patch")
-
-            Database.recipientPatch.insert(patch)
-                .subscribeOn(Schedulers.io())
-                .map { id -> Tuple3(id, session, patch)}
-        }
-            .flatMapCompletable {
-                Log.d("RECIPIENT", "Created patch id $it")
-
-                Database.session.updateRefCount(it.second.id, -1)
-                    .observeOn(Schedulers.io())
-                    .andThen(applyPatch(it.third))
+        if(changes.hasTagUpdates()) {
+            val updates = changes.getTagUpdates(createdBy)
+            updates.forEach { upd ->
+                c = c.andThen (Database.recipientTagUpdates.insert(upd).subscribeOn(Schedulers.io()).ignoreElement())
             }
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe( {
+            c = c.andThen(applyRecipientTagUpdates(viewModel.tags ?: listOf(), updates))
+        }
+
+        c.observeOn(AndroidSchedulers.mainThread())
+        .autoDispose(this)
+        .subscribe( {
                 // we're done saving it now.
                 // Save is done. Nav back.
                 (requireActivity() as MainActivity).navController.popBackStack()
-            }, { t ->
-                Log.d("RECIPIENT", "ERROR")
+            }, {
+                Log.d("RECIP_FRAG", "ERROR", it)
         })
     }
 
-    private fun applyPatch(p: RecipientPatch): Completable {
-        // Load up the Recipient and fuck with it.
-        val r = viewModel.recipient!!
-
-        // TODO: Compute labels array.
-        // Sometime in the future. We don't support labels as of  yet.
-
+    private fun applyRecipientUpdate(r: Recipient, p: RecipientUpdate): Completable {
         val newRecipient = Recipient(
             id = r.id,
             addressNumber = p.addressNumber ?: r.addressNumber,
@@ -432,42 +379,57 @@ class RecipientFragment: Fragment() {
             stream = p.stream ?: r.stream,
             posLat = p.posLat ?: r.posLat,
             posLng =  p.posLng ?: r.posLng,
-            active = p.active ?: r.active,
-            groupId = if(p.groupId == "000000") { null } else (p.groupId ?: r.groupId),
+            groupId = if(p.groupId == "") { null } else (p.groupId ?: r.groupId),
             labels = r.labels,
-            updatedAt = r.updatedAt,
             comments = p.comments ?: r.comments,
-            countyId = r.countyId
+            countyId = r.countyId,
+            eosId = r.eosId
         )
-
-        // for each op in the tags array perform independent DB ops.
-
-        val insertTags = Observable.fromIterable(p.tags)
-                .flatMapCompletable { op ->
-                    when (op.first) {
-                        ArrayOp.REMOVE ->
-                            Database.recipientTag.deleteSlot(r.id, op.second)
-                                .subscribeOn(Schedulers.io())
-                        ArrayOp.ADD ->
-                            Database.recipientTag.insert(
-                                listOf(
-                                    RecipientTag(
-                                        op.third,
-                                        r.id,
-                                        op.second
-                                    )
-                                )
-                            ).subscribeOn(Schedulers.io())
-                    }
-                }
-
         return Database.recipient.insert(listOf(newRecipient))
             .subscribeOn(Schedulers.io())
-            .andThen(insertTags)
+    }
+
+    private fun applyRecipientTagUpdates(t: List<RecipientTag>, p: List<RecipientTagUpdate>): Completable {
+        val newTags = t.map { tag ->
+            val u = p.firstOrNull { it.slot == tag.slot }
+            if(u == null) {
+                tag
+            } else {
+                RecipientTag(
+                    tag = u.tag,
+                    slot = u.slot,
+                    recipientId = u.recipientId,
+                    id = tag.id
+                )
+            }
+        }.toMutableList()
+
+        // now check if there's no "new" tags (updates w/ no corresponding tag)
+        p.forEach { u ->
+            val tag = t.firstOrNull { it.slot == u.slot }
+            if(tag == null) {
+                newTags.add(RecipientTag(
+                    tag = u.tag,
+                    slot = u.slot,
+                    recipientId = u.recipientId,
+                    id = 0
+                ))
+            }
+        }
+
+        return Database.recipientTags.insert(newTags.toList())
+            .subscribeOn(Schedulers.io())
     }
 
 
+
     private data class RecipientChangedValues(
+        val eosId: String,
+        val id: Int,
+        val tag0Val: String,
+        val tag1Val: String,
+        val tag0Id: Int,
+        val tag1Id: Int,
         val locId: Int? = null,
         val uatId: Int? = null,
         val size: String? = null,
@@ -475,20 +437,84 @@ class RecipientFragment: Fragment() {
         val addressStreet: String? = null,
         val addressNumber: String? = null,
         val comments: String? = null,
-        val groupId: String? = null,
-        val tags: List<Triple<ArrayOp, Int, String>> = listOf()
+        val groupId: String? = null,        // Empty String represents EXPLICIT NULL in graphql
+        val tag0: String? = null,           // Empty String represents EXPLICIT NULL in graphql
+        val tag1: String? = null,           // Empty String represents EXPLICIT NULL in graphql
+        val labels: Map<String, String?>? = null
     ) {
         fun hasChanges() = (locId ?: uatId ?: size ?: stream?:
-            addressStreet ?: addressNumber ?: comments ?: groupId) != null || tags.isNotEmpty()
+            addressStreet ?: addressNumber ?: comments ?: groupId ?: tag0 ?: tag1 ?: labels) != null
+
+        fun hasRecipientUpdate() = (locId ?: uatId ?: size ?: stream?:
+        addressStreet ?: addressNumber ?: comments ?: groupId ?: labels) != null
+
+        fun hasTagUpdates() = (tag0 ?: tag1) != null
+
+        fun getTagUpdates(createdBy: String): List<RecipientTagUpdate> {
+            val rtn = mutableListOf<RecipientTagUpdate>()
+            if(tag0 != null) {
+                rtn.add(RecipientTagUpdate(
+                    tag = tag0Val,
+                    slot = 0,
+                    recipientId = eosId,
+                    uploaded = false,
+                    createdAt = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT),
+                    createdBy = createdBy,
+                    id = id,
+                    updateId = 0
+                ))
+            }
+            if(tag1 != null) {
+                rtn.add(RecipientTagUpdate(
+                    tag = tag1Val,
+                    slot = 1,
+                    recipientId = eosId,
+                    uploaded = false,
+                    createdAt = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT),
+                    createdBy = createdBy,
+                    id = id,
+                    updateId = 0
+                ))
+            }
+            return rtn.toList()
+        }
+
+        fun getRecipientUpdate(createdBy: String, posLat: Double, posLng: Double): RecipientUpdate {
+            return RecipientUpdate(
+                locId = locId,
+                uatId = uatId,
+                groupId = groupId,
+                size = size,
+                stream = stream,
+                labels = labels,
+                comments = comments,
+                addressStreet = addressStreet,
+                addressNumber = addressNumber,
+                posLat = if(posLat == 0.0) null else posLat,
+                posLng = if(posLng == 0.0) null else posLng,
+
+                eosId = eosId,
+                uploaded = false,
+                updateId = 0,
+                id = id,
+                createdAt = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT),
+                createdBy = createdBy
+            )
+        }
     }
 
     // Generates a patch if necessary.
     private fun getChanges(): RecipientChangedValues {
-        // Size, Stream
-        // UAT, Loc,
-        // AddressStreet, AddressNumber
-        // groupId
-        // comments
+        if(viewModel.recipient == null) {
+            return RecipientChangedValues(
+                eosId = "",
+                id = 0,
+                tag0Val = "",
+                tag1Val = "",
+                tag0Id = 0,
+                tag1Id = 0
+            )
+        }
 
         val vmUatId = viewModel.uats.value?.find { u -> u.name == viewModel.uat.value }?.id ?: 0
         val vmLocId = viewModel.locs.value?.find { l -> l.name == viewModel.loc.value }?.id ?: 0
@@ -498,41 +524,21 @@ class RecipientFragment: Fragment() {
         val vmAddressNumber = viewModel.addressNumber.value!!
         val vmComments = viewModel.comments.value!!
         val vmGroupId = viewModel.groupId.value!!
-
-        val vmTags = viewModel.displayTags.value!!.mapIndexed { index, tuple2 ->
-            Tuple2(index + 1, tuple2.first.value!!)
-        }.filter { t -> t.second.isNotEmpty() }
-
-        val tagChanges: ArrayList<Triple<ArrayOp, Int, String>> = ArrayList()
-        for(tag in vmTags) {
-            val slot = tag.first
-            val value = tag.second
-
-            val eqTag = viewModel.originalTags.find { t -> t.slot == slot }
-            if(eqTag == null || eqTag.tag != value) {
-                tagChanges.add(Triple(ArrayOp.ADD, slot, value))
-            }
-        }
-
-        for(tag in viewModel.originalTags) {
-            // if there's a tag in originalTags but not vmTags, then it was REMOVED
-            val eqTag = vmTags.find { t -> t.first == tag.slot }
-            if(eqTag == null) {
-                tagChanges.add(Triple(ArrayOp.REMOVE, tag.slot, ""))
-            }
-        }
-
-        // now we want to compare these
-        if(viewModel.recipient == null) {
-            return RecipientChangedValues()
-        }
+        val vmTag0 = viewModel.tag0.value!!
+        val vmTag1 = viewModel.tag1.value!!
 
         val r = viewModel.recipient!!
-
-
-        val recGroupId = r.groupId ?: ""
+        val tag0 = viewModel.tags?.firstOrNull{ t -> t.slot == 0 }?.tag ?: ""
+        val tag1 = viewModel.tags?.firstOrNull{ t -> t.slot == 1}?.tag ?: ""
+        val rGroupId = r.groupId ?: ""
 
         val ret = RecipientChangedValues(
+            eosId = r.eosId,
+            id = r.id,
+            tag0Val = if(vmTag0.isNotEmpty()) vmTag0 else tag0,
+            tag1Val = if(vmTag1.isNotEmpty()) vmTag1 else tag1,
+            tag0Id = viewModel.tags?.firstOrNull{ t -> t.slot == 0 }?.id ?: 0,
+            tag1Id = viewModel.tags?.firstOrNull{ t -> t.slot == 1 }?.id ?: 0,
             uatId = if(r.uatId == vmUatId) null else vmUatId,
             locId = if(r.locId == vmLocId) null else vmLocId,
             size = if(r.size == vmSize) null else vmSize,
@@ -540,12 +546,12 @@ class RecipientFragment: Fragment() {
             comments = if(r.comments == vmComments) null else vmComments,
             addressStreet =  if(r.addressStreet == vmAddressStreet) null else vmAddressStreet,
             addressNumber = if(r.addressNumber == vmAddressNumber) null else vmAddressNumber,
-            groupId = if(recGroupId == vmGroupId) null else vmGroupId,
-            tags = tagChanges
+            groupId = if(rGroupId == vmGroupId) null else vmGroupId,
+            tag0 = if(vmTag0 == tag0) null else vmTag0,
+            tag1 = if(vmTag1 == tag1) null else vmTag1
         )
 
-        Log.d("RECIPIENT", "Changes: ${ret}")
-
+        Log.d("RECIPIENT", "Changes: $ret")
         return ret
     }
 

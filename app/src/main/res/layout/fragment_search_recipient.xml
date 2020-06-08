@@ -33,16 +33,15 @@
                 >
 
                 <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/search"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@null"
-                android:ems="10"
-                android:hint="Căută cod/adresă"
-                android:text="@={model.searchTerm}"
-                android:inputType="textVisiblePassword|textNoSuggestions"
-                />
+                    android:id="@+id/search"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@color/colorPrimary"
+                    android:ems="10"
+                    android:hint="Căută cod/adresă"
+                    android:inputType="textVisiblePassword|textNoSuggestions"
+                    android:text="@={model.searchTerm}" />
 
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>

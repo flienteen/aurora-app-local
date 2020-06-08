@@ -1,7 +1,6 @@
 package com.persidius.eos.aurora.database.dao
 
 import androidx.room.*
-import com.persidius.eos.aurora.database.LongQueryResult
 import com.persidius.eos.aurora.database.entities.Artery
 import io.reactivex.Completable
 import io.reactivex.Maybe
@@ -19,7 +18,7 @@ interface ArteryDao {
     fun getByLocIds(locIds: List<Int>): Maybe<List<Artery>>
 
     @Query("SELECT COUNT(id) AS result FROM Artery")
-    fun getCount(): Maybe<LongQueryResult>
+    fun getCount(): Maybe<Int>
 
     @Query("SELECT * FROM Artery JOIN ArteryFTS ON (ArteryFTS.rowid = Artery.rowid) WHERE locId = :locId AND ArteryFTS MATCH :term")
     fun search(locId: Int, term: String): Maybe<List<Artery>>

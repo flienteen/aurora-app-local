@@ -1,7 +1,6 @@
 package com.persidius.eos.aurora.database.dao
 
 import androidx.room.*
-import com.persidius.eos.aurora.database.LongQueryResult
 import com.persidius.eos.aurora.database.entities.Uat
 import io.reactivex.Completable
 import io.reactivex.Maybe
@@ -25,7 +24,7 @@ interface UatDao {
     fun getByIds(ids: List<Int>): Maybe<List<Uat>>
 
     @Query("SELECT COUNT(id) AS result FROM Uat")
-    fun getCount(): Maybe<LongQueryResult>
+    fun getCount(): Maybe<Int>
 
     @Query("SELECT * FROM Uat JOIN UatFTS ON (UatFTS.rowid = Uat.rowid) WHERE countyId IN (:countyIds) AND UatFTS MATCH :term")
     fun searchByCounty(countyIds: List<Int>, term: String): Maybe<List<Uat>>

@@ -4,7 +4,6 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.persidius.eos.aurora.database.LongQueryResult
 import com.persidius.eos.aurora.database.entities.RecommendedLabel
 import io.reactivex.Completable
 import io.reactivex.Maybe
@@ -24,5 +23,5 @@ interface RecommendedLabelDao {
     fun getAll(): Maybe<List<RecommendedLabel>>
 
     @Query("SELECT COUNT(displayName) AS result FROM RecommendedLabel")
-    fun getCount(): Maybe<LongQueryResult>
+    fun getCount(): Maybe<Int>
 }

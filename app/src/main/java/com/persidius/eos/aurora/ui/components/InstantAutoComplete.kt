@@ -7,7 +7,7 @@ import android.view.MotionEvent
 import android.widget.AutoCompleteTextView
 import com.persidius.eos.aurora.R
 
-class InstantAutoComplete: AutoCompleteTextView {
+class InstantAutoComplete: androidx.appcompat.widget.AppCompatAutoCompleteTextView {
     private var filterIgnoreText: Boolean = false
     constructor(context: Context) : super(context)
 

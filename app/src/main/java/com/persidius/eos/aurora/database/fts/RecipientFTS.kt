@@ -11,7 +11,7 @@ import com.persidius.eos.aurora.database.entities.Recipient
     tableName = "RecipientFTS"
 )
 data class RecipientFTS(
-    val id: String,
+    val eosId: String,
     val addressStreet: String,
     val addressNumber: String
 )

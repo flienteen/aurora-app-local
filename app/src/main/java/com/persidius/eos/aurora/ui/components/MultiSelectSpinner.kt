@@ -1,17 +1,16 @@
 package com.persidius.eos.aurora.ui.components
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
 import android.content.DialogInterface.OnMultiChoiceClickListener
 import android.util.AttributeSet
-import android.view.View
 import android.widget.*
 import java.util.*
 
 
-class MultiSelectionSpinner : Spinner, OnMultiChoiceClickListener {
-
+class MultiSelectSpinner : Spinner, OnMultiChoiceClickListener {
     interface OnSpinnerEventsListener {
         fun onSpinnerOpened()
         fun onSpinnerClosed()
@@ -53,6 +52,7 @@ class MultiSelectionSpinner : Spinner, OnMultiChoiceClickListener {
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun performClick(): Boolean {
         val builder = AlertDialog.Builder(context)
         builder.setMultiChoiceItems(_items, mSelection, this)

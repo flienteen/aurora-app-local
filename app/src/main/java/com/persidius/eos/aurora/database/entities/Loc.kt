@@ -10,13 +10,13 @@ import androidx.room.PrimaryKey
         entity = Uat::class,
         parentColumns = ["id"],
         childColumns = ["uatId"],
-        onDelete = ForeignKey.SET_NULL
+        onDelete = ForeignKey.CASCADE
     ),
     ForeignKey(
         entity = County::class,
         parentColumns = ["id"],
         childColumns = ["countyId"],
-        onDelete = ForeignKey.SET_NULL
+        onDelete = ForeignKey.CASCADE
     )],
     indices = [
         Index(unique = false, value = ["uatId"]),

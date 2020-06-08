@@ -5,48 +5,14 @@ schema {
     mutation: Mutation
 }
 
-interface GroupBase {
-    active: Boolean!
-    comments: String!
-    id: String!
-    labels: [String!]!
-    type: GroupType!
+interface Paginated {
+    "current page number"
+    pageNumber: Int!
+    "maximum size of the page currently returned"
+    pageSize: Int!
+    "total number of results"
+    total: Int!
 }
-
-interface RecipientBase {
-    active: Boolean!
-    addressNumber: String!
-    addressStreet: String!
-    comments: String!
-    id: String!
-    labels: [String!]!
-    "Last known latitude"
-    posLat: Float!
-    "Last known longitude"
-    posLng: Float!
-    size: String!
-    stream: WasteStream!
-}
-
-interface RecipientTagBase {
-    slot: Int!
-    tag: String!
-}
-
-interface UserBase {
-    active: Boolean!
-    addressNumber: String!
-    addressStreet: String!
-    billingType: BillingType!
-    comments: String!
-    id: String!
-    idNumber: String!
-    labels: [String!]!
-    name: String!
-    type: UserType!
-}
-
-union UserBillingData = UserBillingData_Fixed | UserBillingData_PerPerson | UserBillingData_PerPerson_RA
 
 type Artery {
     county: County!
@@ -61,34 +27,27 @@ type Artery {
     uname: String!
 }
 
-type BillSchedule {
-    endMonth: Int!
-    startMonth: Int!
-    year: Int!
-}
-
-type BillSummaryItem {
-    text: String!
-    type: BillSummaryItemType!
-    unit: BillSummaryItemUnit
-    value: String!
-}
-
 type Collection {
-    arrivedAt: Int!
-    county: County
-    createdAt: Int!
-    externalId: String!
+    "Date the event was recorded in the cloud"
+    arrivedAt: DateTime!
+    collectedStream: WasteStream
+    county: County!
+    "Date the event was recorded in the field"
+    createdAt: DateTime!
+    "Only allowed in debug mode"
+    extId: String!
+    "Group record at the time collection was created (createdAt used as reference)"
     group: Group
     id: Int!
+    intendedStream: WasteStream
     posLat: Float!
     posLng: Float!
+    "Recipient record at the time collection was created"
     recipient: Recipient
     source: CollectionSource!
     status: CollectionStatus!
-    stream: WasteStream
     tag: String!
-    uat: Uat
+    uat: Uat!
     vehicleLicensePlate: String!
 }
 
@@ -106,35 +65,58 @@ type County {
     uname: String!
 }
 
-type Group implements GroupBase {
-    active: Boolean!
-    collections(range: FromToFilter): [Collection!]!
+type Group {
+    "Street Number"
+    addressNumber: String!
+    addressStreet: String!
+    collections(
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int
+    ): PaginatedCollections!
     comments: String!
     county: County!
-    currentRecipients: [GroupRecipient!]!
-    currentUsers: [GroupUser!]!
-    id: String!
-    labels: [String!]!
-    recipientHistory(range: FromToFilter): [GroupRecipient!]!
+    current: Boolean!
+    eosId: String!
+    from: DateTime!
+    "Whether this object is hidden by default or not"
+    hidden: Boolean!
+    id: Int!
+    labels: [Label!]!
+    loc: Loc!
+    recipients(
+        from: DateTime,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        to: DateTime
+    ): [Recipient!]!
+    to: DateTime!
     type: GroupType!
     uat: Uat!
-    userHistory(range: FromToFilter): [GroupUser!]!
+    users(
+        from: DateTime,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        to: DateTime
+    ): [User!]!
 }
 
-type GroupRecipient {
-    current: Boolean!
-    group: Group
-    recipient: Recipient!
-    validFrom: Timestamp!
-    validTo: Timestamp!
+type GroupMap {
+    center: GroupMapLngLat!
+    data: String!
+    max: GroupMapLngLat!
+    min: GroupMapLngLat!
 }
 
-type GroupUser {
-    current: Boolean!
-    group: Group
-    user: User!
-    validFrom: Timestamp!
-    validTo: Timestamp!
+type GroupMapLngLat {
+    posLat: Float!
+    posLng: Float!
+}
+
+type Label {
+    name: String!
+    value: String
 }
 
 type Loc {
@@ -145,275 +127,293 @@ type Loc {
     posLat: Float!
     posLng: Float!
     uat: Uat!
-    uname: Int!
+    uname: String!
 }
 
 type Mutation {
-    allocateGroups(count: Int!, countyId: Int!, type: GroupType!): [RawGroup!]!
-    allocateRecipients(count: Int!, countyId: Int!, stream: WasteStream!): [RawRecipient!]!
-    allocateUser(count: Int!, countyId: Int!, type: UserType!): [RawUser!]!
-    "To be used for assigning tasks"
-    assignTasks(assignedTo: String!, ids: [Int!]!): [Task!]!
-    createCollection(arrivedAt: Int!, createdAt: Int!, externalId: String!, posLat: Float!, posLng: Float!, source: String!, tag: String!, vehicleLicensePlate: String!): CollectionStatus!
-    "Creates a task and optionally assigns it."
-    createTask(task: TaskInput!): Task!
-    editGroup(
-        associatedTaskId: Int,
-        #Unix timestamp when this edit was created on local device
-        createdAt: Int!,
-        #Edits to be made to the group
-        group: GroupInput!,
-        #Id of the group to be edited
-        groupId: String!,
-        transactionId: String
-    ): RawGroup!
-    editRecipient(
-        associatedTaskId: Int,
-        #Unix Timestamp of when the patch was created
-        createdAt: Int!,
-        recipient: RecipientInput!,
-        recipientId: String!,
-        transactionId: String
-    ): RawRecipient!
-    "Edits task values. Throws an error if the task has been assigned"
-    editTask(id: Int!, task: TaskInput!): Task!
-    editUser(associatedTaskId: Int, createdAt: Int!, transactionId: String, user: UserInput!, userId: String!): RawUser!
-    "Use to apply a series of patches, along with an optional final patch"
-    patchGroup(
-        #Final group state before patches are approved.
-        group: GroupInput!,
-        groupId: String!,
-        #Patches that are to be applied
-        patches: [Int!]!
-    ): PatchResponse
-    "Use to apply a series of patches, along with an optional final patch"
-    patchRecipient(
-        #Patches that are to be applied
-        patches: [Int!]!,
-        #Final recipient state before patches are approved.
-        recipient: RecipientInput!,
-        recipientId: String!
-    ): PatchResponse!
-    patchUser(
-        #Patches that are to be applied
-        patches: [Int!]!,
-        #Final user state before patches are approved.
-        user: UserInput!,
-        userId: String!
-    ): PatchResponse!
-    "Submits a transaction, making its associated edits visible in the system"
-    submitTransaction(transactionId: String!): String!
-    "To be used for task updates from limited-connectivity devies"
-    updateTask(gid: String, id: Int, task: TaskInput!, updatedAt: Int!): Task!
+    createCollection(input: CollectionCreateInput!): CollectionStatus!
+    createGroup(input: GroupCreateInput!): Group!
+    createRecipient(input: RecipientCreateInput!): Recipient!
+    createUser(input: UserCreateInput!): User!
+    deleteVehicleTrip(id: Int!): VehicleTrip!
+    saveVehicleTrip(input: VehicleTripInput!): VehicleTrip!
+    updateGroup(eosId: String!, input: GroupUpdateInput!): Group!
+    updateRecipient(eosId: String!, input: RecipientUpdateInput!): Recipient!
+    updateRecipientTag(input: RecipientTagUpdateInput!, tag: String!): RecipientTag!
+    updateUser(eosId: String!, input: UserUpdateInput!): User!
 }
 
-type Patch {
-    arrivedAt: Int!
-    associatedTask: Task
-    createdAt: Int!
-    createdBy: String!
-    id: Int!
-    patch: String!
-    state: PatchState!
+type PaginatedCollections implements Paginated {
+    items: [Collection!]!
+    "current page number"
+    pageNumber: Int!
+    "maximum size of the page currently returned"
+    pageSize: Int!
+    "total number of results"
+    total: Int!
 }
 
-type PatchResponse {
-    pendingGroups: [String!]
-    pendingRecipients: [String!]
-    pendingUsers: [String!]
-    "Patch application state. APPLIED means everything is done, ACCEPTED means a transaction is still pending"
-    state: PatchState!
+type PaginatedGroups implements Paginated {
+    "groups in the page"
+    items: [Group!]!
+    "current page number"
+    pageNumber: Int!
+    "maximum size of the page currently returned"
+    pageSize: Int!
+    "total number of results"
+    total: Int!
+}
+
+type PaginatedRecipientTags implements Paginated {
+    "recipient tags in the page"
+    items: [RecipientTag!]!
+    "current page number"
+    pageNumber: Int!
+    "maximum size of the page currently returned"
+    pageSize: Int!
+    "total number of results"
+    total: Int!
+}
+
+type PaginatedRecipients implements Paginated {
+    "recipients in the page"
+    items: [Recipient!]!
+    "current page number"
+    pageNumber: Int!
+    "maximum size of the page currently returned"
+    pageSize: Int!
+    "total number of results"
+    total: Int!
+}
+
+type PaginatedSearchResults implements Paginated {
+    "search results in the page"
+    items: [SearchResult!]!
+    "current page number"
+    pageNumber: Int!
+    "maximum size of the page currently returned"
+    pageSize: Int!
+    "total number of results"
+    total: Int!
+}
+
+type PaginatedUsers implements Paginated {
+    "users in the page"
+    items: [User!]!
+    "current page number"
+    pageNumber: Int!
+    "maximum size of the page currently returned"
+    pageSize: Int!
+    "total number of results"
+    total: Int!
+}
+
+type PaginatedVehicleTrips {
+    items: [VehicleTrip!]!
+    "Id for 'after' parameter of next page"
+    nextId: Int
+    pageSize: Int!
+    "Id for 'after' parameter of previous page. Not implemented"
+    prevId: Int
+    "Total number of results. Not implemented."
+    total: Int
+}
+
+type Profile {
+    counties: [County!]!
+    "Email of this user"
+    email: String!
+    "Unique user-id. Usually maps on to OIDC provider's GUID"
+    id: String!
+    "Name of this user."
+    name: String!
+    "Array of roles this user is part of. Can be null if user has no roles assigned."
+    roles: [String!]
+    uats: [Uat!]!
+    "Username of this user. Usually unique, but not guaranteed."
+    username: String!
 }
 
 type Query {
     arteries(countyIds: [Int!], locIds: [Int!], uatIds: [Int!]): [Artery!]!
     collections(
-        arrivedAt: FromToFilter,
+        arrivedAt: QueryCollectionDateFilter,
+        "County IDs to restrict query to"
         countyIds: [Int!],
-        createdAt: FromToFilter,
+        createdAt: QueryCollectionDateFilter,
+        "Return collections that only correspond to certain group ids"
         groupIds: [String!],
-        #Maximum number of results per page. Max 200.
-        maxResultsPerPage: Int,
-        #Id after which to begin
-        pageAfter: Int,
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        "Return collections that only correspond to certain recipient ids"
         recipientIds: [String!],
+        "Only return collections that have the specified status"
         status: [CollectionStatus!],
-        #Limit results to a particular vehicle license plate
-        vehicleLicensePlate: [String!]
-    ): [Collection!]!
+        "UAT IDs to restrict query"
+        uatIds: [Int!],
+        "Only return collections that have the specified vehicleLicensePlates set"
+        vehicleLicensePlates: [String!]
+    ): PaginatedCollections!
     counties: [County!]!
+    groupMap: GroupMap!
     groups(
-        #Whether to return active (true) or inactive (false) groups. Default [true]
-        active: [Boolean!],
-        #County IDs to restrict query to
+        "For delta queries"
+        afterId: Int,
+        "County IDs to restrict query to"
         countyIds: [Int!],
-        ids: [String!],
+        eosIds: [String!],
+        from: DateTime,
+        "State of hideables to show"
+        hideableState: HideableState,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        "Labels that must be present on the object"
         labels: [String!],
-        #Maximum number of results per page
-        maxResultsPerPage: Int,
-        #Id after which to start the page
-        pageAfter: String,
-        types: [GroupType!],
-        uatIds: [Int!]
-    ): [Group!]!
-    locs(countyIds: [Int!], uatIds: [Int!]): [Loc!]!
-    rawGroups(hasPendingChanges: Boolean, ids: [String!], labels: [String!], maxResultsPerPage: Int, pageAfter: String, updatedAfter: Int): [RawGroup!]!
-    rawRecipients(hasPendingChanges: Boolean, ids: [String!], labels: [String!], maxResultsPerPage: Int, pageAfter: String, updatedAfter: Int): [RawRecipient!]!
-    rawSearch(
-        countyIds: [Int!],
-        #Maximum number of results to return, max allowed is 100.
-        maxResults: Int,
-        q: String!,
-        types: [SearchResultType!],
-        uatIds: [Int!]
-    ): [RawSearchResult!]!
-    rawUsers(hasPendingChanges: Boolean, ids: [String!], labels: [String!], maxResultsPerPage: Int, pageAfter: String, updatedAfter: Int): [RawUser!]!
-    recipients(
-        #Whether to return active (true) or inactive (false) recipients. Default [true]
-        active: [Boolean!],
-        #County IDs to restrict query to
-        countyIds: [Int!],
-        ids: [String!],
-        labels: [String!],
+        "Loc ids to restrict query to"
         locIds: [Int!],
-        #Maximum number of results per page
-        maxResultsPerPage: Int,
-        #Id after which to return results
-        pageAfter: String,
-        sizes: [String!],
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        "Street name to query (can be inexact)"
+        street: String,
+        to: DateTime,
+        types: [GroupType!],
+        "UAT IDs to restrict query"
         uatIds: [Int!]
-    ): [Recipient!]!
+    ): PaginatedGroups!
+    locs(countyIds: [Int!], uatIds: [Int!]): [Loc!]!
+    "Current user's profile"
+    me: Profile
+    recipientTags(
+        "Used for delta queries. Requires DISABLE_PAGINATION role"
+        afterId: Int,
+        "County IDs to restrict query to"
+        countyIds: [Int!],
+        from: DateTime,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        to: DateTime,
+        "UAT IDs to restrict query"
+        uatIds: [Int!]
+    ): PaginatedRecipientTags!
+    recipients(
+        "Used for delta queries. Requires DISABLE_PAGINATION role"
+        afterId: Int,
+        altIds: [String!],
+        "County IDs to restrict query to"
+        countyIds: [Int!],
+        eosIds: [String!],
+        from: DateTime,
+        groupIds: [String!],
+        "State of hideables to show"
+        hideableState: HideableState,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        "Labels that must be present on the object"
+        labels: [String!],
+        "Loc ids to restrict query to"
+        locIds: [Int!],
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        sizes: [String!],
+        streams: [WasteStream!],
+        "Street name to query (can be inexact)"
+        street: String,
+        to: DateTime,
+        "UAT IDs to restrict query"
+        uatIds: [Int!]
+    ): PaginatedRecipients!
     recommendedLabels: [RecommendedLabel!]!
     search(
+        "County IDs to restrict query to"
         countyIds: [Int!],
-        #Maximum number of results to return, max allowed is 100.
-        maxResults: Int,
+        locIds: [Int!],
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
         q: String!,
-        types: [SearchResultType!],
+        types: [EosObjectType!],
+        "UAT IDs to restrict query"
         uatIds: [Int!]
-    ): [SearchResult!]!
+    ): PaginatedSearchResults!
     stat: Stat!
-    "List of people tasks can be assigned to"
-    taskAssigneeList: [String!]!
-    taskSearch(
-        #Use empty string to select \"unassigned\" tasks
-        assignedTo: [String!],
-        countyIds: [Int!],
-        #Maximum number of results to return
-        maxResults: Int,
-        q: String!,
-        status: [TaskStatus!],
-        uatIds: [Int!]
-    ): [TaskSearchResult!]!
-    "Note: since conditions are additive, you cannot search by ID or GID in the same query, you must use separate queries"
-    tasks(assignedTo: [String!], countyIds: [Int!], gids: [String!], ids: [Int!], maxResultsPerPage: Int, pageAfter: Int, updatedAfter: Int, status: [TaskStatus!], uatIds: [Int!]): [Task!]!
     uats(countyIds: [Int!]): [Uat!]!
     users(
-        active: [Boolean!],
-        billingTypes: [BillingType!],
+        "County IDs to restrict query to"
         countyIds: [Int!],
+        eosIds: [String!],
+        extIds: [String!],
+        from: DateTime,
         groupTypes: [GroupType!],
-        ids: [String!],
+        "State of hideables to show"
+        hideableState: HideableState,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        "Labels that must be present on the object"
         labels: [String!],
+        "Loc ids to restrict query to"
         locIds: [Int!],
-        #Maximum number of results per page
-        maxResultsPerPage: Int,
-        #Id after which to start page
-        pageAfter: String,
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        "Street name to query (can be inexact)"
+        street: String,
+        to: DateTime,
         types: [UserType!],
+        "UAT IDs to restrict query"
         uatIds: [Int!]
-    ): [User!]!
+    ): PaginatedUsers!
+    vehicleTrips(
+        date: VehicleTripDateFilter,
+        id: [Int!],
+        "Maximum number of results per page. Max 200."
+        maxResultsPerPage: Int,
+        "Id after which to begin "
+        pageAfter: Int,
+        stream: [WasteStream!],
+        vehicleLicensePlate: [String!]
+    ): PaginatedVehicleTrips!
+    vehicles: [Vehicle!]!
 }
 
-type RawGroup implements GroupBase {
-    active: Boolean!
-    associatedTasks: [Task!]!
-    "Accepted or applied patches to this object"
-    changeHistory: [Patch!]!
-    comments: String!
-    county: County!
-    id: String!
-    labels: [String!]!
-    pendingChanges: [Patch!]!
-    recipients: [RawRecipient!]!
-    type: GroupType!
-    uat: Uat!
-    updatedAt: Int!
-    users: [RawUser!]!
-}
-
-type RawRecipient implements RecipientBase {
-    active: Boolean!
+type Recipient {
+    "Street Number"
     addressNumber: String!
     addressStreet: String!
-    associatedTasks: [Task!]!
-    "Accepted or applied patches to this object"
-    changeHistory: [Patch!]!
+    altId: String
+    collections(
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int
+    ): PaginatedCollections!
     comments: String!
     county: County!
-    groupId: String
-    id: String!
-    labels: [String!]!
-    loc: Loc!
-    pendingChanges: [Patch!]!
-    "Last known latitude"
-    posLat: Float!
-    "Last known longitude"
-    posLng: Float!
-    size: String!
-    stream: WasteStream!
-    "Recipient tags. Only visible with Logistics->Tags->View option"
-    tags: [RawRecipientTag!]
-    uat: Uat!
-    updatedAt: Int!
-}
-
-type RawRecipientTag implements RecipientTagBase {
-    slot: Int!
-    tag: String!
-}
-
-type RawSearchResult {
-    group: RawGroup
-    highlight: SearchResultHighlight!
-    recipient: RawRecipient
-    user: RawUser
-}
-
-type RawUser implements UserBase {
-    active: Boolean!
-    addressNumber: String!
-    addressStreet: String!
-    associatedTasks: [Task!]!
-    billingData: UserBillingData
-    billingType: BillingType!
-    "Accepted or applied patches to this object"
-    changeHistory: [Patch!]!
-    comments: String!
-    county: County!
-    groupId: String
-    id: String!
-    idNumber: String!
-    labels: [String!]!
-    loc: Loc!
-    name: String!
-    pendingChanges: [Patch!]!
-    type: UserType!
-    uat: Uat!
-    updatedAt: Int!
-}
-
-type Recipient implements RecipientBase {
-    active: Boolean!
-    addressNumber: String!
-    addressStreet: String!
-    collections(range: FromToFilter): [Collection!]!
-    comments: String!
-    county: County!
-    currentGroup: GroupRecipient
-    groupHistory(range: FromToFilter): [GroupRecipient!]!
-    id: String!
-    labels: [String!]!
+    current: Boolean!
+    eosId: String!
+    from: DateTime!
+    "Group entries with which this recipient entry is associated"
+    groups(
+        from: DateTime,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        to: DateTime
+    ): [Group!]!
+    "Whether this object is hidden by default or not"
+    hidden: Boolean!
+    id: Int!
+    labels: [Label!]!
     loc: Loc!
     "Last known latitude"
     posLat: Float!
@@ -421,19 +421,41 @@ type Recipient implements RecipientBase {
     posLng: Float!
     size: String!
     stream: WasteStream!
-    tags: [RecipientTag!]!
+    tag0(
+        from: DateTime,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        to: DateTime
+    ): [RecipientTag!]!
+    tag1(
+        from: DateTime,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        to: DateTime
+    ): [RecipientTag!]!
+    to: DateTime!
     uat: Uat!
 }
 
-type RecipientTag implements RecipientTagBase {
+type RecipientTag {
+    current: Boolean!
+    from: DateTime!
+    id: Int!
+    recipient(
+        from: DateTime,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        to: DateTime
+    ): [Recipient!]!
     slot: Int!
     tag: String!
+    to: DateTime!
 }
 
 type RecommendedLabel {
     "The text to show when this label is used"
     displayName: String!
-    "Name of label that will be found in the labels[] array"
+    "Name of the label that will be found in the labels[] array"
     label: String!
 }
 
@@ -447,18 +469,19 @@ type SearchResult {
 type SearchResultHighlight {
     addressNumber: String
     addressStreet: String
+    extId: String
     id: String
     name: String
 }
 
 type Stat {
     collectionCount: [StatCollectionBucket!]!
-    userCountPerCategory: StatUser!
+    userCountPerCategory: [UserCountPerCategory!]!
 }
 
 type StatCollectionBucket {
-    end: Timestamp!
-    start: Timestamp!
+    end: DateTime!
+    start: DateTime!
     values: [StatCollectionBucketValues!]!
 }
 
@@ -467,157 +490,75 @@ type StatCollectionBucketValues {
     value: Int!
 }
 
-type StatUser {
-    business: StatUserBusiness!
-    domestic: StatUserDomestic!
-}
-
-type StatUserBusiness {
-    administrative: Int!
-    industrial: Int!
-}
-
-type StatUserDomestic {
-    condominium: Int!
-    flat: Int!
-    home: Int!
-}
-
-type Task {
-    assignedTo: String
-    comments: String!
-    county: County!
-    current: Boolean!
-    gid: String
-    groups: [RawGroup!]!
-    history: [Task!]!
-    id: Int!
-    loc: Loc!
-    posLat: Float
-    posLng: Float
-    recipients: [RawRecipient!]!
-    status: TaskStatus!
-    uat: Uat!
-    updatedAt: Timestamp!
-    updatedBy: String!
-    users: [RawUser!]!
-    validFrom: Timestamp!
-    validTo: Timestamp!
-}
-
-type TaskSearchHighlights {
-    gid: String
-    groupIds: String
-    id: String
-    recipientIds: String
-    userIds: String
-}
-
-type TaskSearchResult {
-    highlights: TaskSearchHighlights!
-    task: Task!
-}
-
 type Uat {
     arteries: [Artery!]!
     county: County!
     id: Int!
-    locs: [Uat!]!
+    locs: [Loc!]!
     name: String!
     uname: String!
 }
 
-type User implements UserBase {
-    active: Boolean!
+type User {
+    "Street Number"
     addressNumber: String!
     addressStreet: String!
-    bill(schedule: BillScheduleInput): UserBill
-    billingData: UserBillingData
-    billingType: BillingType!
+    attributes: [UserAttribute!]!
     comments: String!
     county: County!
     current: Boolean!
-    currentGroup: GroupUser
-    groupHistory(range: FromToFilter): [GroupUser!]!
-    history(range: FromToFilter): [User!]!
-    id: String!
+    eosId: String!
+    "External ID used to interface this user to other systems"
+    extId: String
+    from: DateTime!
+    "Group entries with which this user entry is associated"
+    groups(
+        from: DateTime,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        to: DateTime
+    ): PaginatedGroups!
+    "Whether this object is hidden by default or not"
+    hidden: Boolean!
+    id: Int!
     idNumber: String!
-    labels: [String!]!
+    labels: [Label!]!
     loc: Loc!
     name: String!
-    stat: UserStat
+    to: DateTime!
     type: UserType!
     uat: Uat!
-    validFrom: Timestamp!
-    validTo: Timestamp!
 }
 
-type UserBill {
-    consolidatedUrl: String!
-    itemisedUrl: String!
-    schedule: BillSchedule!
-    summary: [BillSummaryItem!]!
+type UserAttribute {
+    name: String!
+    value: String!
 }
 
-type UserBillingData_Fixed {
-    fixedComponents: [UserBillingData_Fixed_Component!]!
+type UserCountPerCategory {
+    count: Int!
+    groupType: GroupType!
+    userType: UserType!
 }
 
-type UserBillingData_Fixed_Component {
-    collections: Int!
-    size: String!
+type Vehicle {
+    county: County!
+    licensePlate: String!
+}
+
+type VehicleTrip {
+    county: County!
+    editedAt: DateTime!
+    editedBy: String!
+    end: DateTime!
+    id: Int!
+    start: DateTime!
     stream: WasteStream!
-}
-
-type UserBillingData_PerPerson {
-    persons: Int!
-}
-
-type UserBillingData_PerPerson_RA {
-    persons: Int!
-    ra: [UserBillingData_PerPerson_RA_Month!]!
-}
-
-type UserBillingData_PerPerson_RA_Month {
-    month: String!
-    value: Boolean!
-}
-
-type UserStat {
-    collectionDays: [String!]
-    collectionWeight: String
-    collectionsPerMonth: Float
-    penaltiesPerYear: Float
-}
-
-"Label operations. Add/remove available."
-enum ArrayOp {
-    ADD
-    REMOVE
-}
-
-"Bill item type"
-enum BillSummaryItemType {
-    CollectionsExtra
-    CollectionsIncluded
-    CollectionsPenalty
-    Total
-    TotalExtra
-    TotalPenalty
-}
-
-"Unit the item is in"
-enum BillSummaryItemUnit {
-    Count
-    Lei
-}
-
-"User billing type"
-enum BillingType {
-    FIXED
-    NONE
-    PER_PERSON
-    PER_PERSON_RA
+    vehicleLicensePlate: String!
 }
 
 "The source of this reading"
@@ -636,7 +577,14 @@ enum CollectionStatus {
     UNSUCCESSFUL
 }
 
-"The type of group, see enums for more details."
+"eos object type enum"
+enum EosObjectType {
+    GROUP
+    RECIPIENT
+    USER
+}
+
+"The type of group. Subject to change in the future"
 enum GroupType {
     AE
     DM
@@ -644,27 +592,19 @@ enum GroupType {
     PX
 }
 
-"Patch State"
-enum PatchState {
-    ACCEPTED
-    APPLIED
-    PENDING
-    SUBMITTED
-    VOIDED
+"State of hideables to show."
+enum HideableState {
+    ANY
+    HIDDEN
+    VISIBLE
 }
 
-"Search result object type"
-enum SearchResultType {
-    GROUP
-    RECIPIENT
-    USER
-}
-
-enum TaskStatus {
-    NEW
-    RESOLVED
-    REVISIT
-    UNRESOLVED
+"Type of historical record to return for an object"
+enum HistoricalRecordType {
+    CURRENT_ONLY
+    FULL
+    HISTORY_ONLY
+    INHERIT
 }
 
 "User type"
@@ -682,114 +622,156 @@ enum WasteStream {
     RPM
 }
 
-input BillScheduleInput {
-    endMonth: Int!
-    startMonth: Int!
-    year: Int!
+input CollectionCreateInput {
+    arrivedAt: DateTime!
+    countyId: Int
+    createdAt: DateTime!
+    "UUID"
+    extId: String!
+    ignoreTimeout: Boolean
+    posLat: Float!
+    posLng: Float!
+    source: CollectionSource!
+    tag: String!
+    vehicleLicensePlate: String!
 }
 
-input FromToFilter {
-    from: Int
-    to: Int
-}
-
-input GroupInput {
-    active: Boolean
+input GroupCreateInput {
+    addressNumber: String!
+    addressStreet: String!
     comments: String
-    labels: [LabelEdit!]
-    uatId: Int
+    countyId: Float!
+    "Object hidden or not"
+    hidden: Boolean!
+    "Full label array"
+    labels: [LabelInput!]!
+    locId: Int!
+    type: GroupType!
+    uatId: Int!
 }
 
-input LabelEdit {
-    "Name of label to perform operation on"
-    name: String!
-    "Operation"
-    op: ArrayOp!
-}
-
-input RecipientInput {
-    active: Boolean
+input GroupUpdateInput {
     addressNumber: String
     addressStreet: String
     comments: String
+    "Object hidden or not"
+    hidden: Boolean
+    "Full label array"
+    labels: [LabelInput!]
+    locId: Int
+    type: GroupType
+    uatId: Int
+}
+
+input LabelInput {
+    name: String!
+    value: String
+}
+
+input QueryCollectionDateFilter {
+    from: DateTime
+    to: DateTime
+}
+
+input RecipientCreateInput {
+    addressNumber: String!
+    addressStreet: String!
+    altId: String
+    comments: String!
+    countyId: Int!
     groupId: String
-    labels: [LabelEdit!]
-    locId: Int
-    posLat: Float
-    posLng: Float
-    "Valid values are: 120L, 240L, 360L, 1.100L, S60, S120"
-    size: String
-    stream: WasteStream
-    tags: [TagEdit!]
-    uatId: Int
-}
-
-input TagEdit {
-    "Operation"
-    op: ArrayOp!
-    "Slot of the transponder to add/remove. If -1 when adding, a slot is auto assigned. If -1 when removing, just the tag and not the slot position is considered"
-    slot: Int
-    "Transponder code of the tag to add/remove"
-    tag: String!
-}
-
-input TaskInput {
-    "Use empty string to set it to null. Can only be updated to empty string, but edited to any value"
-    assignedTo: String
-    comments: String
-    "County ID. Can only be set when editing, not updating, a task"
-    countyId: Int
-    groupIds: [String!]
-    "Loc ID. Can only be set when editing, not updating, a task"
-    locId: Int
-    posLat: Float
-    posLng: Float
-    recipientIds: [String!]
-    status: TaskStatus
-    "Uat ID. Can only be set when editing not updating a task"
-    uatId: Int
-    userIds: [String!]
-}
-
-input UserBillingInput {
-    "Only applicable if billingType is FIXED"
-    fixed: [UserBillingInputFixedCompoent!]
-    "Number of persons. Only valid for PER_PERSON, PER_PERSON_RA types"
-    persons: Int
-    "Only applicable to PER_PERSON_RA types"
-    ra: [UserBillingInputRAEntry!]
-}
-
-input UserBillingInputFixedCompoent {
-    collections: Int!
-    "Valid recipient size for component"
+    "Object hidden or not"
+    hidden: Boolean!
+    "Full label array"
+    labels: [LabelInput!]!
+    locId: Int!
+    posLat: Float!
+    posLng: Float!
     size: String!
     stream: WasteStream!
+    uatId: Int!
 }
 
-input UserBillingInputRAEntry {
-    "Year-Month to which this applies"
-    month: String!
-    "Whether RA is active for this month or not"
-    value: Boolean!
+input RecipientTagUpdateInput {
+    recipientId: String
+    slot: Int!
 }
 
-input UserInput {
-    active: Boolean
+input RecipientUpdateInput {
     addressNumber: String
     addressStreet: String
-    billingData: UserBillingInput
-    billingType: BillingType
     comments: String
-    "Group this user belongs to. Set to special value 000000 to set to group to NULL"
     groupId: String
-    idNumber: String
-    labels: [LabelEdit!]
+    "Object hidden or not"
+    hidden: Boolean
+    "Full label array"
+    labels: [LabelInput!]
     locId: Int
-    name: String
+    posLat: Float
+    posLng: Float
+    size: String
+    stream: WasteStream
     uatId: Int
 }
 
+input UserAttributeInput {
+    name: String!
+    value: String!
+}
 
-"UNIX Timestamp"
-scalar Timestamp
+input UserCreateInput {
+    addressNumber: String!
+    addressStreet: String!
+    attributes: [UserAttributeInput!]!
+    comments: String!
+    countyId: Int!
+    "External ID used to interface this user to other systems"
+    extId: String
+    groupId: String
+    "Object hidden or not"
+    hidden: Boolean!
+    idNumber: String!
+    "Full label array"
+    labels: [LabelInput!]!
+    locId: Int!
+    name: String!
+    type: UserType!
+    uatId: Int!
+}
+
+input UserUpdateInput {
+    addressNumber: String
+    addressStreet: String
+    attributes: [UserAttributeInput!]
+    comments: String
+    "External ID used to interface this user to other systems"
+    extId: String
+    groupId: String
+    "Object hidden or not"
+    hidden: Boolean
+    idNumber: String
+    "Full label array"
+    labels: [LabelInput!]
+    locId: Int
+    name: String
+    type: UserType
+    uatId: Int
+}
+
+input VehicleTripDateFilter {
+    from: DateTime
+    to: DateTime
+}
+
+input VehicleTripInput {
+    end: DateTime!
+    "Trip id, if editing an existing trip"
+    id: Int
+    start: DateTime!
+    stream: WasteStream!
+    vehicleLicensePlate: String
+}
+
+
+"The javascript `Date` as string. Type represents date and time as the ISO Date string."
+scalar DateTime

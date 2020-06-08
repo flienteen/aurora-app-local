@@ -9,7 +9,9 @@ import com.apollographql.apollo.rx2.rxQuery
 import com.auth0.android.jwt.JWT
 import com.persidius.eos.aurora.*
 import com.persidius.eos.aurora.auth.AuthManager
-import com.persidius.eos.aurora.type.CustomType
+import com.persidius.eos.aurora.database.entities.RecipientTagUpdate
+import com.persidius.eos.aurora.database.entities.RecipientUpdate
+import com.persidius.eos.aurora.type.*
 import com.persidius.eos.aurora.util.Optional
 import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers
@@ -19,6 +21,12 @@ import okhttp3.logging.HttpLoggingInterceptor
 
 class EosGraphQL(am: AuthManager) {
     private var client = BehaviorSubject.create<ApolloClient>()
+
+    companion object {
+        const val RECIPIENT_PAGE_SIZE = 3000
+        const val GROUP_PAGE_SIZE = 3000
+        const val RECIPIENT_TAG_PAGE_SIZE = 3000
+    }
 
     init {
         am.session.jwt.map {createApolloClient(it, BuildConfig.EOS_GRAPHQL_URL)}
@@ -65,24 +73,72 @@ class EosGraphQL(am: AuthManager) {
             .firstOrError()
     }
 
-   /* fun queryRecipients(withTags: Boolean = false, updatedAfter: Int?, pageAfter: String? = null): Single<Response<RecipientsQuery.Data>> {
-        return client.value!!.rxQuery(RecipientsQuery(withTags, Input.fromNullable(updatedAfter), Input.fromNullable(pageAfter)))
+    fun queryRecipients(pageNumber: Int): Single<Response<RecipientsQuery.Data>> {
+        return client.value!!.rxQuery(RecipientsQuery(RECIPIENT_PAGE_SIZE, Input.fromNullable(pageNumber), Input.absent()))
             .subscribeOn(Schedulers.io())
             .firstOrError()
     }
 
-    fun queryGroups(updatedAfter: Int?, pageAfter: String? = null): Single<Response<GroupsQuery.Data>> {
-        return client.value!!.rxQuery(GroupsQuery(Input.fromNullable(updatedAfter), Input.fromNullable(pageAfter)))
+    fun deltaQueryRecipients(afterId: Int, pageNumber: Int?): Single<Response<RecipientsQuery.Data>> {
+        return client.value!!.rxQuery(RecipientsQuery(RECIPIENT_PAGE_SIZE, Input.fromNullable(pageNumber), Input.fromNullable(afterId)))
             .subscribeOn(Schedulers.io())
             .firstOrError()
     }
-    */
 
-    /*
-    fun updateRecipient(id: String, createdAt: Int, recipient: RecipientInput): Single<Response<EditRecipientMutation.Data>> {
-        return client.value!!.rxMutate(EditRecipientMutation(
-            createdAt, id, recipient
+    fun queryGroups(pageNumber: Int?): Single<Response<GroupsQuery.Data>> {
+        return client.value!!.rxQuery(GroupsQuery(GROUP_PAGE_SIZE, Input.fromNullable(pageNumber), Input.absent()))
+            .subscribeOn(Schedulers.io())
+            .firstOrError()
+    }
+
+    fun deltaQueryGroups(afterId: Int, pageNumber: Int?): Single<Response<GroupsQuery.Data>> {
+        return client.value!!.rxQuery(GroupsQuery(GROUP_PAGE_SIZE, Input.fromNullable(pageNumber), Input.fromNullable(afterId)))
+            .subscribeOn(Schedulers.io())
+            .firstOrError()
+    }
+
+    fun queryRecipientTags(pageNumber: Int?): Single<Response<RecipientTagsQuery.Data>> {
+        return client.value!!.rxQuery(RecipientTagsQuery(RECIPIENT_TAG_PAGE_SIZE, Input.fromNullable(pageNumber), Input.absent()))
+            .subscribeOn(Schedulers.io())
+            .firstOrError()
+    }
+
+    fun deltaQueryRecipientTags(afterId: Int, pageNumber: Int?): Single<Response<RecipientTagsQuery.Data>> {
+        return client.value!!.rxQuery(RecipientTagsQuery(RECIPIENT_TAG_PAGE_SIZE, Input.fromNullable(pageNumber), Input.fromNullable(afterId)))
+            .subscribeOn(Schedulers.io())
+            .firstOrError()
+    }
+
+    private fun <T>absentFromNull(v: T?): Input<T> = if(v == null) Input.absent() else Input.fromNullable(v)
+
+    fun updateRecipient(update: RecipientUpdate): Single<Response<UpdateRecipientMutation.Data>> {
+        val input = RecipientUpdateInput(
+            labels = if(update.labels == null) Input.absent() else Input.fromNullable(update.labels.entries.map { LabelInput(it.key, Input.fromNullable(it.value)) }.toList()),
+            stream = if(update.stream == null) Input.absent() else Input.fromNullable(if(WasteStream.safeValueOf(update.stream) == WasteStream.UNKNOWN__) WasteStream.REZ else WasteStream.valueOf(update.stream)),
+            groupId = if(update.groupId == null) Input.absent() else Input.fromNullable(if(update.groupId.isEmpty()) null else update.groupId),
+            locId = absentFromNull(update.locId),
+            uatId = absentFromNull(update.uatId),
+            addressNumber = absentFromNull(update.addressNumber),
+            addressStreet = absentFromNull(update.addressStreet),
+            comments = absentFromNull(update.comments),
+            size = absentFromNull(update.size),
+            posLat = absentFromNull(update.posLat),
+            posLng = absentFromNull(update.posLng)
+        )
+        return client.value!!.rxMutate(UpdateRecipientMutation(
+            eosId = update.eosId,
+            input = input)
+        ).subscribeOn(Schedulers.io())
+    }
+
+    fun updateTag(update: RecipientTagUpdate): Single<Response<UpdateRecipientTagMutation.Data>> {
+        val input = RecipientTagUpdateInput(
+            slot = update.slot,
+            recipientId = Input.fromNullable(update.recipientId)
+        )
+        return client.value!!.rxMutate(UpdateRecipientTagMutation(
+            tag = update.tag,
+            input = input
         )).subscribeOn(Schedulers.io())
     }
-    */
 }

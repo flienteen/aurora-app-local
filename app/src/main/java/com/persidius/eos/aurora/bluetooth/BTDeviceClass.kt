@@ -1,8 +1,8 @@
 package com.persidius.eos.aurora.bluetooth
 
-import android.bluetooth.BluetoothAdapter
-import com.persidius.nemesis.bluetooth.BTService
+import io.reactivex.Completable
 import io.reactivex.Observable
+import io.reactivex.subjects.PublishSubject
 
 /**
  * The BT Device should store the socket? -> no.
@@ -10,14 +10,14 @@ import io.reactivex.Observable
  * that it can use.
  *
  */
-interface BTDeviceAdapter {
-    /**
-     * Friendly DisplayName of this device class
-     */
-    fun name(): String
-
+interface BTDeviceClass {
     /**
      * Initialise the device class
      */
-    fun start(read: Observable<ByteArray>)
+    fun start(read: Observable<ByteArray>, write: (data: ByteArray) -> Completable, tags: PublishSubject<String>)
+
+    /*
+        For disposing of any subscriptions
+     */
+    fun dispose() { }
 }

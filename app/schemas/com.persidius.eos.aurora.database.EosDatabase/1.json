@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "acccf103fd8f0d84b707ba7952acacfc",
+    "identityHash": "5b73480f77ead1fab0ab6f7ad95f044d",
     "entities": [
       {
         "tableName": "County",
@@ -44,7 +44,7 @@
       },
       {
         "tableName": "Uat",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `countyId` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`countyId`) REFERENCES `County`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `countyId` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`countyId`) REFERENCES `County`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -84,7 +84,7 @@
         "foreignKeys": [
           {
             "table": "County",
-            "onDelete": "SET NULL",
+            "onDelete": "CASCADE",
             "onUpdate": "NO ACTION",
             "columns": [
               "countyId"
@@ -132,7 +132,7 @@
       },
       {
         "tableName": "Loc",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `uatId` INTEGER NOT NULL, `countyId` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`uatId`) REFERENCES `Uat`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`countyId`) REFERENCES `County`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `uatId` INTEGER NOT NULL, `countyId` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`uatId`) REFERENCES `Uat`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`countyId`) REFERENCES `County`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -186,7 +186,7 @@
         "foreignKeys": [
           {
             "table": "Uat",
-            "onDelete": "SET NULL",
+            "onDelete": "CASCADE",
             "onUpdate": "NO ACTION",
             "columns": [
               "uatId"
@@ -197,7 +197,7 @@
           },
           {
             "table": "County",
-            "onDelete": "SET NULL",
+            "onDelete": "CASCADE",
             "onUpdate": "NO ACTION",
             "columns": [
               "countyId"
@@ -210,7 +210,7 @@
       },
       {
         "tableName": "Artery",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `prefix` TEXT NOT NULL, `locId` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`locId`) REFERENCES `Loc`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `prefix` TEXT NOT NULL, `locId` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`locId`) REFERENCES `Loc`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -256,7 +256,7 @@
         "foreignKeys": [
           {
             "table": "Loc",
-            "onDelete": "SET NULL",
+            "onDelete": "CASCADE",
             "onUpdate": "NO ACTION",
             "columns": [
               "locId"
@@ -335,63 +335,19 @@
         "foreignKeys": []
       },
       {
-        "tableName": "Session",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `createdAt` INTEGER NOT NULL, `refCount` INTEGER NOT NULL, `open` INTEGER NOT NULL, `uploaded` INTEGER NOT NULL, `txId` TEXT)",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "createdAt",
-            "columnName": "createdAt",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "refCount",
-            "columnName": "refCount",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "open",
-            "columnName": "open",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "uploaded",
-            "columnName": "uploaded",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "txId",
-            "columnName": "txId",
-            "affinity": "TEXT",
-            "notNull": false
-          }
-        ],
-        "primaryKey": {
-          "columnNames": [
-            "id"
-          ],
-          "autoGenerate": true
-        },
-        "indices": [],
-        "foreignKeys": []
-      },
-      {
         "tableName": "Recipient",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `addressNumber` TEXT NOT NULL, `addressStreet` TEXT NOT NULL, `posLat` REAL NOT NULL, `posLng` REAL NOT NULL, `labels` TEXT NOT NULL, `comments` TEXT NOT NULL, `active` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `groupId` TEXT, `stream` TEXT NOT NULL, `size` TEXT NOT NULL, `locId` INTEGER NOT NULL, `uatId` INTEGER NOT NULL, `countyId` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`eosId` TEXT NOT NULL, `id` INTEGER NOT NULL, `addressNumber` TEXT NOT NULL, `addressStreet` TEXT NOT NULL, `posLat` REAL NOT NULL, `posLng` REAL NOT NULL, `labels` TEXT NOT NULL, `comments` TEXT NOT NULL, `groupId` TEXT, `stream` TEXT NOT NULL, `size` TEXT NOT NULL, `locId` INTEGER NOT NULL, `uatId` INTEGER NOT NULL, `countyId` INTEGER NOT NULL, PRIMARY KEY(`eosId`))",
         "fields": [
+          {
+            "fieldPath": "eosId",
+            "columnName": "eosId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
           {
             "fieldPath": "id",
             "columnName": "id",
-            "affinity": "TEXT",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -428,18 +384,6 @@
             "fieldPath": "comments",
             "columnName": "comments",
             "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "active",
-            "columnName": "active",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "updatedAt",
-            "columnName": "updatedAt",
-            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -481,7 +425,7 @@
         ],
         "primaryKey": {
           "columnNames": [
-            "id"
+            "eosId"
           ],
           "autoGenerate": false
         },
@@ -509,55 +453,6 @@
               "locId"
             ],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_Recipient_locId` ON `${TABLE_NAME}` (`locId`)"
-          },
-          {
-            "name": "index_Recipient_updatedAt",
-            "unique": false,
-            "columnNames": [
-              "updatedAt"
-            ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_Recipient_updatedAt` ON `${TABLE_NAME}` (`updatedAt`)"
-          }
-        ],
-        "foreignKeys": []
-      },
-      {
-        "tableName": "RecipientTag",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`tag` TEXT NOT NULL, `recipientId` TEXT NOT NULL, `slot` INTEGER NOT NULL, PRIMARY KEY(`tag`))",
-        "fields": [
-          {
-            "fieldPath": "tag",
-            "columnName": "tag",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "recipientId",
-            "columnName": "recipientId",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "slot",
-            "columnName": "slot",
-            "affinity": "INTEGER",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "columnNames": [
-            "tag"
-          ],
-          "autoGenerate": false
-        },
-        "indices": [
-          {
-            "name": "index_RecipientTag_recipientId",
-            "unique": false,
-            "columnNames": [
-              "recipientId"
-            ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_RecipientTag_recipientId` ON `${TABLE_NAME}` (`recipientId`)"
           }
         ],
         "foreignKeys": []
@@ -577,15 +472,15 @@
         "contentSyncTriggers": [
           "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_RecipientFTS_BEFORE_UPDATE BEFORE UPDATE ON `Recipient` BEGIN DELETE FROM `RecipientFTS` WHERE `docid`=OLD.`rowid`; END",
           "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_RecipientFTS_BEFORE_DELETE BEFORE DELETE ON `Recipient` BEGIN DELETE FROM `RecipientFTS` WHERE `docid`=OLD.`rowid`; END",
-          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_RecipientFTS_AFTER_UPDATE AFTER UPDATE ON `Recipient` BEGIN INSERT INTO `RecipientFTS`(`docid`, `id`, `addressStreet`, `addressNumber`) VALUES (NEW.`rowid`, NEW.`id`, NEW.`addressStreet`, NEW.`addressNumber`); END",
-          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_RecipientFTS_AFTER_INSERT AFTER INSERT ON `Recipient` BEGIN INSERT INTO `RecipientFTS`(`docid`, `id`, `addressStreet`, `addressNumber`) VALUES (NEW.`rowid`, NEW.`id`, NEW.`addressStreet`, NEW.`addressNumber`); END"
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_RecipientFTS_AFTER_UPDATE AFTER UPDATE ON `Recipient` BEGIN INSERT INTO `RecipientFTS`(`docid`, `eosId`, `addressStreet`, `addressNumber`) VALUES (NEW.`rowid`, NEW.`eosId`, NEW.`addressStreet`, NEW.`addressNumber`); END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_RecipientFTS_AFTER_INSERT AFTER INSERT ON `Recipient` BEGIN INSERT INTO `RecipientFTS`(`docid`, `eosId`, `addressStreet`, `addressNumber`) VALUES (NEW.`rowid`, NEW.`eosId`, NEW.`addressStreet`, NEW.`addressNumber`); END"
         ],
         "tableName": "RecipientFTS",
-        "createSql": "CREATE VIRTUAL TABLE IF NOT EXISTS `${TABLE_NAME}` USING FTS4(`id` TEXT NOT NULL, `addressStreet` TEXT NOT NULL, `addressNumber` TEXT NOT NULL, tokenize=unicode61, content=`Recipient`)",
+        "createSql": "CREATE VIRTUAL TABLE IF NOT EXISTS `${TABLE_NAME}` USING FTS4(`eosId` TEXT NOT NULL, `addressStreet` TEXT NOT NULL, `addressNumber` TEXT NOT NULL, tokenize=unicode61, content=`Recipient`)",
         "fields": [
           {
-            "fieldPath": "id",
-            "columnName": "id",
+            "fieldPath": "eosId",
+            "columnName": "eosId",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -610,9 +505,15 @@
         "foreignKeys": []
       },
       {
-        "tableName": "RecipientPatch",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `recipientId` TEXT NOT NULL, `sessionId` INTEGER, `createdAt` INTEGER NOT NULL, `createdBy` TEXT NOT NULL, `posLat` REAL, `posLng` REAL, `stream` TEXT, `size` TEXT, `addressStreet` TEXT, `addressNumber` TEXT, `uatId` INTEGER, `locId` INTEGER, `comments` TEXT, `active` INTEGER, `labels` TEXT NOT NULL, `tags` TEXT NOT NULL, `groupId` TEXT)",
+        "tableName": "RecipientTag",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`tag` TEXT NOT NULL, `id` INTEGER NOT NULL, `recipientId` TEXT, `slot` INTEGER NOT NULL, PRIMARY KEY(`tag`))",
         "fields": [
+          {
+            "fieldPath": "tag",
+            "columnName": "tag",
+            "affinity": "TEXT",
+            "notNull": true
+          },
           {
             "fieldPath": "id",
             "columnName": "id",
@@ -623,24 +524,73 @@
             "fieldPath": "recipientId",
             "columnName": "recipientId",
             "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "slot",
+            "columnName": "slot",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "tag"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [
+          {
+            "name": "index_RecipientTag_tag",
+            "unique": true,
+            "columnNames": [
+              "tag"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_RecipientTag_tag` ON `${TABLE_NAME}` (`tag`)"
+          },
+          {
+            "name": "index_RecipientTag_recipientId",
+            "unique": false,
+            "columnNames": [
+              "recipientId"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_RecipientTag_recipientId` ON `${TABLE_NAME}` (`recipientId`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "RecipientUpdate",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`updateId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `eosId` TEXT NOT NULL, `createdAt` TEXT NOT NULL, `createdBy` TEXT NOT NULL, `id` INTEGER NOT NULL, `posLat` REAL, `posLng` REAL, `stream` TEXT, `size` TEXT, `addressStreet` TEXT, `addressNumber` TEXT, `uatId` INTEGER, `locId` INTEGER, `comments` TEXT, `labels` TEXT, `groupId` TEXT, `uploaded` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "updateId",
+            "columnName": "updateId",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "sessionId",
-            "columnName": "sessionId",
-            "affinity": "INTEGER",
-            "notNull": false
+            "fieldPath": "eosId",
+            "columnName": "eosId",
+            "affinity": "TEXT",
+            "notNull": true
           },
           {
             "fieldPath": "createdAt",
             "columnName": "createdAt",
-            "affinity": "INTEGER",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
             "fieldPath": "createdBy",
             "columnName": "createdBy",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -698,130 +648,149 @@
             "notNull": false
           },
           {
-            "fieldPath": "active",
-            "columnName": "active",
-            "affinity": "INTEGER",
-            "notNull": false
-          },
-          {
             "fieldPath": "labels",
             "columnName": "labels",
             "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "tags",
-            "columnName": "tags",
-            "affinity": "TEXT",
-            "notNull": true
+            "notNull": false
           },
           {
             "fieldPath": "groupId",
             "columnName": "groupId",
             "affinity": "TEXT",
             "notNull": false
+          },
+          {
+            "fieldPath": "uploaded",
+            "columnName": "uploaded",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
           "columnNames": [
-            "id"
+            "updateId"
           ],
           "autoGenerate": true
         },
         "indices": [
           {
-            "name": "index_RecipientPatch_sessionId",
+            "name": "index_RecipientUpdate_eosId",
             "unique": false,
             "columnNames": [
-              "sessionId"
+              "eosId"
             ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_RecipientPatch_sessionId` ON `${TABLE_NAME}` (`sessionId`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_RecipientUpdate_eosId` ON `${TABLE_NAME}` (`eosId`)"
           },
           {
-            "name": "index_RecipientPatch_recipientId",
+            "name": "index_RecipientUpdate_uploaded",
             "unique": false,
             "columnNames": [
-              "recipientId"
+              "uploaded"
             ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_RecipientPatch_recipientId` ON `${TABLE_NAME}` (`recipientId`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_RecipientUpdate_uploaded` ON `${TABLE_NAME}` (`uploaded`)"
           }
         ],
         "foreignKeys": []
       },
       {
-        "tableName": "Task",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `gid` TEXT NOT NULL, `assignedTo` TEXT NOT NULL, `validFrom` INTEGER NOT NULL, `validTo` INTEGER NOT NULL, `updatedBy` TEXT NOT NULL, `updatedAt` INTEGER NOT NULL, `status` TEXT NOT NULL, `posLat` REAL NOT NULL, `posLng` REAL NOT NULL, `comments` TEXT NOT NULL, `uatId` INTEGER NOT NULL, `locId` INTEGER NOT NULL, `countyId` INTEGER NOT NULL, `groupId` TEXT NOT NULL, `userId` TEXT NOT NULL, `stream` TEXT NOT NULL, `size` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "tableName": "RecipientTagUpdate",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`updateId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tag` TEXT NOT NULL, `slot` INTEGER NOT NULL, `recipientId` TEXT, `createdAt` TEXT NOT NULL, `createdBy` TEXT NOT NULL, `id` INTEGER NOT NULL, `uploaded` INTEGER NOT NULL)",
         "fields": [
+          {
+            "fieldPath": "updateId",
+            "columnName": "updateId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tag",
+            "columnName": "tag",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "slot",
+            "columnName": "slot",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recipientId",
+            "columnName": "recipientId",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdBy",
+            "columnName": "createdBy",
+            "affinity": "TEXT",
+            "notNull": true
+          },
           {
             "fieldPath": "id",
             "columnName": "id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "gid",
-            "columnName": "gid",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "assignedTo",
-            "columnName": "assignedTo",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "validFrom",
-            "columnName": "validFrom",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "validTo",
-            "columnName": "validTo",
+            "fieldPath": "uploaded",
+            "columnName": "uploaded",
             "affinity": "INTEGER",
             "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "updateId"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_RecipientTagUpdate_tag",
+            "unique": false,
+            "columnNames": [
+              "tag"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_RecipientTagUpdate_tag` ON `${TABLE_NAME}` (`tag`)"
           },
           {
-            "fieldPath": "updatedBy",
-            "columnName": "updatedBy",
+            "name": "index_RecipientTagUpdate_uploaded",
+            "unique": false,
+            "columnNames": [
+              "uploaded"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_RecipientTagUpdate_uploaded` ON `${TABLE_NAME}` (`uploaded`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "Group",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`eosId` TEXT NOT NULL, `id` INTEGER NOT NULL, `type` TEXT NOT NULL, `locId` INTEGER NOT NULL, `countyId` INTEGER NOT NULL, `uatId` INTEGER NOT NULL, PRIMARY KEY(`eosId`))",
+        "fields": [
+          {
+            "fieldPath": "eosId",
+            "columnName": "eosId",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "updatedAt",
-            "columnName": "updatedAt",
+            "fieldPath": "id",
+            "columnName": "id",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "status",
-            "columnName": "status",
+            "fieldPath": "type",
+            "columnName": "type",
             "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "posLat",
-            "columnName": "posLat",
-            "affinity": "REAL",
-            "notNull": true
-          },
-          {
-            "fieldPath": "posLng",
-            "columnName": "posLng",
-            "affinity": "REAL",
-            "notNull": true
-          },
-          {
-            "fieldPath": "comments",
-            "columnName": "comments",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "uatId",
-            "columnName": "uatId",
-            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -837,154 +806,6 @@
             "notNull": true
           },
           {
-            "fieldPath": "groupId",
-            "columnName": "groupId",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "userId",
-            "columnName": "userId",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "stream",
-            "columnName": "stream",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "size",
-            "columnName": "size",
-            "affinity": "TEXT",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "columnNames": [
-            "id"
-          ],
-          "autoGenerate": false
-        },
-        "indices": [
-          {
-            "name": "index_Task_countyId",
-            "unique": false,
-            "columnNames": [
-              "countyId"
-            ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_Task_countyId` ON `${TABLE_NAME}` (`countyId`)"
-          },
-          {
-            "name": "index_Task_uatId",
-            "unique": false,
-            "columnNames": [
-              "uatId"
-            ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_Task_uatId` ON `${TABLE_NAME}` (`uatId`)"
-          },
-          {
-            "name": "index_Task_locId",
-            "unique": false,
-            "columnNames": [
-              "locId"
-            ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_Task_locId` ON `${TABLE_NAME}` (`locId`)"
-          },
-          {
-            "name": "index_Task_updatedAt",
-            "unique": false,
-            "columnNames": [
-              "updatedAt"
-            ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_Task_updatedAt` ON `${TABLE_NAME}` (`updatedAt`)"
-          }
-        ],
-        "foreignKeys": []
-      },
-      {
-        "ftsVersion": "FTS4",
-        "ftsOptions": {
-          "tokenizer": "unicode61",
-          "tokenizerArgs": [],
-          "contentTable": "Task",
-          "languageIdColumnName": "",
-          "matchInfo": "FTS4",
-          "notIndexedColumns": [],
-          "prefixSizes": [],
-          "preferredOrder": "ASC"
-        },
-        "contentSyncTriggers": [
-          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_TaskFTS_BEFORE_UPDATE BEFORE UPDATE ON `Task` BEGIN DELETE FROM `TaskFTS` WHERE `docid`=OLD.`rowid`; END",
-          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_TaskFTS_BEFORE_DELETE BEFORE DELETE ON `Task` BEGIN DELETE FROM `TaskFTS` WHERE `docid`=OLD.`rowid`; END",
-          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_TaskFTS_AFTER_UPDATE AFTER UPDATE ON `Task` BEGIN INSERT INTO `TaskFTS`(`docid`, `id`) VALUES (NEW.`rowid`, NEW.`id`); END",
-          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_TaskFTS_AFTER_INSERT AFTER INSERT ON `Task` BEGIN INSERT INTO `TaskFTS`(`docid`, `id`) VALUES (NEW.`rowid`, NEW.`id`); END"
-        ],
-        "tableName": "TaskFTS",
-        "createSql": "CREATE VIRTUAL TABLE IF NOT EXISTS `${TABLE_NAME}` USING FTS4(`id` TEXT NOT NULL, tokenize=unicode61, content=`Task`)",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "TEXT",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "columnNames": [],
-          "autoGenerate": false
-        },
-        "indices": [],
-        "foreignKeys": []
-      },
-      {
-        "tableName": "Groups",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `labels` TEXT NOT NULL, `comments` TEXT NOT NULL, `type` TEXT NOT NULL, `updatedAt` INTEGER NOT NULL, `active` INTEGER NOT NULL, `countyId` INTEGER NOT NULL, `uatId` INTEGER NOT NULL, PRIMARY KEY(`id`))",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "labels",
-            "columnName": "labels",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "comments",
-            "columnName": "comments",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "type",
-            "columnName": "type",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "updatedAt",
-            "columnName": "updatedAt",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "active",
-            "columnName": "active",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "countyId",
-            "columnName": "countyId",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
             "fieldPath": "uatId",
             "columnName": "uatId",
             "affinity": "INTEGER",
@@ -993,42 +814,26 @@
         ],
         "primaryKey": {
           "columnNames": [
-            "id"
+            "eosId"
           ],
           "autoGenerate": false
         },
         "indices": [
           {
-            "name": "index_Groups_uatId",
+            "name": "index_Group_uatId",
             "unique": false,
             "columnNames": [
               "uatId"
             ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_Groups_uatId` ON `${TABLE_NAME}` (`uatId`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Group_uatId` ON `${TABLE_NAME}` (`uatId`)"
           },
           {
-            "name": "index_Groups_active",
-            "unique": false,
-            "columnNames": [
-              "active"
-            ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_Groups_active` ON `${TABLE_NAME}` (`active`)"
-          },
-          {
-            "name": "index_Groups_type",
+            "name": "index_Group_type",
             "unique": false,
             "columnNames": [
               "type"
             ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_Groups_type` ON `${TABLE_NAME}` (`type`)"
-          },
-          {
-            "name": "index_Groups_updatedAt",
-            "unique": false,
-            "columnNames": [
-              "updatedAt"
-            ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_Groups_updatedAt` ON `${TABLE_NAME}` (`updatedAt`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Group_type` ON `${TABLE_NAME}` (`type`)"
           }
         ],
         "foreignKeys": []
@@ -1038,7 +843,7 @@
         "ftsOptions": {
           "tokenizer": "unicode61",
           "tokenizerArgs": [],
-          "contentTable": "Groups",
+          "contentTable": "Group",
           "languageIdColumnName": "",
           "matchInfo": "FTS4",
           "notIndexedColumns": [],
@@ -1046,17 +851,17 @@
           "preferredOrder": "ASC"
         },
         "contentSyncTriggers": [
-          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_GroupsFTS_BEFORE_UPDATE BEFORE UPDATE ON `Groups` BEGIN DELETE FROM `GroupsFTS` WHERE `docid`=OLD.`rowid`; END",
-          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_GroupsFTS_BEFORE_DELETE BEFORE DELETE ON `Groups` BEGIN DELETE FROM `GroupsFTS` WHERE `docid`=OLD.`rowid`; END",
-          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_GroupsFTS_AFTER_UPDATE AFTER UPDATE ON `Groups` BEGIN INSERT INTO `GroupsFTS`(`docid`, `id`) VALUES (NEW.`rowid`, NEW.`id`); END",
-          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_GroupsFTS_AFTER_INSERT AFTER INSERT ON `Groups` BEGIN INSERT INTO `GroupsFTS`(`docid`, `id`) VALUES (NEW.`rowid`, NEW.`id`); END"
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_GroupFTS_BEFORE_UPDATE BEFORE UPDATE ON `Group` BEGIN DELETE FROM `GroupFTS` WHERE `docid`=OLD.`rowid`; END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_GroupFTS_BEFORE_DELETE BEFORE DELETE ON `Group` BEGIN DELETE FROM `GroupFTS` WHERE `docid`=OLD.`rowid`; END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_GroupFTS_AFTER_UPDATE AFTER UPDATE ON `Group` BEGIN INSERT INTO `GroupFTS`(`docid`, `eosId`) VALUES (NEW.`rowid`, NEW.`eosId`); END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_GroupFTS_AFTER_INSERT AFTER INSERT ON `Group` BEGIN INSERT INTO `GroupFTS`(`docid`, `eosId`) VALUES (NEW.`rowid`, NEW.`eosId`); END"
         ],
-        "tableName": "GroupsFTS",
-        "createSql": "CREATE VIRTUAL TABLE IF NOT EXISTS `${TABLE_NAME}` USING FTS4(`id` TEXT NOT NULL, tokenize=unicode61, content=`Groups`)",
+        "tableName": "GroupFTS",
+        "createSql": "CREATE VIRTUAL TABLE IF NOT EXISTS `${TABLE_NAME}` USING FTS4(`eosId` TEXT NOT NULL, tokenize=unicode61, content=`Group`)",
         "fields": [
           {
-            "fieldPath": "id",
-            "columnName": "id",
+            "fieldPath": "eosId",
+            "columnName": "eosId",
             "affinity": "TEXT",
             "notNull": true
           }
@@ -1066,144 +871,13 @@
           "autoGenerate": false
         },
         "indices": [],
-        "foreignKeys": []
-      },
-      {
-        "tableName": "User",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `idNumber` TEXT NOT NULL, `labels` TEXT NOT NULL, `comments` TEXT NOT NULL, `active` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `groupId` TEXT, `type` TEXT NOT NULL, `billingType` TEXT NOT NULL, `persons` INTEGER, `countyId` INTEGER NOT NULL, `uatId` INTEGER NOT NULL, `locId` INTEGER NOT NULL, PRIMARY KEY(`id`))",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "name",
-            "columnName": "name",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "idNumber",
-            "columnName": "idNumber",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "labels",
-            "columnName": "labels",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "comments",
-            "columnName": "comments",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "active",
-            "columnName": "active",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "updatedAt",
-            "columnName": "updatedAt",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "groupId",
-            "columnName": "groupId",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
-            "fieldPath": "type",
-            "columnName": "type",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "billingType",
-            "columnName": "billingType",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "persons",
-            "columnName": "persons",
-            "affinity": "INTEGER",
-            "notNull": false
-          },
-          {
-            "fieldPath": "countyId",
-            "columnName": "countyId",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "uatId",
-            "columnName": "uatId",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "locId",
-            "columnName": "locId",
-            "affinity": "INTEGER",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "columnNames": [
-            "id"
-          ],
-          "autoGenerate": false
-        },
-        "indices": [
-          {
-            "name": "index_User_countyId",
-            "unique": false,
-            "columnNames": [
-              "countyId"
-            ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_User_countyId` ON `${TABLE_NAME}` (`countyId`)"
-          },
-          {
-            "name": "index_User_uatId",
-            "unique": false,
-            "columnNames": [
-              "uatId"
-            ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_User_uatId` ON `${TABLE_NAME}` (`uatId`)"
-          },
-          {
-            "name": "index_User_locId",
-            "unique": false,
-            "columnNames": [
-              "locId"
-            ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_User_locId` ON `${TABLE_NAME}` (`locId`)"
-          },
-          {
-            "name": "index_User_updatedAt",
-            "unique": false,
-            "columnNames": [
-              "updatedAt"
-            ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_User_updatedAt` ON `${TABLE_NAME}` (`updatedAt`)"
-          }
-        ],
         "foreignKeys": []
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'acccf103fd8f0d84b707ba7952acacfc')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5b73480f77ead1fab0ab6f7ad95f044d')"
     ]
   }
 }

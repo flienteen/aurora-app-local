@@ -1,7 +1,6 @@
 package com.persidius.eos.aurora.database.dao
 
 import androidx.room.*
-import com.persidius.eos.aurora.database.LongQueryResult
 import com.persidius.eos.aurora.database.entities.Loc
 import io.reactivex.Completable
 import io.reactivex.Maybe
@@ -24,5 +23,5 @@ interface LocDao {
     fun getByIds(ids: List<Int>): Maybe<List<Loc>>
 
     @Query("SELECT COUNT(id) AS result FROM Loc")
-    fun getCount(): Maybe<LongQueryResult>
+    fun getCount(): Maybe<Int>
 }

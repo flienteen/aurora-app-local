@@ -1,60 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
     <PreferenceCategory
-        app:title="RFID"
-        app:key="rfidStatus"
+        app:title="BLUETOOTH"
+        app:key="btStatus"
         app:icon="@drawable/ic_settings_rfid_24dp"
         app:enabled="true"
         >
 
         <SwitchPreferenceCompat
-            app:key="rfidEnable"
+            app:key="btEnabled"
             app:title="Scanner Activ"
             app:summary="Activare/dezactivare scanner bluetooth"
             />
 
         <ListPreference
-            app:key="rfidDeviceType"
+            app:key="btDeviceType"
             app:title="Tip Scanner"
             app:summary="Selectare tip scanner"
-            app:dependency="rfidEnable"
+            app:dependency="btEnabled"
             />
 
         <ListPreference
-            app:key="rfidDeviceAddress"
+            app:key="btDeviceId"
             app:title="Dispozitiv Bluetooth"
             app:summary="Selectare dispozitiv din lista"
-            app:dependency="rfidEnable"
+            app:dependency="btEnabled"
             />
 
         <Preference
-            app:key="rfidLastTag"
+            app:key="btLastTag"
             app:enableCopying="true"
             app:title="Ultima Citire"
             app:summary="Nu există citiri"
-            app:dependency="rfidEnable"
+            app:dependency="btEnabled"
             />
 
     </PreferenceCategory>
 
     <PreferenceCategory
-        app:title="Sesiune"
+        app:title="GENERAL"
         app:icon="@drawable/ic_settings_session_24dp"
         >
 
-        <ListPreference
-            app:key="eosEnv"
-            app:dialogTitle="Selectare server"
-            app:title="Server eos"
-            app:summary="Selectare mediu "
-            app:entries="@array/eos_env"
-            app:entryValues="@array/eos_env_values"
-            app:defaultValue="persidius.com"
-            />
-
         <Preference
             app:key="logout"
-            app:icon="@drawable/ic_close_black_24dp"
             app:title="Logout"
             app:summary="Inchidere sesiune"
             app:enabled="false"
@@ -64,7 +53,7 @@
             app:key="version"
             app:title="Versiune Aplicație"
             app:enableCopying="true"
-            app:summary="4.0.0"
+            app:summary="5.0.0"
             />
 
     </PreferenceCategory>

@@ -1,0 +1,6 @@
+mutation updateRecipientTag($tag: String!, $input: RecipientTagUpdateInput!) {
+    updateRecipientTag(tag: $tag, input: $input) {
+        tag
+        id
+    }
+}

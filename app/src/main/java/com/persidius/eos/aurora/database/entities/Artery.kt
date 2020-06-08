@@ -11,7 +11,7 @@ import androidx.room.PrimaryKey
         entity = Loc::class,
         parentColumns = ["id"],
         childColumns = ["locId"],
-        onDelete = ForeignKey.SET_NULL
+        onDelete = ForeignKey.CASCADE
     )],
     indices = [
         Index(value = ["locId"], unique = false)

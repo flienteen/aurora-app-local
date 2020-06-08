@@ -1,29 +1,42 @@
-query recipients($withTags: Boolean!, $updatedAfter: Int, $pageAfter: String) {
-    rawRecipients(updatedAfter: $updatedAfter, pageAfter: $pageAfter, maxResultsPerPage: 2500) {
-        tags @include(if: $withTags) {
-            tag
-            slot
-        }
-        updatedAt
-        labels
-        addressStreet
-        addressNumber
-        posLat
-        posLng
-        stream
-        size
-        active
-        comments
-        groupId
-        id
-        county {
+query recipients($pageSize: Int!, $pageNumber: Int, $afterId: Int) {
+    recipients(historicalRecordType: CURRENT_ONLY, hideableState: ANY,
+        pageNumber: $pageNumber, pageSize: $pageSize, afterId: $afterId) {
+        total
+        pageNumber
+        pageSize
+        items {
             id
-        }
-        loc {
-            id
-        }
-        uat {
-            id
+            eosId
+
+            labels {
+                name
+                value
+            }
+
+            addressStreet
+            addressNumber
+
+            posLat
+            posLng
+
+            stream
+            size
+            comments
+
+            groups (historicalRecordType: CURRENT_ONLY) {
+                eosId
+            }
+
+
+            county {
+                id
+            }
+            loc {
+                id
+            }
+            uat {
+                id
+            }
         }
     }
 }

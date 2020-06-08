@@ -10,7 +10,7 @@ import androidx.room.PrimaryKey
         entity = County::class,
         parentColumns = ["id"],
         childColumns = ["countyId"],
-        onDelete = ForeignKey.SET_NULL
+        onDelete = ForeignKey.CASCADE
         )
     ],
     indices = [

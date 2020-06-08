@@ -36,17 +36,18 @@
                 android:layout_marginTop="14dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/loginOtherErrorMessage">
+                app:layout_constraintTop_toBottomOf="@id/imageView">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/username"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@color/colorBackground"
                     android:ems="10"
-                    android:enabled="@{!model.locked &amp;&amp; !model.loggingIn}"
+                    android:enabled="@{model.formEnabled}"
                     android:hint="@string/user"
                     android:inputType="textEmailAddress"
-                    android:text="@={model.email}" />
+                    android:text="@={model.username}" />
             </com.google.android.material.textfield.TextInputLayout>
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/passwordHolder"
@@ -55,17 +56,18 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/usernameHolder" >
+
                 <com.google.android.material.textfield.TextInputEditText
-                    android:ems="10"
                     android:id="@+id/password"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@color/colorBackground"
+                    android:ems="10"
+                    android:enabled="@{model.formEnabled}"
                     android:hint="@string/password"
-                    android:text="@={model.pass}"
-                    android:enabled="@{!model.loggingIn}"
-                    android:inputType="textPassword"
                     android:imeOptions="actionDone"
-                    />
+                    android:inputType="textPassword"
+                    android:text="@={model.password}" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.button.MaterialButton
@@ -74,53 +76,16 @@
                 android:layout_height="wrap_content"
                 android:text="Autentificare"
                 android:onClick="@{model::login}"
-                android:enabled="@{!model.loggingIn}"
+                android:enabled="@{model.formEnabled}"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/passwordHolder"
                 />
 
-            <TextView
-                android:id="@+id/lockedErrorMessage"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/imageView"
-                android:gravity="center"
-                android:textColor="@color/colorError"
-                android:visibility="@{model.locked ? View.VISIBLE : View.GONE}"
-                android:text="Parola acestui cont a fost schimbată.\nVă rugam să vă autentificați cu noua parolă." />
-
-            <TextView
-                android:id="@+id/loginErrorMessage"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/lockedErrorMessage"
-                android:gravity="center"
-                android:textColor="@color/colorError"
-                android:visibility="@{model.loginError ? View.VISIBLE : View.GONE}"
-                android:text="Combinatie email/parolă invalidă." />
-
-            <TextView
-                android:id="@+id/loginOtherErrorMessage"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/loginErrorMessage"
-                android:gravity="center"
-                android:textColor="@color/colorError"
-                android:visibility="@{model.loginOtherError ? View.VISIBLE : View.GONE}"
-                android:text="A avut loc o eroare. Incearcă mai tarziu." />
-
-
             <ProgressBar
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:visibility="@{model.loggingIn ? View.VISIBLE : View.GONE}"
+                android:visibility="@{model.formEnabled ? View.GONE : View.VISIBLE}"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="@+id/usernameHolder"

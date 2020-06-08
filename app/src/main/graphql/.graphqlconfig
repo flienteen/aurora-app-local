@@ -1,13 +1,19 @@
 {
-  "name": "eos graphql schema",
+  "name": "eos",
   "schemaPath": "schema.graphql",
   "extensions": {
     "endpoints": {
-      "Default GraphQL Endpoint": {
-        "url": "https://eos-graph.persidius.dev",
+      "eos graphql prod": {
+        "url": "https://eos-api.persidius.com/graphql",
         "headers": {
-          "user-agent": "JS GraphQL",
-          "authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXoiOlsidTAiLCJjMCIsIm52ciIsIm52dSIsIm52ZyIsIm52YyIsImx2ciIsImx2dSIsImx2ZyIsImxlciIsImxlZyIsImxldSIsImxhciIsImxhZyIsImxhdSIsImxyciIsImxyZyIsImxydSIsImxjayIsImx2ayIsImxlayIsImx1ayJdLCJ1c2VyIjp7ImlkIjoxLCJuYW1lIjoiU3RlZmFuIiwiZW1haWwiOiJzdGVmYW5AemFwb3JvamFuLmNvbSIsImVuZm9yY2UyRkEiOmZhbHNlfSwiaWF0IjoxNTc0NjA5ODQ1LCJpc3MiOiJhdXRoX3N2YyIsInN1YiI6IjEiLCJqdGkiOiI3ODRhM2JkMi1kYjY2LTQwMDctODBiYi0yNzc3MGI4MTNjZTEifQ.azDigbZ7_K9VoPuiTXBh4iQTIusPFD0ujp70zj4kEQvZe6PCwiAVas0aUNxk3EZP-fiZWTiKBVfc-odp308L_8fgApnPVJQ5ylQrYIjW_KmQTL0ZVasnHim1QMhIfKHNvTFHu_-PpSzzdRvSVNUM5EW01O_qFm8L1ufd-NYuQ5qee2e83sADFkYw7i6JdP8saZYxjl_wEWNhL4v5fiWRdD7j4gxsHuxbogcAqGTdT0v_bf5IZKFxDQWk-nWlb44pTkiLUX3zmFSzhr8ZX3R4WVVpgqgo2kMsWOjMGD4liqQK6wuHhAwZ6HpAn4Vivyu1KxiSSuIG-P11Qxh4Cr-8Uw"
+          "user-agent": "JS GraphQL"
+        },
+        "introspect": true
+      },
+      "eos graphql dev": {
+        "url": "https://eos-api.persidius.dev/graphql",
+        "headers": {
+          "user-agent": "JS GraphQL"
         },
         "introspect": true
       }

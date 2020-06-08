@@ -1,30 +1,15 @@
-package com.persidius.eos.aurora.authorization
+package com.persidius.eos.aurora.auth
 
 import com.persidius.eos.aurora.BuildConfig
-import io.reactivex.Observable
 import io.reactivex.Single
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.Body
-import retrofit2.http.Headers
-import retrofit2.http.POST
-import retrofit2.http.Query
-import javax.annotation.Nullable
+import retrofit2.http.*
 
 interface TokenApi {
-    data class TokenRequest(
-        var grant_type: String,
-        var username: String? = null,
-        var password: String? = null,
-        var scope: String? = null,
-        var refresh_token: String? = null,
-        var client_id: String,
-        var client_secret: String
-    )
-
     data class TokenResponse (
         var access_token: String,
         var token_type: String,
@@ -34,9 +19,30 @@ interface TokenApi {
         var refresh_token: String
     )
 
+    data class TokenErrorResponse (
+        var error: String,               // usually 'invalid_grant'
+        var error_message: String        // debug error message
+    )
+
+    object TokenError {
+        val InvalidGrant = "invalid_grant"      // request did not contain valid credentials
+        val InvalidClient = "invalid_client"    // request had invalid client id
+        val InvalidRequest = "invalid_request"  // request did not contain all necessary fields
+        val InvalidScope = "invalid_scope"      // request contained invalid scopes
+        val UnsupportedGrantType = "unsupported_grant_type"  // not a valid grant type
+    }
+
     @POST("token")
-    @Headers("Content-Type: application/json")
-    fun token(@Body() request: TokenRequest): Single<TokenResponse>
+    @FormUrlEncoded()
+    fun token(
+        @Field("grant_type") grantType: String,
+        @Field("client_id") clientId: String? = null,
+        @Field("client_secret") clientSecret: String? = null,
+        @Field("username") username: String? = null,
+        @Field("password") password: String? = null,
+        @Field("scope") scope: String? = null,
+        @Field("refresh_token") refreshToken: String? = null
+    ): Single<TokenResponse>
 
     companion object {
         fun create(url: String): TokenApi {

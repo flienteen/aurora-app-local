@@ -9,7 +9,7 @@ import io.reactivex.Completable
 import io.reactivex.Maybe
 
 @Dao
-interface GroupsDao {
+interface GroupDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(groups: List<Group>): Completable
 
@@ -22,6 +22,6 @@ interface GroupsDao {
     @Query("SELECT COUNT(id) AS result FROM `Group`")
     fun getCount(): Maybe<Int>
 
-    @Query("SELECT * FROM `Group` JOIN GroupsFTS ON (GroupsFTS.rowid = `Group`.rowid) WHERE GroupsFTS MATCH :term")
+    @Query("SELECT * FROM `Group` JOIN GroupFTS ON (GroupFTS.rowid = `Group`.rowid) WHERE GroupFTS MATCH :term")
     fun search(term: String): Maybe<List<Group>>
 }

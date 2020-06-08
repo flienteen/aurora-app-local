@@ -1,4 +1,4 @@
-package com.persidius.nemesis.bluetooth
+package com.persidius.eos.aurora.bluetooth
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -9,42 +9,82 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.util.Log
-import com.facebook.react.bridge.Arguments
-import com.facebook.react.bridge.Promise
-import java.io.InputStream
-import java.io.OutputStream
-import java.util.*
+import com.persidius.eos.aurora.bluetooth.devices.LFReader
+import com.persidius.eos.aurora.bluetooth.devices.MultipenLF
+import com.persidius.eos.aurora.bluetooth.devices.MultipenUHF
+import com.persidius.eos.aurora.util.Preferences
+import com.persidius.eos.aurora.util.asLiveData
+import io.reactivex.Completable
+import io.reactivex.Observable
+import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.BehaviorSubject
+import io.reactivex.subjects.PublishSubject
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.thread
 import kotlin.concurrent.withLock
 
-class BTService(appContext: Context, module: BTModule): BroadcastReceiver() {
-    private val BLUETOOTH_SPP_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
-
-    enum class State (val i: Int) {
-        DISABLED(0),
-        ENABLED(1),
-        CONNECTING(2),
-        CONNECTED(3)
+class BTService(private val appContext: Context): BroadcastReceiver() {
+    companion object {
+        val BLUETOOTH_SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
     }
 
-    private val rnModule = module
+    val tag = "BT_SVC"
+
+    enum class State (val i: Int) {
+        BT_DISABLED(0),     // Device is disabled.
+        DISABLED(1),        //
+        ENABLED(2),         // enabled but not configured.
+        CONNECTING(3),      // attempting to connect to target device
+        CONNECTED(4)        // Ready to go
+    }
+
+
+    private val state: BehaviorSubject<State> = BehaviorSubject.createDefault(State.BT_DISABLED)
+    private val _tags: PublishSubject<String> = PublishSubject.create()
+    val tags: Observable<String> = _tags
+    val tagLiveData = _tags.asLiveData()
+    val stateLiveData = state.asLiveData()
 
     // locked w/ 'lock'
-    private var activeDeviceId: String? = null
+    private var selectedDeviceId: String? = Preferences.btDeviceType.value
+    private var selectedDeviceType: String? = Preferences.btDeviceId.value
 
     // locked w/ 'lock'
-    private var connectThread: Thread? = null
-
     private val lock = ReentrantLock()
     private val adapter: BluetoothAdapter? = (appContext.getSystemService((Context.BLUETOOTH_SERVICE)) as BluetoothManager?)?.adapter
+
+    private var device: BluetoothDevice? = null
+    private var socket: BluetoothSocket? = null
+
+    private var connectSubscription: Disposable? = null
+    private val disconnecting = AtomicBoolean(false)
+
+    // Used to suppress exceptions that would normally generate 'disconnect' or 'fail' events.
+    private val suppressExceptions: AtomicBoolean = AtomicBoolean(false)
 
     init {
         val filter = IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
         appContext.registerReceiver(this, filter)
+
+        val initState = if(isAdapterEnabled()) { if(Preferences.btEnabled.value!!) { State.ENABLED } else { State.DISABLED}  } else { State.BT_DISABLED }
+        state.onNext(initState)
+        Log.d(tag, "Initial sate is ${state.value?.name}")
+
+        // Preferences triggers
+        Preferences.btDeviceId.subscribe { deviceId ->
+            selectDevice(deviceId)
+        }
+        Preferences.btDeviceType.subscribe { deviceType ->
+            setDeviceType(deviceType)
+        }
+        Preferences.btEnabled.subscribe { enabled ->
+            setEnabled(enabled)
+        }
     }
+
+    private fun isConfigured() = selectedDeviceId in getDeviceList().map { it.id } && selectedDeviceType in getDeviceTypeList()
 
     override fun onReceive(context: Context?, intent: Intent?) {
         when(intent?.action) {
@@ -53,9 +93,8 @@ class BTService(appContext: Context, module: BTModule): BroadcastReceiver() {
                 when(intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.STATE_OFF)) {
                     BluetoothAdapter.STATE_ON -> {
                         lock.withLock {
-                            setState(State.ENABLED)
-                            if (activeDeviceId != null) {
-                                connect(activeDeviceId!!)
+                            if(state.value!! == State.BT_DISABLED) {
+                                setEnabled(true)
                             }
                         }
                     }
@@ -63,8 +102,10 @@ class BTService(appContext: Context, module: BTModule): BroadcastReceiver() {
                     // If we're connected, stop/start
                     BluetoothAdapter.STATE_TURNING_OFF -> {
                         lock.withLock {
-                            disconnect()
-                            setState(State.DISABLED)
+                            if(state.value != State.DISABLED) {
+                                setState(State.BT_DISABLED)
+                                disconnect()
+                            }
                         }
                     }
                 }
@@ -72,20 +113,35 @@ class BTService(appContext: Context, module: BTModule): BroadcastReceiver() {
         }
     }
 
-    fun isEnabled(): Boolean {
+    fun getState(): Observable<State> = state
+
+    fun isAdapterEnabled(): Boolean {
         return adapter?.isEnabled ?: false
     }
 
-    fun enable(): Boolean {
-        return adapter?.enable() ?: false
-    }
-
-    fun disable(): Boolean {
-        return adapter?.disable() ?: false
+    fun setEnabled(enabled: Boolean = true) = lock.withLock {
+        if(enabled) {
+            if(!isAdapterEnabled()) {
+                // request adapter enable
+                val intent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                appContext.startActivity(intent)
+            } else {
+                setState(State.ENABLED)
+                Log.d(tag, "isConfigured = ${isConfigured()}")
+                if(isConfigured()) {
+                    Log.d(tag, "Call connect()")
+                    connect(selectedDeviceId!!)
+                }
+            }
+        } else {
+            disconnect()
+            setState(State.DISABLED)
+        }
     }
 
     data class ListDevice(val id: String, val name: String)
-    fun deviceList(): List<ListDevice> {
+    fun getDeviceList(): List<ListDevice> {
         val devices = mutableListOf<ListDevice>()
         for(dev in adapter?.bondedDevices ?: listOf<BluetoothDevice>()) {
             devices.add(ListDevice(dev.address, dev.name))
@@ -93,67 +149,167 @@ class BTService(appContext: Context, module: BTModule): BroadcastReceiver() {
         return devices
     }
 
-    fun getActiveDevice(): String? = lock.withLock {
-        return activeDeviceId
+    fun getSelectedDeviceId(): String? = lock.withLock {
+        return selectedDeviceId
     }
 
-    private var device: BluetoothDevice? = null
-    private var socket: BluetoothSocket? = null
+    fun getDeviceTypeList(): List<String> = listOf(
+        MultipenUHF.name,
+        MultipenLF.name
+        // LFReader.name
+    )
 
-    private var connectShutdown: AtomicBoolean = AtomicBoolean(false)
+    private fun deviceTypeInstance(type: String?): BTDeviceClass? {
+        return when(type) {
+            MultipenUHF.name -> MultipenUHF()
+            MultipenLF.name -> MultipenLF()
+            // LFReader.name -> LFReader()
+            else -> null
+        }
+    }
 
-    // Used to suppress exceptions that would normally generate 'disconnect' or 'fail' events.
-    private var suppressExceptions: AtomicBoolean = AtomicBoolean(false)
+    fun setDeviceType(type: String) = lock.withLock {
+        if(type !in getDeviceTypeList()) {
+            return
+        }
 
-    private fun tryConnectForever() {
-        while(!connectShutdown.get()) {
+        if (selectedDeviceType == null || selectedDeviceType == type) {
+            return
+        }
+
+        // if currentId != null, then stop connecting service & read thread.
+        if (selectedDeviceType != null) {
+            disconnect()
+        }
+
+        selectedDeviceType = type
+        if (isConfigured() && (state.value == State.ENABLED || state.value == State.CONNECTING || state.value == State.CONNECTED)) {
+            connect(selectedDeviceId!!)
+        }
+    }
+
+    fun getSelectedDeviceType(): String? = lock.withLock {
+        return selectedDeviceType
+    }
+
+    private fun setState(newState: State) = lock.withLock {
+        if(newState != state.value) {
+            Log.d(tag, "Enter new state ${newState.name}")
+            state.onNext(newState)
+        }
+    }
+
+    // Returns when completing.
+    // Keeps looping forever or until
+    // a signal is sent.
+
+    private fun tryConnect(): Completable = Completable.create {emitter ->
+        while(!disconnecting.get()) {
             try {
-                Log.d("RNBT", "Connect loop...")
+                Log.d(tag, "Connect loop...")
                 socket = device?.createRfcommSocketToServiceRecord(BLUETOOTH_SPP_UUID)
 
-                if (device == null || socket == null) {
-                    Log.d("RNBT", "Connect loop null ref retry.")
+                if(device == null || socket == null) {
+                    Log.d(tag, "Connect loop null ref. Waiting 200ms and retrying")
+                    Thread.sleep(200)
                     continue
                 }
 
-                // maybe we're already connected?
-                if (socket!!.isConnected) {
-                    Log.d("RNBT", "Socket was connected!")
-                    setState(State.CONNECTED)
+                if(socket!!.isConnected) {
+                    Log.d(tag, "Socket is already connected")
                     break
                 }
 
-                // try connecting
                 socket!!.connect()
                 if(socket!!.isConnected) {
-                    Log.d("RNBT", "Socket connected!")
-                    setState(State.CONNECTED)
+                    Log.d(tag, "Connected successfully")
                     break
                 }
-            } catch (e: Exception) {
-                Log.d("RNBT", "Connect failed w/ exception $e")
+            } catch(t: Throwable) {
+                Log.d(tag, "Connect failed with exception $t")
             }
         }
+        emitter.onComplete()
+    }.subscribeOn(Schedulers.io())
+
+    /**
+     * Flag used to suppress errors inside read/write loops that would
+     * normally trigger a disconnect action. This flag gets set once an
+     * exception is raised that disconnects the device (or external user
+     * action) is taken.
+     */
+
+    fun write(data: ByteArray): Completable = Completable.create{ emitter ->
+        try {
+            Log.d(tag, "Writing data ${data.map { it.toString(16) }}")
+            socket?.outputStream!!.write(data)
+            emitter.onComplete()
+        } catch(t: Throwable) {
+            emitter.onError(t)
+        }
     }
+    .subscribeOn(Schedulers.io())
+
+    private fun read(): Observable<ByteArray> = Observable.create<ByteArray> { emitter ->
+        try {
+            while (socket != null) {
+                val readSize = 64
+                val data = ByteArray(readSize) { 0 }
+                val sizeRead = socket?.inputStream?.read(data) ?: 0
+                if(sizeRead != 0) {
+                    emitter.onNext(data.sliceArray(IntRange(start = 0, endInclusive = sizeRead - 1)))
+                }
+            }
+        } catch (t: Throwable) {
+            if(!disconnecting.get() && !suppressExceptions.get()) {
+                disconnect()
+                connect(selectedDeviceId!!)
+            }
+            emitter.onComplete()
+        }
+    }.subscribeOn(Schedulers.io())
 
     /**
      * NOTE: Must be called with 'lock'
      */
-    private fun connect(id: String) {
-        Log.d("RNBT", "Starting connect thread")
+
+    private var devClass: BTDeviceClass? = null
+
+    private fun connect(id: String) = lock.withLock {
+        if(connectSubscription != null) {
+            return
+        }
+        
+        Log.d(tag, "Starting connect thread")
+        disconnecting.set(false)
         suppressExceptions.set(false)
-        connectShutdown.set(false)
         device = adapter?.getRemoteDevice(id)
+
+        val completable = tryConnect()
+        setState(State.CONNECTING)
+        connectSubscription = completable.doFinally {
+                lock.withLock {
+                    connectSubscription = null
+                }
+            }.subscribe({
+            if(!disconnecting.get()) {
+                // we're now connected.
+                // do the needful
+                lock.withLock {
+                    setState(State.CONNECTED)
+                    devClass = deviceTypeInstance(selectedDeviceType)
+                    devClass?.start(read(), this::write, _tags)
+                }
+            }
+        }, {
+            // we fcked up, but should we retry?
+            // TODO: YES.
+        })
 
         // don't do anything.
         if(device == null) {
+            Log.d(tag, "Device = null. wtf?")
             return
-        }
-
-        setState(State.CONNECTING)
-
-        connectThread = thread(start = true) {
-            tryConnectForever()
         }
     }
 
@@ -162,201 +318,36 @@ class BTService(appContext: Context, module: BTModule): BroadcastReceiver() {
      * It is up to the user to migrate to an appropriate which will trigger it.
      * NOTE2: Must be called with 'lock'
      */
-    private fun disconnect() {
+    private fun disconnect() = lock.withLock {
         suppressExceptions.set(true)
-        if(socket != null) {
-            socket!!.close()
-        }
+        disconnecting.set(true)
 
-        // We're still connecting.
-        if(connectThread != null && connectThread!!.isAlive) {
-            connectShutdown.set(true)
-            connectThread!!.join()
-        }
+        socket?.close()
+        socket = null
+        connectSubscription?.dispose()
+        connectSubscription = null
+        devClass?.dispose()
+        devClass = null
     }
 
-    fun setActiveDevice(id: String?) {
-        lock.withLock {
-            if ((activeDeviceId == null && id == null) ||
-                (activeDeviceId != null && id != null && activeDeviceId == id)) {
-                return
-            }
+    fun selectDevice(id: String?) = lock.withLock {
+        if ((selectedDeviceId == null && id == null) ||
+            (selectedDeviceId != null && id != null && selectedDeviceId == id)) {
+            return
+        }
 
-            // if currentId != null, then stop connecting service & read thread.
-            if (activeDeviceId != null) {
-                disconnect()
+        // if currentId != null, then stop connecting service & read thread.
+        if (selectedDeviceId != null) {
+            disconnect()
 
-                if(id == null) {
-                    setState(State.ENABLED)
-                }
-            }
-
-            activeDeviceId = id
-            if (id != null && state.get() != State.DISABLED) {
-                connect(id)
+            if(id == null) {
+                setState(State.ENABLED)
             }
         }
-    }
 
-
-
-    // Decide initial state
-    private var state: AtomicReference<State> = AtomicReference( if(isEnabled()) { State.ENABLED } else { State.DISABLED } )
-
-    init {
-        Log.d("RNBT", "Initial sate is " + state.get().name)
-    }
-
-    private fun setState(newState: State) {
-        lock.withLock {
-            val oldState = state.getAndSet(newState)
-            if (oldState != newState) {
-                Log.d("RNBT", "Enter new state ${newState.name} from oldState ${oldState.name}")
-                if (newState == State.DISABLED) {
-                    rnModule.emitDisabled()
-                }
-
-                if (newState == State.ENABLED && oldState == State.DISABLED) {
-                    rnModule.emitEnabled()
-                }
-
-                // if we're leaving the 'CONNECTED' state
-                // emit a 'disconnect' event
-                if (oldState == State.CONNECTED) {
-                    rnModule.emitDisconnected()
-                }
-
-                if (newState == State.CONNECTED) {
-                    rnModule.emitConnected()
-                }
-            }
-        }
-    }
-
-    private var readThread: Thread? = null
-
-    /**
-     * Must specify size of read. Otherwise reads entire available data.
-     */
-    fun read(size: Int?, promise: Promise) {
-        lock.withLock {
-            try {
-                val inStream: InputStream = if (state.get() == State.CONNECTED && socket != null) {
-                    socket!!.inputStream
-                } else {
-                    null
-                } ?: throw IllegalStateException("Bluetooth is not in a state where it can read")
-
-                if (readThread != null) {
-                    throw IllegalAccessException("There is already a read call pending")
-                }
-
-                readThread = thread(start = true) {
-                    try {
-                        val readSize = size ?: inStream.available()
-                        val data = ByteArray(readSize) { 0 }
-                        val sizeRead = inStream.read(data)
-
-                        val jsArr = Arguments.createArray()
-                        data.slice(IntRange(start = 0, endInclusive = sizeRead - 1)).forEach {
-                            jsArr.pushInt(it.toInt())
-                        }
-
-                        val jsMap = Arguments.createMap()
-                        jsMap.putInt("size", sizeRead)
-                        jsMap.putArray("data", jsArr)
-
-                        promise.resolve(jsMap)
-                    } catch (t: Throwable) {
-                        if (!suppressExceptions.get()) {
-                            disconnect()
-                            Log.d("RNBT", "Disconnected")
-                            lock.withLock {
-                                Log.d("RNBT", "Attempting to launch 'connect' again with adid=$activeDeviceId")
-                                if(activeDeviceId != null) {
-                                    connect(activeDeviceId!!)
-                                }
-                            }
-                        }
-                        promise.reject("ReadError", t.toString())
-                    } finally {
-                        lock.withLock {
-                            readThread = null
-                        }
-                    }
-                }
-            }
-            catch(t: Throwable) {
-                if(!suppressExceptions.get()) {
-                    disconnect()
-                }
-                if (t is IllegalAccessError) {
-                    promise.reject("IllegalAccessError", t.message)
-                    return
-                }
-                if(t is IllegalStateException) {
-                    promise.reject("IllegalStateError", t.message)
-                    return
-                }
-
-                promise.reject("UnknownError", t.toString())
-            }
-        }
-    }
-
-    private var writeThread: Thread? = null
-    fun write(data: ByteArray, promise: Promise) {
-        lock.withLock {
-            try {
-                val outStream: OutputStream = if (state.get() == State.CONNECTED && socket != null) {
-                    socket!!.outputStream
-                } else {
-                    null
-                } ?: throw IllegalStateException("Bluetooth is not in a state where it can write")
-
-                if (writeThread != null) {
-                    throw IllegalAccessException("There is already a write call pending")
-                }
-
-                writeThread = thread(start = true) {
-                    try {
-                        Log.d("RNBT", "Writing ${data.size} bytes")
-                        outStream.write(data)
-                        promise.resolve(null)
-                    } catch (t: Throwable) {
-                        if (!suppressExceptions.get()) {
-                            disconnect()
-                            Log.d("RNBT", "Disconnected")
-                            lock.withLock {
-                                Log.d("RNBT", "Attempting to launch 'connect' again with adid=$activeDeviceId")
-                                if(activeDeviceId != null) {
-                                    connect(activeDeviceId!!)
-                                }
-                            }
-                        }
-                        promise.reject("WriteError", t.toString())
-                    } finally {
-                        lock.withLock {
-                            writeThread = null
-                        }
-                    }
-                }
-            }
-            catch(t: Throwable) {
-                if(!suppressExceptions.get()) {
-                    disconnect()
-                }
-                if (t is IllegalAccessError) {
-                    promise.reject("IllegalAccessError", t.message)
-                    return
-                }
-                if(t is IllegalStateException) {
-                    promise.reject("IllegalStateError", t.message)
-                    return
-                }
-
-                promise.reject("UnknownError", t.toString())
-            }
+        selectedDeviceId = id
+        if (id != null && (state.value == State.ENABLED || state.value == State.CONNECTING || state.value == State.CONNECTED)) {
+            connect(id)
         }
     }
 }

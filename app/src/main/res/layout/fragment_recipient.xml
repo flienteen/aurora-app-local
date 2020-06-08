@@ -5,6 +5,7 @@
     tools:context=".ui.Recipient.RecipientFragment">
 
     <data>
+        <import type="android.view.View" />
         <variable
             name="model"
             type="com.persidius.eos.aurora.ui.recipient.RecipientViewModel" />
@@ -13,17 +14,70 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true">
+
         <LinearLayout
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:padding="10sp" >
-            <ListView
+
+            <!-- Tag0 Display -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                tools:listitem="@layout/tag_slot_item"
-                android:id="@+id/tagList"
-                />
+                android:orientation="horizontal"
+                android:padding="10sp"
+                android:clickable="true"
+                android:visibility="@{model.tagSlots > 0 ? View.VISIBLE : View.GONE}"
+                android:onClick="@{model::selectTag0}"
+                >
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Tag 1"
+                    android:textSize="18sp"
+                    android:isBold="@{model.tagSelected == 0}"
+                    />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@={model.tag0}"
+                    android:gravity="center"
+                    android:textSize="18dp"
+                    android:isBold="@{model.tagSelected == 0}"
+                    />
+            </LinearLayout>
+            <!-- Tag1 Display -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="10sp"
+                android:clickable="true"
+                android:visibility="@{model.tagSlots > 1 ? View.VISIBLE : View.GONE}"
+                android:onClick="@{model::selectTag1}"
+                >
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Tag 2"
+                    android:textSize="18dp"
+                    android:isBold="@{model.tagSelected == 1}"
+                    />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@{model.tag1}"
+                    android:gravity="center"
+                    android:textSize="18sp"
+                    android:isBold="@{model.tagSelected == 1}"
+                    />
+            </LinearLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
@@ -33,8 +87,7 @@
                 <AutoCompleteTextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@={model.addressStreet}"
-                    >
+                    android:text="@={model.addressStreet}">
                     <requestFocus/>
                 </AutoCompleteTextView>
 
@@ -113,7 +166,7 @@
                     android:layout_width="0sp"
                     android:layout_height="wrap_content"
                     android:layout_weight="2"
-                    android:hint="Flux" >
+                    >
 
                     <com.persidius.eos.aurora.ui.components.InstantAutoComplete
                         android:enabled="@{model.streamSelectable}"
@@ -122,6 +175,7 @@
                         android:text="@={model.stream}"
                         android:id="@+id/stream"
                         app:filterIgnoreText="true"
+                        android:hint="Flux"
                         />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
@@ -129,26 +183,28 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Grup" >
+                >
 
                 <AutoCompleteTextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@={model.groupId}"
                     android:id="@+id/group"
+                    android:hint="Grup"
                     />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Comentarii" >
+                >
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:maxLines="50"
                     android:minLines="1"
+                    android:hint="Comentarii"
                     android:text="@={model.comments}"
                     />
             </com.google.android.material.textfield.TextInputLayout>

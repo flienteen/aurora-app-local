@@ -7,22 +7,23 @@ import androidx.room.*
     indices = [
         Index(value = ["countyId"], unique = false),
         Index(value = ["uatId"], unique = false),
-        Index(value = ["locId"], unique = false),
-        Index(value = ["updatedAt"], unique = false)
+        Index(value = ["locId"], unique = false)
     ]
 )
 data class Recipient(
     @PrimaryKey
-    @NonNull val id: String,
+    @NonNull val eosId: String,
+
+    // Internal, record ID
+    val id: Int,
+
     val addressNumber: String,
     val addressStreet: String,
     val posLat: Double,
     val posLng: Double,
 
-    val labels: List<String>,
+    val labels: Map<String, String?>,
     val comments: String,
-    val active: Boolean,
-    val updatedAt: Long,
     val groupId: String?,
 
     val stream: String,

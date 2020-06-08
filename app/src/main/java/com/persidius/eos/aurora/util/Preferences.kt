@@ -5,106 +5,100 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
-import com.auth0.android.jwt.JWT
-import com.persidius.eos.aurora.BuildConfig
-import com.persidius.eos.aurora.eos.SyncState
+import com.persidius.eos.aurora.eos.sync.SyncState
+import io.reactivex.Observable
 import io.reactivex.subjects.BehaviorSubject
 
+object Preferences: SharedPreferences.OnSharedPreferenceChangeListener {
+    private const val AM_LOCKED = "amLocked"
+    private const val AM_ACCESS_TOKEN = "amAccessToken"
+    private const val AM_REFRESH_TOKEN = "amRefreshToken"
+    private const val AM_USERNAME = "amUsername"
+    private const val AM_PASSWORD = "amPassword"
 
-const val EOS_ENV_PREF = "eosEnv"
+    private const val BT_ENABLED = "btEnabled"
+    private const val BT_DEVICE_TYPE = "btDeviceType"
+    private const val BT_DEVICE_ID = "btDeviceId"
 
-const val AM_TOKEN = "amToken"
-const val AM_TOKEN_USERNAME = "amTokenUsername"
-const val AM_TOKEN_PASSWORD = "amTokenPassword"
-const val AM_LOCKED = "amLocked"
+    private const val SM_STATE = "smState"
+    private const val SM_LAST_SYNC = "smLastSync"
 
-const val SM_SYNC_STATE = "smSyncState"
-const val SM_LAST_SYNC = "smLastSync"
-
-const val SM_LAST_RECIPIENT_UPDATE = "smLastRecipientUpdate"
-const val SM_LAST_USER_UPDATE = "smLastUserUpdate"
-const val SM_LAST_GROUP_UPDATE = "smLastGroupUpdate"
-const val SM_LAST_TASK_UPDATE = "smLastTaskUpdate"
-
-object Preferences {
     lateinit var prefs: SharedPreferences
 
-
-    // We need to init this with an applicationContext
-    // therefore the init needs to be called on app startup.
-    lateinit var eosEnv: BehaviorSubject<String>
-
     // AuthorizationManager Token
-    // tapped w/ onNext such that settings are written back to the preferences.
-    // there is no preferenceChangeListener for this.
-    lateinit var amToken: BehaviorSubject<String>
     lateinit var amLocked: BehaviorSubject<Boolean>
-    lateinit var amTokenUsername: BehaviorSubject<String>
-    lateinit var amTokenPassword: BehaviorSubject<String>
+    lateinit var amUsername: BehaviorSubject<String>
+    lateinit var amPassword: BehaviorSubject<String>
+    lateinit var amAccessToken: BehaviorSubject<String>
+    lateinit var amRefreshToken: BehaviorSubject<String>
 
-    lateinit var smSyncState: BehaviorSubject<SyncState>
-    lateinit var smLastSync: BehaviorSubject<Long>
-    lateinit var smLastRecipientUpdate: BehaviorSubject<Long>
-    lateinit var smLastTaskUpdate: BehaviorSubject<Long>
-    lateinit var smLastUserUpdate: BehaviorSubject<Long>
-    lateinit var smLastGroupUpdate: BehaviorSubject<Long>
+    lateinit var btEnabled: BehaviorSubject<Boolean>
+    lateinit var btDeviceId: BehaviorSubject<String>
+    lateinit var btDeviceType: BehaviorSubject<String>
 
-
-    val eosEnvDefault = if(BuildConfig.DEBUG) "persidius.dev" else "persidius.com"
+    lateinit var smState: BehaviorSubject<SyncState>
+    lateinit var smLastSync: BehaviorSubject<String>
 
     fun init(applicationContext: Context) {
         prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
-
         initSmPrefs()
-        initOtherPrefs()
         initAmPrefs()
+        initBtPrefs()
 
-        prefs.registerOnSharedPreferenceChangeListener(preferenceChangeListener)
+        prefs.registerOnSharedPreferenceChangeListener(this)
     }
 
-    private val preferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener {
-            sharedPrefs, key ->
-        // what we care about most here is the 'eosEnv' variable.
-        when(key) {
-            EOS_ENV_PREF -> {
-                val newValue = sharedPrefs.getString(key, eosEnvDefault)
-                if(newValue != null) eosEnv.onNext(newValue)
+    override fun onSharedPreferenceChanged(
+        sharedPreferences: SharedPreferences,
+        key: String?
+    ) {
+        when (key) {
+            BT_ENABLED -> {
+                btEnabled.onNext(sharedPreferences.getBoolean(key, false))
+            }
+            BT_DEVICE_TYPE -> {
+                btDeviceType.onNext(sharedPreferences.getString(key, "")!!)
+            }
+            BT_DEVICE_ID -> {
+                btDeviceId.onNext(sharedPreferences.getString(key, "")!!)
             }
         }
     }
 
-    private fun initOtherPrefs() {
-        eosEnv = utils.createString(EOS_ENV_PREF, eosEnvDefault)
+    private fun initSmPrefs() {
+        smState = setupSmState(SM_STATE, SyncState.WAIT_VALID_SESSION)
+        smLastSync = PrefUtils.setupString(SM_LAST_SYNC, "")
+    }
+
+    private fun setupSmState(prefName: String, defValue: SyncState): BehaviorSubject<SyncState> {
+        val s = try {
+            BehaviorSubject.createDefault(SyncState.valueOf(prefs.getString(prefName, defValue.toString()) ?: defValue.toString()))
+        } catch(t: Throwable) {
+            Log.d("PREFS", "Error loading $prefName: $t")
+            BehaviorSubject.createDefault(defValue)
+        }
+
+        PrefUtils.subscribeString(s.map { it.toString() }, prefName)
+
+        return s
+    }
+
+    private fun initBtPrefs() {
+        btEnabled = PrefUtils.setupBoolean(BT_ENABLED, false)
+        btDeviceId = PrefUtils.setupString(BT_DEVICE_ID, "")
+        btDeviceType = PrefUtils.setupString(BT_DEVICE_TYPE, "")
     }
 
     private fun initAmPrefs() {
-        amToken = utils.setupString(AM_TOKEN, "")
-        amLocked = utils.setupBoolean(AM_LOCKED, false)
-        amTokenUsername = utils.setupString(AM_TOKEN_USERNAME, "")
-        amTokenPassword = utils.setupString(AM_TOKEN_PASSWORD, "")
+        amLocked = PrefUtils.setupBoolean(AM_LOCKED, false)
+        amAccessToken = PrefUtils.setupString(AM_ACCESS_TOKEN, "")
+        amRefreshToken = PrefUtils.setupString(AM_REFRESH_TOKEN, "")
+        amPassword = PrefUtils.setupString(AM_PASSWORD, "")
+        amUsername = PrefUtils.setupString(AM_USERNAME, "")
     }
 
-    private fun initSmPrefs() {
-        smSyncState = try {
-            BehaviorSubject.createDefault(SyncState.valueOf(prefs.getString(SM_SYNC_STATE, SyncState.INIT.name)!!))
-        } catch(t: Throwable) {
-            Log.d("PREFS", "Error loading $SM_SYNC_STATE: $t")
-            BehaviorSubject.createDefault(SyncState.INIT)
-        }
-
-        smSyncState.subscribe { ss: SyncState ->
-            prefs.edit(commit = true) { putString(SM_SYNC_STATE, ss.name) }
-        }
-
-        smLastSync = utils.setupLong(SM_LAST_SYNC, 0)
-        smLastRecipientUpdate = utils.setupLong(SM_LAST_RECIPIENT_UPDATE, 0)
-        smLastTaskUpdate = utils.setupLong(SM_LAST_TASK_UPDATE, 0)
-        smLastGroupUpdate = utils.setupLong(SM_LAST_GROUP_UPDATE, 0)
-        smLastUserUpdate = utils.setupLong(SM_LAST_USER_UPDATE, 0)
-    }
-
-    private object utils {
-        fun subscribeString(subject: BehaviorSubject<String>, prefName: String) {
+    private object PrefUtils {
+        fun subscribeString(subject: Observable<String>, prefName: String) {
             subject.subscribe {
                 prefs.edit(commit = true) { putString (prefName, it) }
             }

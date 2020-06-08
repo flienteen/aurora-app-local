@@ -1,12 +1,12 @@
-package com.persidius.eos.aurora.ui.util
+package com.persidius.eos.aurora.ui.recipient
 
 import android.content.Context
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import com.persidius.eos.aurora.database.Database
+import java.util.*
 
 
 class GroupIdAdapter(private val context: Context,
@@ -25,9 +25,9 @@ class GroupIdAdapter(private val context: Context,
 
         override fun fixText(invalidText: CharSequence?): CharSequence {
             // see if we can match it against anything
-            val match = invalidText.toString().toLowerCase()
+            val match = invalidText.toString().toLowerCase(Locale.ROOT)
             for((index,item) in items.withIndex()) {
-                if(item.toLowerCase().startsWith(match)) {
+                if(item.toLowerCase(Locale.ROOT).startsWith(match)) {
                     return items[index]
                 }
             }
@@ -47,11 +47,11 @@ class GroupIdAdapter(private val context: Context,
                 results.values = items
                 results.count = items.size
             } else {
-                val term = constraint.toString().toLowerCase()
-                val searchResults = Database.groups.search("*$term*")
+                val term = constraint.toString().toLowerCase(Locale.ROOT)
+                val searchResults = Database.group.search("*$term*")
                     .blockingGet()
 
-                val values = searchResults.take(10).map { g -> g.id }
+                val values = searchResults.take(10).map { g -> g.eosId }
                 results.values = values
                 results.count = values.size
             }

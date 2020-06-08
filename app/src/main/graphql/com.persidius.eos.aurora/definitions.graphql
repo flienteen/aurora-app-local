@@ -1,0 +1,32 @@
+query definitions {
+    ## Gis Hierarchy
+    me {
+        uats {
+            id
+            name
+            county {
+                name
+                short
+                seq
+                id
+            }
+            locs {
+                name
+                id
+                arteries {
+                    name
+                    prefix
+                    id
+                    loc {
+                        id
+                    }
+                }
+            }
+        }
+    }
+
+    recommendedLabels {
+        displayName
+        label
+    }
+}

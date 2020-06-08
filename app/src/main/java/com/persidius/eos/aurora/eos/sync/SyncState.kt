@@ -1,12 +1,18 @@
 package com.persidius.eos.aurora.eos.sync
 
-enum class State {
-    NOT_READY,
+enum class SyncState {
+    WAIT_VALID_SESSION,
     DEFINITIONS,
     RECIPIENTS,
+    TAGS,
     GROUPS,
 
     UPDATE_RECIPIENTS,
+    UPDATE_TAGS,
+    SYNC_RECIPIENTS,
+    SYNC_TAGS,
+    SYNC_GROUPS,
 
-    ABORTED;
+    // Timeout.
+    SYNC_WAIT
 }

@@ -1,17 +1,22 @@
-query groups($updatedAfter: Int, $pageAfter: String) {
-    rawGroups(updatedAfter: $updatedAfter, pageAfter: $pageAfter, maxResultsPerPage: 2500) {
-        id
-        type
-        county {
+ query groups($pageSize: Int!, $pageNumber: Int, $afterId: Int) {
+    groups(hideableState: ANY, historicalRecordType: CURRENT_ONLY, pageSize: $pageSize,
+        pageNumber: $pageNumber, afterId: $afterId) {
+        total
+        pageNumber
+        pageSize
+        items {
             id
+            eosId
+            type
+            county {
+                id
+            }
+            uat {
+                id
+            }
+            loc {
+                id
+            }
         }
-        uat {
-            id
-        }
-        active
-        updatedAt
-        labels
-        comments
-
     }
 }
