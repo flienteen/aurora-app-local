@@ -45,6 +45,7 @@ object Preferences {
     lateinit var smSyncState: BehaviorSubject<SyncState>
     lateinit var smLastSync: BehaviorSubject<Long>
     lateinit var smLastRecipientUpdate: BehaviorSubject<Long>
+    lateinit var smLastTaskUpdate: BehaviorSubject<Long>
     lateinit var smLastUserUpdate: BehaviorSubject<Long>
     lateinit var smLastGroupUpdate: BehaviorSubject<Long>
 
@@ -97,6 +98,7 @@ object Preferences {
 
         smLastSync = utils.setupLong(SM_LAST_SYNC, 0)
         smLastRecipientUpdate = utils.setupLong(SM_LAST_RECIPIENT_UPDATE, 0)
+        smLastTaskUpdate = utils.setupLong(SM_LAST_TASK_UPDATE, 0)
         smLastGroupUpdate = utils.setupLong(SM_LAST_GROUP_UPDATE, 0)
         smLastUserUpdate = utils.setupLong(SM_LAST_USER_UPDATE, 0)
     }

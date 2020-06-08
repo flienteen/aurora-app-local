@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "686c21a8bd588f8556bfe2bfed085c3b",
+    "identityHash": "acccf103fd8f0d84b707ba7952acacfc",
     "entities": [
       {
         "tableName": "County",
@@ -749,6 +749,196 @@
         "foreignKeys": []
       },
       {
+        "tableName": "Task",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `gid` TEXT NOT NULL, `assignedTo` TEXT NOT NULL, `validFrom` INTEGER NOT NULL, `validTo` INTEGER NOT NULL, `updatedBy` TEXT NOT NULL, `updatedAt` INTEGER NOT NULL, `status` TEXT NOT NULL, `posLat` REAL NOT NULL, `posLng` REAL NOT NULL, `comments` TEXT NOT NULL, `uatId` INTEGER NOT NULL, `locId` INTEGER NOT NULL, `countyId` INTEGER NOT NULL, `groupId` TEXT NOT NULL, `userId` TEXT NOT NULL, `stream` TEXT NOT NULL, `size` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gid",
+            "columnName": "gid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "assignedTo",
+            "columnName": "assignedTo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "validFrom",
+            "columnName": "validFrom",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "validTo",
+            "columnName": "validTo",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedBy",
+            "columnName": "updatedBy",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "posLat",
+            "columnName": "posLat",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "posLng",
+            "columnName": "posLng",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "comments",
+            "columnName": "comments",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uatId",
+            "columnName": "uatId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "locId",
+            "columnName": "locId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "countyId",
+            "columnName": "countyId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "groupId",
+            "columnName": "groupId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stream",
+            "columnName": "stream",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "size",
+            "columnName": "size",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [
+          {
+            "name": "index_Task_countyId",
+            "unique": false,
+            "columnNames": [
+              "countyId"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Task_countyId` ON `${TABLE_NAME}` (`countyId`)"
+          },
+          {
+            "name": "index_Task_uatId",
+            "unique": false,
+            "columnNames": [
+              "uatId"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Task_uatId` ON `${TABLE_NAME}` (`uatId`)"
+          },
+          {
+            "name": "index_Task_locId",
+            "unique": false,
+            "columnNames": [
+              "locId"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Task_locId` ON `${TABLE_NAME}` (`locId`)"
+          },
+          {
+            "name": "index_Task_updatedAt",
+            "unique": false,
+            "columnNames": [
+              "updatedAt"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Task_updatedAt` ON `${TABLE_NAME}` (`updatedAt`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "ftsVersion": "FTS4",
+        "ftsOptions": {
+          "tokenizer": "unicode61",
+          "tokenizerArgs": [],
+          "contentTable": "Task",
+          "languageIdColumnName": "",
+          "matchInfo": "FTS4",
+          "notIndexedColumns": [],
+          "prefixSizes": [],
+          "preferredOrder": "ASC"
+        },
+        "contentSyncTriggers": [
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_TaskFTS_BEFORE_UPDATE BEFORE UPDATE ON `Task` BEGIN DELETE FROM `TaskFTS` WHERE `docid`=OLD.`rowid`; END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_TaskFTS_BEFORE_DELETE BEFORE DELETE ON `Task` BEGIN DELETE FROM `TaskFTS` WHERE `docid`=OLD.`rowid`; END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_TaskFTS_AFTER_UPDATE AFTER UPDATE ON `Task` BEGIN INSERT INTO `TaskFTS`(`docid`, `id`) VALUES (NEW.`rowid`, NEW.`id`); END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_TaskFTS_AFTER_INSERT AFTER INSERT ON `Task` BEGIN INSERT INTO `TaskFTS`(`docid`, `id`) VALUES (NEW.`rowid`, NEW.`id`); END"
+        ],
+        "tableName": "TaskFTS",
+        "createSql": "CREATE VIRTUAL TABLE IF NOT EXISTS `${TABLE_NAME}` USING FTS4(`id` TEXT NOT NULL, tokenize=unicode61, content=`Task`)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
         "tableName": "Groups",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `labels` TEXT NOT NULL, `comments` TEXT NOT NULL, `type` TEXT NOT NULL, `updatedAt` INTEGER NOT NULL, `active` INTEGER NOT NULL, `countyId` INTEGER NOT NULL, `uatId` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
@@ -1013,7 +1203,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '686c21a8bd588f8556bfe2bfed085c3b')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'acccf103fd8f0d84b707ba7952acacfc')"
     ]
   }
 }

@@ -1,0 +1,2 @@
+query tags($pageSize: Int!, $pageNumber: Int, $afterId: Int) {
+    recipientTags(historicalRecordType: CURRENT_ONLY,

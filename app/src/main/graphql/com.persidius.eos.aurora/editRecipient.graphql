@@ -1,5 +1,0 @@
-mutation editRecipient($createdAt: Int!, $id: String!, $recipient: RecipientInput!) {
-    editRecipient(createdAt: $createdAt, recipientId: $id, recipient: $recipient) {
-        id
-    }
-}

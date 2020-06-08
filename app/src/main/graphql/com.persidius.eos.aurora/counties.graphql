@@ -1,8 +1,0 @@
-query counties {
-    counties {
-        name
-        short
-        seq
-        id
-    }
-}

@@ -78,9 +78,14 @@
         android:name="com.persidius.eos.aurora.ui.tasks.TasksFragment"
         android:label="Cautare task"
         tools:layout="@layout/fragment_tasks">
+    </fragment>
+    <fragment
+        android:id="@+id/nav_task"
+        android:name="com.persidius.eos.aurora.ui.task.TaskFragment"
+        android:label="TaskFragment" >
         <argument
-            android:name="tasksId"
-            app:argType="string" />
+            android:name="taskId"
+            app:argType="integer" />
         <argument
             android:name="sessionId"
             app:argType="integer" />
@@ -88,7 +93,7 @@
     <fragment
         android:id="@+id/nav_taskMap"
         android:name="com.persidius.eos.aurora.ui.map.MapFragment"
-        android:label="Harta task-uri"
+        android:label="Harta taskuri"
         tools:layout="@layout/fragment_map">
         <argument
             android:name="tasksId"
