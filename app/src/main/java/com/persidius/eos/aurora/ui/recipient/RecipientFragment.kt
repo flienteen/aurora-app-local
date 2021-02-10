@@ -39,6 +39,11 @@ class RecipientFragment: AutoDisposeFragment() {
     private lateinit var viewModel: RecipientViewModel
 
     private fun onBack() {
+        // Protect against remaining back listeners
+        if(this.activity == null) {
+            return
+        }
+
         val changes = getChanges()
         if(changes.hasChanges()) {
             // Pop an alert dialogue.
@@ -48,12 +53,14 @@ class RecipientFragment: AutoDisposeFragment() {
             builder.setTitle("Schimbări Nesalvate")
             builder.setMessage("Există modificări făcute la recipientul actual. Sigur dorești să navighezi inapoi fără le salvezi?")
             builder.setPositiveButton("Da") { _, _ ->
+                (activity as MainActivity).clearOnBackListener()
                 (activity as MainActivity).navController.popBackStack()
             }
 
             builder.setNegativeButton("Nu") {_, _ -> }
             builder.show()
         } else {
+            (activity as MainActivity).clearOnBackListener()
             (activity as MainActivity).navController.popBackStack()
         }
     }
@@ -189,6 +196,7 @@ class RecipientFragment: AutoDisposeFragment() {
                 })
 
                 viewModel.uats.value = data.second
+                Log.d("RF", "${data.fourth}")
                 viewModel.uat.value = data.fourth[0].name
                 viewModel.loc.value = data.third[0].name
                 viewModel.recLabels.value = data.fifth
@@ -515,9 +523,10 @@ class RecipientFragment: AutoDisposeFragment() {
                 tag1Id = 0
             )
         }
+        val r = viewModel.recipient!!
 
-        val vmUatId = viewModel.uats.value?.find { u -> u.name == viewModel.uat.value }?.id ?: 0
-        val vmLocId = viewModel.locs.value?.find { l -> l.name == viewModel.loc.value }?.id ?: 0
+        val vmUatId = viewModel.uats.value?.find { u -> u.name == viewModel.uat.value }?.id ?: r.uatId
+        val vmLocId = viewModel.locs.value?.find { l -> l.name == viewModel.loc.value }?.id ?: r.locId
         val vmSize = viewModel.size.value
         val vmStream = RecipientStream.fromDisplayName(viewModel.stream.value!!).name
         val vmAddressStreet = viewModel.addressStreet.value!!
@@ -527,7 +536,7 @@ class RecipientFragment: AutoDisposeFragment() {
         val vmTag0 = viewModel.tag0.value!!
         val vmTag1 = viewModel.tag1.value!!
 
-        val r = viewModel.recipient!!
+
         val tag0 = viewModel.tags?.firstOrNull{ t -> t.slot == 0 }?.tag ?: ""
         val tag1 = viewModel.tags?.firstOrNull{ t -> t.slot == 1}?.tag ?: ""
         val rGroupId = r.groupId ?: ""

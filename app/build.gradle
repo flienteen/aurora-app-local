@@ -2,6 +2,7 @@ apply plugin: 'com.android.application'
 
 apply plugin: 'kotlin-android'
 
+// TODO: Maybe upgrade this plugin sometime. There's a lot of work to get that done.
 apply plugin: 'kotlin-android-extensions'
 
 apply plugin: 'com.google.gms.google-services'
@@ -26,6 +27,7 @@ android {
     }
 
     buildFeatures {
+        // viewBinding = true
         dataBinding = true
     }
 
@@ -33,8 +35,8 @@ android {
         applicationId "com.persidius.eos.aurora"
         minSdkVersion 28
         targetSdkVersion 29
-        versionCode 500
-        versionName "5.0.0"
+        versionCode 510
+        versionName "5.1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         javaCompileOptions {
@@ -51,10 +53,10 @@ android {
         release {
             buildConfigField "String", "IDP_URL", '"https://idp.persidius.com/auth/realms/prod/protocol/openid-connect/"'
             buildConfigField "String", "SENTRY_DSN", '"https://e0497460cb404808889437a948c7c163@o394445.ingest.sentry.io/5264927"'
-            buildConfigField "String", "IDP_CLIENT_SECRET", '""'
-            buildConfigField "String", "IDP_CLIENT_ID", '""'
-            buildConfigField "String", "EOS_GRAPHQL_URL", '""'
-            buildConfigField "Boolean", "ENABLE_HTTP_LOGGING", "false"
+            buildConfigField "String", "IDP_CLIENT_SECRET", '"eb9ea944-6670-4b21-82ea-766a04a9d987"'
+            buildConfigField "String", "IDP_CLIENT_ID", '"eos-aurora"'
+            buildConfigField "String", "EOS_GRAPHQL_URL", '"https://eos-api.persidius.com/graphql"'
+            buildConfigField "Boolean", "ENABLE_HTTP_LOGGING", "true"
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
@@ -88,9 +90,6 @@ apollo {
     graphqlSourceDirectorySet.include("**/*.graphql")
     graphqlSourceDirectorySet.exclude("**/schema.graphql")
     generateKotlinModels = true
-    /* customTypeMapping = [
-        "DateTime": "java.util.Date"
-    ] */
 }
 
 dependencies {

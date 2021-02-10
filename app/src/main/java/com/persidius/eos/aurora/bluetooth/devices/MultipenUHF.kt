@@ -30,22 +30,23 @@ class MultipenUHF: BTDeviceClass {
             "cw 0D,04",         // UHF Repeat 4x
             "cw 09,04",         // UHF only
             "cw 61,01",         // Set read to EPC
-            "cw 62,01"          //
+            "cw 62,01"          // read EPC bank
         )
 
         var buffer = ""
         val packets: PublishSubject<String> = PublishSubject.create()
 
         subs.add(read.subscribe {
-            buffer += it.joinToString(separator="") { it.toChar().toString() }
+            buffer += it.joinToString(separator="") { s -> s.toChar().toString() }
             while(PKT_SEP in buffer) {
                 val ix = buffer.indexOf(PKT_SEP)
                 val packet = buffer.slice(IntRange(0, ix - 1))
                 buffer = buffer.slice(IntRange(ix + 1, buffer.length - 1))
 
                 packets.onNext(packet)
-                // Tags always start with 'E2'
-                if (packet.startsWith("E2")) {
+                // Log.d(tag, "packet.length=${packet.length}")
+                // Tags always start with 'E2' or is 24chars long
+                if (packet.startsWith("E2") || packet.length == 24) {
                     tags.onNext(packet.toUpperCase(Locale.US).trim())
                 }
 

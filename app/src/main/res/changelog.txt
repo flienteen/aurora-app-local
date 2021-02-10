@@ -1,0 +1,15 @@
+[v5.0.3 07/02/2021]
+* Fix RecipientFragment Uat/Loc id handling that was erroneous and caused a crash
+* Fixed occasional BarcodeAnalyzer crash
+* Fixed onBackHandler not being cleared from RecipientFragment and causing a crash
+
+[v5.0.4 08/02/2021]
+* Fix build config from debug to release
+
+[v5.0.5 09/02/2021]
+* Remove 'starts with E2' check on UHF tags as we have discovered
+other tags starting with 33 that are also valid
+
+[v5.1.0 10/02/2021]
+* Add support for LF Type A and type B scanners.
+* Fix a parsing error for AuthManager

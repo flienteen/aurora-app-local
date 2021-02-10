@@ -111,12 +111,16 @@ class AuthManager {
 
     fun parseTokenError(t: Throwable): LoginError {
         if(t is HttpException) {
-            val data = (Gson()).fromJson(t.response().errorBody()?.charStream(), TokenApi.TokenErrorResponse::class.java)
-            Log.d(tag, data.toString())
-            return if(data.error == TokenApi.TokenError.InvalidGrant) {
-                LoginError(LoginErrorType.InvalidCredentials, "Invalid credentials", t)
-            } else {
-                LoginError(LoginErrorType.Other, data.error_message, t)
+            try {
+                val data = (Gson()).fromJson(t.response().errorBody()?.charStream(), TokenApi.TokenErrorResponse::class.java)
+                Log.d(tag, data.toString())
+                return if (data.error == TokenApi.TokenError.InvalidGrant) {
+                    LoginError(LoginErrorType.InvalidCredentials, "Invalid credentials", t)
+                } else {
+                    LoginError(LoginErrorType.Other, data.error_message ?: "no error message specified", t)
+                }
+            } catch(e: Exception) {
+                return LoginError(LoginErrorType.Other, "Cannot parse http exception", t)
             }
         }
 

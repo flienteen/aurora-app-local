@@ -10,6 +10,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.util.Log
 import com.persidius.eos.aurora.bluetooth.devices.LFReader
+import com.persidius.eos.aurora.bluetooth.devices.LFReaderType
 import com.persidius.eos.aurora.bluetooth.devices.MultipenLF
 import com.persidius.eos.aurora.bluetooth.devices.MultipenUHF
 import com.persidius.eos.aurora.util.Preferences
@@ -115,11 +116,11 @@ class BTService(private val appContext: Context): BroadcastReceiver() {
 
     fun getState(): Observable<State> = state
 
-    fun isAdapterEnabled(): Boolean {
+    private fun isAdapterEnabled(): Boolean {
         return adapter?.isEnabled ?: false
     }
 
-    fun setEnabled(enabled: Boolean = true) = lock.withLock {
+    private fun setEnabled(enabled: Boolean = true) = lock.withLock {
         if(enabled) {
             if(!isAdapterEnabled()) {
                 // request adapter enable
@@ -155,20 +156,22 @@ class BTService(private val appContext: Context): BroadcastReceiver() {
 
     fun getDeviceTypeList(): List<String> = listOf(
         MultipenUHF.name,
-        MultipenLF.name
-        // LFReader.name
+        MultipenLF.name,
+        LFReader.typeAName,
+        LFReader.typeBName
     )
 
     private fun deviceTypeInstance(type: String?): BTDeviceClass? {
         return when(type) {
             MultipenUHF.name -> MultipenUHF()
             MultipenLF.name -> MultipenLF()
-            // LFReader.name -> LFReader()
+            LFReader.typeAName -> LFReader(LFReaderType.TypeA)
+            LFReader.typeBName -> LFReader(LFReaderType.TypeB)
             else -> null
         }
     }
 
-    fun setDeviceType(type: String) = lock.withLock {
+    private fun setDeviceType(type: String) = lock.withLock {
         if(type !in getDeviceTypeList()) {
             return
         }

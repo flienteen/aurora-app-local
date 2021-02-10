@@ -21,7 +21,7 @@ interface TokenApi {
 
     data class TokenErrorResponse (
         var error: String,               // usually 'invalid_grant'
-        var error_message: String        // debug error message
+        var error_message: String?        // debug error message
     )
 
     object TokenError {
