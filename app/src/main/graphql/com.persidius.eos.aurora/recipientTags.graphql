@@ -8,6 +8,7 @@ query recipientTags($pageSize: Int!, $pageNumber: Int, $afterId: Int) {
             tag
             slot
             id
+            from
             recipient {
                 eosId
             }

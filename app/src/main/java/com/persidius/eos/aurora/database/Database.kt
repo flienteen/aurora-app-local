@@ -3,6 +3,7 @@ package com.persidius.eos.aurora.database
 import android.content.Context
 import androidx.room.Room
 import com.persidius.eos.aurora.database.dao.*
+import com.persidius.eos.aurora.database.migrations.Migration1To2
 
 object Database {
     private lateinit var eos: EosDatabase
@@ -10,6 +11,7 @@ object Database {
     fun init(applicationContext: Context) {
         // Add migrations here.
         eos = Room.databaseBuilder(applicationContext, EosDatabase::class.java, "n_eos.database")
+            .addMigrations(Migration1To2)
             .build()
     }
 

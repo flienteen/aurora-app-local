@@ -35,8 +35,8 @@ android {
         applicationId "com.persidius.eos.aurora"
         minSdkVersion 28
         targetSdkVersion 29
-        versionCode 510
-        versionName "5.1.0"
+        versionCode 520
+        versionName "5.2.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         javaCompileOptions {
@@ -52,21 +52,29 @@ android {
     buildTypes {
         release {
             buildConfigField "String", "IDP_URL", '"https://idp.persidius.com/auth/realms/prod/protocol/openid-connect/"'
-            buildConfigField "String", "SENTRY_DSN", '"https://e0497460cb404808889437a948c7c163@o394445.ingest.sentry.io/5264927"'
             buildConfigField "String", "IDP_CLIENT_SECRET", '"eb9ea944-6670-4b21-82ea-766a04a9d987"'
             buildConfigField "String", "IDP_CLIENT_ID", '"eos-aurora"'
             buildConfigField "String", "EOS_GRAPHQL_URL", '"https://eos-api.persidius.com/graphql"'
-            buildConfigField "Boolean", "ENABLE_HTTP_LOGGING", "true"
+
+            buildConfigField "Boolean", "ENABLE_HTTP_LOGGING", "false"
+            buildConfigField "String", "SENTRY_DSN", '"https://e0497460cb404808889437a948c7c163@o394445.ingest.sentry.io/5264927"'
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
+            /*
             buildConfigField "String", "IDP_URL", '"https://idp.persidius.dev/auth/realms/dev/protocol/openid-connect/"'
             buildConfigField "String", "IDP_CLIENT_SECRET", '"4115784e-a88f-4d44-830e-f9062f02a507"'
             buildConfigField "String", "IDP_CLIENT_ID", '"eos-aurora"'
             buildConfigField "String", "EOS_GRAPHQL_URL", '"https://eos-api.persidius.dev/graphql"'
+             */
+            buildConfigField "String", "IDP_URL", '"https://idp.persidius.com/auth/realms/prod/protocol/openid-connect/"'
+            buildConfigField "String", "IDP_CLIENT_SECRET", '"eb9ea944-6670-4b21-82ea-766a04a9d987"'
+            buildConfigField "String", "IDP_CLIENT_ID", '"eos-aurora"'
+            buildConfigField "String", "EOS_GRAPHQL_URL", '"https://eos-api.persidius.com/graphql"'
+
+            buildConfigField "Boolean", "ENABLE_HTTP_LOGGING", "false"
             buildConfigField "String", "SENTRY_DSN", '""'
-            buildConfigField "Boolean", "ENABLE_HTTP_LOGGING", "true"
         }
     }
     compileOptions {
@@ -90,12 +98,15 @@ apollo {
     graphqlSourceDirectorySet.include("**/*.graphql")
     graphqlSourceDirectorySet.exclude("**/schema.graphql")
     generateKotlinModels = true
+    customTypeMapping = [
+        "DateTime": "kotlin.String"
+    ]
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-    implementation 'androidx.core:core-ktx:1.3.0'
+    implementation 'androidx.core:core-ktx:1.3.2'
 
     implementation 'androidx.appcompat:appcompat:1.0.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
@@ -129,11 +140,11 @@ dependencies {
     implementation "androidx.work:work-runtime-ktx:2.3.4"
     implementation "androidx.work:work-rxjava2:2.3.4"
 
-    implementation 'androidx.room:room-runtime:2.2.5'
-    implementation 'androidx.room:room-ktx:2.2.5'
-    implementation "androidx.room:room-rxjava2:2.2.5"
+    implementation 'androidx.room:room-runtime:2.2.6'
+    implementation 'androidx.room:room-ktx:2.2.6'
+    implementation "androidx.room:room-rxjava2:2.2.6"
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0'
-    kapt 'androidx.room:room-compiler:2.2.5'
+    kapt 'androidx.room:room-compiler:2.2.6'
 
     // EosGraphQL.kt GraphQL
     implementation 'com.apollographql.apollo:apollo-runtime:2.1.0'

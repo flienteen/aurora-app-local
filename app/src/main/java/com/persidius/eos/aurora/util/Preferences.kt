@@ -1,5 +1,6 @@
 package com.persidius.eos.aurora.util
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
@@ -23,6 +24,9 @@ object Preferences: SharedPreferences.OnSharedPreferenceChangeListener {
     private const val SM_STATE = "smState"
     private const val SM_LAST_SYNC = "smLastSync"
 
+    // Vibrate when a tag reassignment is discovered
+    private const val REASSIGN_WARNING = "reassignWarning"
+
     lateinit var prefs: SharedPreferences
 
     // AuthorizationManager Token
@@ -39,11 +43,14 @@ object Preferences: SharedPreferences.OnSharedPreferenceChangeListener {
     lateinit var smState: BehaviorSubject<SyncState>
     lateinit var smLastSync: BehaviorSubject<String>
 
+    lateinit var reassignWarning: BehaviorSubject<Boolean>
+
     fun init(applicationContext: Context) {
         prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
         initSmPrefs()
         initAmPrefs()
         initBtPrefs()
+        initOtherPrefs()
 
         prefs.registerOnSharedPreferenceChangeListener(this)
     }
@@ -62,7 +69,15 @@ object Preferences: SharedPreferences.OnSharedPreferenceChangeListener {
             BT_DEVICE_ID -> {
                 btDeviceId.onNext(sharedPreferences.getString(key, "")!!)
             }
+            REASSIGN_WARNING -> {
+                reassignWarning.onNext(sharedPreferences.getBoolean(key, true))
+                Log.d("Prefs", "ReassignWarning: ${sharedPreferences.getBoolean(key, true)}")
+            }
         }
+    }
+
+    private fun initOtherPrefs() {
+        reassignWarning = PrefUtils.setupBoolean(REASSIGN_WARNING, true)
     }
 
     private fun initSmPrefs() {
@@ -98,18 +113,21 @@ object Preferences: SharedPreferences.OnSharedPreferenceChangeListener {
     }
 
     private object PrefUtils {
+        @SuppressLint("CheckResult")
         fun subscribeString(subject: Observable<String>, prefName: String) {
             subject.subscribe {
                 prefs.edit(commit = true) { putString (prefName, it) }
             }
         }
 
+        @SuppressLint("CheckResult")
         fun subscribeLong(subject: BehaviorSubject<Long>, prefName: String) {
             subject.subscribe {
                 prefs.edit(commit = true) { putLong(prefName, it) }
             }
         }
 
+        @SuppressLint("CheckResult")
         fun subscribeBoolean(subject: BehaviorSubject<Boolean>, prefName: String) {
             subject.subscribe {
                 prefs.edit(commit = true) { putBoolean(prefName, it) }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <PreferenceCategory
         app:title="BLUETOOTH"
         app:key="btStatus"
@@ -37,6 +38,17 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        android:title="ALERTE"
+        app:icon="@drawable/ic_baseline_warning_24"
+    >
+        <SwitchPreferenceCompat
+            app:key="reassignWarning"
+            app:title="Refolosire cip"
+            app:summary="Alertează când un cip a fost deja scanat la altă etichetă"
+            app:defaultValue="true"
+            />
+    </PreferenceCategory>
     <PreferenceCategory
         app:title="GENERAL"
         app:icon="@drawable/ic_settings_session_24dp"

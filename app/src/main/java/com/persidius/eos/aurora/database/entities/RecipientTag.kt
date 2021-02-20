@@ -18,5 +18,8 @@ data class RecipientTag(
     val id: Int,
 
     val recipientId: String?,
-    val slot: Int
+    val slot: Int,
+
+    // fromDate is helpful when we want to keep a synced record
+    val updatedOn: String? = null
 )

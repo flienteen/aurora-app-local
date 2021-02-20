@@ -14,7 +14,7 @@ import com.persidius.eos.aurora.database.fts.*
         RecipientUpdate::class, RecipientTagUpdate::class,
         Group::class, GroupFTS::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

@@ -62,6 +62,7 @@ class EosGraphQL(am: AuthManager) {
 
         val apolloClient = ApolloClient.builder()
             .serverUrl(serverUrl)
+            .addCustomTypeAdapter(CustomType.DATETIME, DateTimeAdapter)
             .okHttpClient(httpClient.build())
 
         return apolloClient.build()
