@@ -20,7 +20,11 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.facebook.stetho.Stetho
+import com.google.android.gms.measurement.module.Analytics
 import com.google.android.material.navigation.NavigationView
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import com.persidius.eos.aurora.auth.AuthManager
 import com.persidius.eos.aurora.bluetooth.BTService
 import com.persidius.eos.aurora.eos.sync.SyncManager
@@ -34,11 +38,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var  _location: Location
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var _navController: NavController
-    private lateinit var subs: CompositeDisposable;
+    private lateinit var subs: CompositeDisposable
+    lateinit var _firebaseAnalytics: FirebaseAnalytics
 
     // Accessible from fragments
     val navController get() = this._navController
     val location get() = this._location
+    val firebaseAnalytics get() = this._firebaseAnalytics
+
 
     inner class DrawerMenu(n: NavigationView) {
         val login: MenuItem = n.menu.findItem(R.id.nav_login)
@@ -112,6 +119,7 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint( "CheckResult", "AutoDispose")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        _firebaseAnalytics = Firebase.analytics
         subs = CompositeDisposable()
 
         if (BuildConfig.DEBUG) {

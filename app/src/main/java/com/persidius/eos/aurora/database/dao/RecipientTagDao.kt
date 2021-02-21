@@ -14,6 +14,9 @@ interface RecipientTagDao {
     @Query("DELETE FROM RecipientTag")
     fun deleteAll(): Completable
 
+    @Query("DELETE FROM RecipientTag WHERE tag IN (:tags)")
+    fun deleteTags(tags: List<String>): Completable
+
     @Query("SELECT * FROM RecipientTag WHERE tag = :tag")
     fun getByTag(tag: String): Maybe<RecipientTag>
 

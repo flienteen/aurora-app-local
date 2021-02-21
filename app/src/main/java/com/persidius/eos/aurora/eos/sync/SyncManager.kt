@@ -212,7 +212,7 @@ class SyncManager(private val authMgr: AuthManager, private val featMgr: Feature
                         recipientId = rt.recipient.firstOrNull()?.eosId,
                         tag = rt.tag,
                         slot = rt.slot,
-                        updatedOn = rt.from
+                        updatedAt = rt.from
                     )
                 }
 
@@ -325,7 +325,8 @@ class SyncManager(private val authMgr: AuthManager, private val featMgr: Feature
                         id = rt.id,
                         recipientId = rt.recipient.firstOrNull()?.eosId,
                         tag = rt.tag,
-                        slot = rt.slot
+                        slot = rt.slot,
+                        updatedAt = rt.from
                     )
                 }
 

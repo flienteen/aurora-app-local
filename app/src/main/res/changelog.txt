@@ -13,3 +13,11 @@ other tags starting with 33 that are also valid
 [v5.1.0 10/02/2021]
 * Add support for LF Type A and type B scanners.
 * Fix a parsing error for AuthManager
+
+[v5.2.0 21/02/2021]
+* Fixed a bug where tags that were 'shed' from a recipient were not deleted from DB,
+ instead still referencing old recipient
+* Added tag reassignment warning when reassigning a tag
+* Added disable reassignment warning in settings (default is enabled)
+* Added Firebase Analytics for reassignment warning
+* Refreshed app icon & login splash graphics

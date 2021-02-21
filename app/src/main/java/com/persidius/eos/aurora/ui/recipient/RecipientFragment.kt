@@ -8,18 +8,16 @@ import android.view.*
 import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.logEvent
 import com.persidius.eos.aurora.MainActivity
 import com.persidius.eos.aurora.R
 import com.persidius.eos.aurora.database.Database
 import com.persidius.eos.aurora.database.entities.*
 import com.persidius.eos.aurora.databinding.FragmentRecipientBinding
 import com.persidius.eos.aurora.ui.util.FoldingArrayAdapter
-import com.persidius.eos.aurora.util.AutoDisposeFragment
-import com.persidius.eos.aurora.util.RecipientSize
-import com.persidius.eos.aurora.util.RecipientStream
-import com.persidius.eos.aurora.util.then
+import com.persidius.eos.aurora.util.*
 import com.uber.autodispose.autoDispose
 import io.reactivex.Completable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -30,7 +28,6 @@ import kotlinx.android.synthetic.main.app_bar.*
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.TimeUnit
 
 class RecipientFragment: AutoDisposeFragment() {
     companion object {
@@ -70,7 +67,7 @@ class RecipientFragment: AutoDisposeFragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         setHasOptionsMenu(true)
 
         // Get the arguments
@@ -149,7 +146,7 @@ class RecipientFragment: AutoDisposeFragment() {
                 viewModel.tagSelected.value = 0
                 viewModel.tagSlots.value = size.slots
 
-                viewModel.uat.observe(viewLifecycleOwner, Observer { newVal ->
+                viewModel.uat.observe(viewLifecycleOwner, { newVal ->
 
                     val uat = viewModel.uats.value?.firstOrNull { u -> u.name == newVal }
                     if (uat != null) {
@@ -174,7 +171,7 @@ class RecipientFragment: AutoDisposeFragment() {
                     }
                 })
 
-                viewModel.uats.observe(viewLifecycleOwner, Observer { newVal ->
+                viewModel.uats.observe(viewLifecycleOwner, { newVal ->
                     binding.uat.setAdapter(
                         FoldingArrayAdapter(
                             requireActivity(),
@@ -184,7 +181,7 @@ class RecipientFragment: AutoDisposeFragment() {
                     binding.uat.validator = (binding.uat.adapter as FoldingArrayAdapter).getValidator("Nedefinit")
                 })
 
-                viewModel.locs.observe(viewLifecycleOwner, Observer { newVal ->
+                viewModel.locs.observe(viewLifecycleOwner, { newVal ->
                     binding.loc.setAdapter(
                         FoldingArrayAdapter(
                             requireActivity(),
@@ -202,7 +199,7 @@ class RecipientFragment: AutoDisposeFragment() {
                 viewModel.recLabels.value = data.fifth
 
                 // Ensure we're always displaying the correct tags
-                viewModel.size.observe(viewLifecycleOwner, Observer { newSize ->
+                viewModel.size.observe(viewLifecycleOwner, { newSize ->
                     val newRecipientSize = RecipientSize.fromDisplayName(newSize) ?: RecipientSize.SIZE_120L
                     viewModel.tagSlots.value = newRecipientSize.slots
                     if(newRecipientSize.slots - 1 <= (viewModel.tagSelected.value ?: 0)) {
@@ -242,21 +239,58 @@ class RecipientFragment: AutoDisposeFragment() {
                 subscription = (activity as MainActivity).btSvc.tags
                 .observeOn(AndroidSchedulers.mainThread())
                 .autoDispose(this)
-                .subscribe { newVal ->
+                .subscribe tagSub@{ newVal ->
 
-                    when(viewModel.tagSelected.value ?: 0) {
-                        0 -> viewModel.tag0.value = newVal
-                        1 -> viewModel.tag1.value = newVal
-                    }
+                    // We need to do another thing:
+                    // Perform a DB lookup (if the warn reassignment option is on)
+                    // IF reassignment warning is enabled, then throw it out
+                    val reassignWarningEnabled = Preferences.reassignWarning.blockingFirst()
+                    val existingTag = Database.recipientTags.getByTag(newVal)
+                        .subscribeOn(Schedulers.io())
+                        .blockingGet()
 
-                    if(viewModel.tag0.value == viewModel.tag1.value) {
-                        // If both tags have the same value,
-                        // null the one not selected.
-                        when(viewModel.tagSelected.value ?: 0) {
-                            0 -> viewModel.tag1.value = ""
-                            1 -> viewModel.tag0.value = ""
+                    if (existingTag != null && existingTag.recipientId != viewModel.recipient?.eosId) {
+                        if(!reassignWarningEnabled) {
+                            // warning is disabled
+                            setCurrentTagValue(newVal)
+
+                            // but log analytics event
+                            (activity as MainActivity).firebaseAnalytics.logEvent(AuroraAnalytics.Event.REASSIGN_WARNING_IGNORED) {
+                                param(AuroraAnalytics.Params.RECIPIENT_EOS_ID, viewModel.recipient?.eosId ?: "NULL")
+                                param(AuroraAnalytics.Params.RFID_TAG, existingTag.tag)
+                                param(AuroraAnalytics.Params.REASSIGN_WARNING_ENABLED, reassignWarningEnabled.toString())
+                            }
                         }
+                        else {
+                            // Warn
+                            // TODO: Include 'time ago' when tag was reg'd
+                            val builder = AlertDialog.Builder(requireContext())
+                            builder.setTitle("Atenție")
+                                .setMessage("Cipul scanat a fost deja asociat cu un alt recipient (${viewModel.recipient?.eosId ?: "NULL"})")
+                            // Proceed.
+                            builder.setPositiveButton("Continuă") { _, _ ->
+                                (activity as MainActivity).firebaseAnalytics.logEvent(AuroraAnalytics.Event.REASSIGN_WARNING_IGNORED) {
+                                    param(AuroraAnalytics.Params.RECIPIENT_EOS_ID, viewModel.recipient?.eosId ?: "NULL")
+                                    param(AuroraAnalytics.Params.RFID_TAG, existingTag.tag)
+                                    param(AuroraAnalytics.Params.REASSIGN_WARNING_ENABLED, reassignWarningEnabled.toString())
+                                }
+                                setCurrentTagValue(newVal)
+                            }
+                            builder.setNegativeButton("Anulează") { _, _ ->
+                                (activity as MainActivity).firebaseAnalytics.logEvent(AuroraAnalytics.Event.REASSIGN_WARNING_ACKNOWLEDGED) {
+                                    param(AuroraAnalytics.Params.RECIPIENT_EOS_ID, viewModel.recipient?.eosId ?: "NULL")
+                                    param(AuroraAnalytics.Params.RFID_TAG, existingTag.tag)
+                                }
+                            }
+                            builder.create().show()
+                            (activity as MainActivity).firebaseAnalytics.logEvent(AuroraAnalytics.Event.REASSIGN_WARNING) {
+                                param(AuroraAnalytics.Params.RECIPIENT_EOS_ID, viewModel.recipient?.eosId ?: "NULL")
+                                param(AuroraAnalytics.Params.RFID_TAG, existingTag.tag)
+                            }
+                        }
+                        return@tagSub
                     }
+                    setCurrentTagValue(newVal)
                 }
 
                 viewModel.groupId.value = recipient.groupId ?: ""
@@ -292,6 +326,22 @@ class RecipientFragment: AutoDisposeFragment() {
                 builder.show()
             })
         return binding.root
+    }
+
+    private fun setCurrentTagValue(newVal: String) {
+        when (viewModel.tagSelected.value ?: 0) {
+            0 -> viewModel.tag0.value = newVal
+            1 -> viewModel.tag1.value = newVal
+        }
+
+        if (viewModel.tag0.value == viewModel.tag1.value) {
+            // If both tags have the same value,
+            // null the one not selected.
+            when (viewModel.tagSelected.value ?: 0) {
+                0 -> viewModel.tag1.value = ""
+                1 -> viewModel.tag0.value = ""
+            }
+        }
     }
 
     override fun onDestroyView() {
@@ -359,9 +409,11 @@ class RecipientFragment: AutoDisposeFragment() {
 
         if(changes.hasTagUpdates()) {
             val updates = changes.getTagUpdates(createdBy)
+            // Insert the updates in the DB
             updates.forEach { upd ->
                 c = c.andThen (Database.recipientTagUpdates.insert(upd).subscribeOn(Schedulers.io()).ignoreElement())
             }
+            // And then apply them to the DB
             c = c.andThen(applyRecipientTagUpdates(viewModel.tags ?: listOf(), updates))
         }
 
@@ -397,45 +449,66 @@ class RecipientFragment: AutoDisposeFragment() {
             .subscribeOn(Schedulers.io())
     }
 
-    private fun applyRecipientTagUpdates(t: List<RecipientTag>, p: List<RecipientTagUpdate>): Completable {
-        val newTags = t.map { tag ->
-            val u = p.firstOrNull { it.slot == tag.slot }
-            if(u == null) {
-                tag
-            } else {
-                RecipientTag(
-                    tag = u.tag,
-                    slot = u.slot,
-                    recipientId = u.recipientId,
-                    id = tag.id
-                )
-            }
-        }.toMutableList()
+    // TODO: if recipient has shed any tags, these are *NOT* updated
+    // in the database.
 
-        // now check if there's no "new" tags (updates w/ no corresponding tag)
+    private fun applyRecipientTagUpdates(t: List<RecipientTag>, p: List<RecipientTagUpdate>): Completable {
+
+        // t is the list of recipientTags from the viewModel (original tags in DB)
+        // p is the list of updated tags
+        // newTags = <tag from viewModel> if it does not exist in TagUpdates
+        //
+
+        val (shedTags, remainingTags) = t.partition { tag -> p.none { it.tag == tag.tag } }
+        Log.d("RecipientFragment", "DELETE FOR TAGS = ${shedTags.map { it.tag }}")
+
+        // Log.d("RecipientFragment", "$t, $p");
+
+        val updatedTags = // Log.d("RecipientFragment", "Updated tag as ${tag.id}/${u.recipientId}/${u.createdAt}/${u.tag}")
+            remainingTags.mapNotNull { tag ->
+                // Try to find an update for that slot.
+                // if no update exists, it means nothing changed
+                // so we are free to do nothing (return null).
+                val u = p.firstOrNull { it.slot == tag.slot  }
+                if (u == null) {
+                    null
+                } else {
+                    RecipientTag(
+                        tag = u.tag,
+                        slot = u.slot,
+                        recipientId = u.recipientId,
+                        id = tag.id,
+                        updatedAt = u.createdAt
+                    )
+                }
+            }.toMutableList()
+
+        // Now check the updates, and see if there are any new tags in the updates
         p.forEach { u ->
-            val tag = t.firstOrNull { it.slot == u.slot }
+            val tag = remainingTags.firstOrNull { it.slot == u.slot }
             if(tag == null) {
-                newTags.add(RecipientTag(
+                updatedTags.add(RecipientTag(
                     tag = u.tag,
                     slot = u.slot,
                     recipientId = u.recipientId,
-                    id = 0
+                    id = 0,
+                    updatedAt = u.createdAt
                 ))
             }
         }
 
-        return Database.recipientTags.insert(newTags.toList())
+        Log.d("RecipientFragment", "UPDATE FOR TAGS ${updatedTags.map { it.tag }}")
+
+        return Database.recipientTags.deleteTags(shedTags.map { it.tag })
+            .andThen(Database.recipientTags.insert(updatedTags.toList()))
             .subscribeOn(Schedulers.io())
     }
-
-
 
     private data class RecipientChangedValues(
         val eosId: String,
         val id: Int,
-        val tag0Val: String,
-        val tag1Val: String,
+        val tag0Val: String,            // Wtf is this?
+        val tag1Val: String,            // WTF IS THIS?>!?!??!
         val tag0Id: Int,
         val tag1Id: Int,
         val locId: Int? = null,
@@ -448,7 +521,7 @@ class RecipientFragment: AutoDisposeFragment() {
         val groupId: String? = null,        // Empty String represents EXPLICIT NULL in graphql
         val tag0: String? = null,           // Empty String represents EXPLICIT NULL in graphql
         val tag1: String? = null,           // Empty String represents EXPLICIT NULL in graphql
-        val labels: Map<String, String?>? = null
+        val labels: Map<String, String?>? = null,
     ) {
         fun hasChanges() = (locId ?: uatId ?: size ?: stream?:
             addressStreet ?: addressNumber ?: comments ?: groupId ?: tag0 ?: tag1 ?: labels) != null
@@ -520,10 +593,11 @@ class RecipientFragment: AutoDisposeFragment() {
                 tag0Val = "",
                 tag1Val = "",
                 tag0Id = 0,
-                tag1Id = 0
+                tag1Id = 0,
             )
         }
         val r = viewModel.recipient!!
+
 
         val vmUatId = viewModel.uats.value?.find { u -> u.name == viewModel.uat.value }?.id ?: r.uatId
         val vmLocId = viewModel.locs.value?.find { l -> l.name == viewModel.loc.value }?.id ?: r.locId
@@ -533,9 +607,9 @@ class RecipientFragment: AutoDisposeFragment() {
         val vmAddressNumber = viewModel.addressNumber.value!!
         val vmComments = viewModel.comments.value!!
         val vmGroupId = viewModel.groupId.value!!
+
         val vmTag0 = viewModel.tag0.value!!
         val vmTag1 = viewModel.tag1.value!!
-
 
         val tag0 = viewModel.tags?.firstOrNull{ t -> t.slot == 0 }?.tag ?: ""
         val tag1 = viewModel.tags?.firstOrNull{ t -> t.slot == 1}?.tag ?: ""
@@ -557,7 +631,7 @@ class RecipientFragment: AutoDisposeFragment() {
             addressNumber = if(r.addressNumber == vmAddressNumber) null else vmAddressNumber,
             groupId = if(rGroupId == vmGroupId) null else vmGroupId,
             tag0 = if(vmTag0 == tag0) null else vmTag0,
-            tag1 = if(vmTag1 == tag1) null else vmTag1
+            tag1 = if(vmTag1 == tag1) null else vmTag1,
         )
 
         Log.d("RECIPIENT", "Changes: $ret")

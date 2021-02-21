@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "5e7c107fa8bc96b8bb9722019f2c68b7",
+    "identityHash": "30e083db7cf7f768d7cfc70038557253",
     "entities": [
       {
         "tableName": "County",
@@ -506,7 +506,7 @@
       },
       {
         "tableName": "RecipientTag",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`tag` TEXT NOT NULL, `id` INTEGER NOT NULL, `recipientId` TEXT, `slot` INTEGER NOT NULL, `updatedOn` TEXT, PRIMARY KEY(`tag`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`tag` TEXT NOT NULL, `id` INTEGER NOT NULL, `recipientId` TEXT, `slot` INTEGER NOT NULL, `updatedAt` TEXT, PRIMARY KEY(`tag`))",
         "fields": [
           {
             "fieldPath": "tag",
@@ -533,8 +533,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "updatedOn",
-            "columnName": "updatedOn",
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
             "affinity": "TEXT",
             "notNull": false
           }
@@ -883,7 +883,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5e7c107fa8bc96b8bb9722019f2c68b7')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '30e083db7cf7f768d7cfc70038557253')"
     ]
   }
 }
