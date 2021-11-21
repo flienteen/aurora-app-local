@@ -19,6 +19,10 @@
     <color name="colorBackground">#ffffff</color>
     <color name="colorError">#ff1744</color>
 
+    <color name="lightError">#F44336</color>
+    <color name="lightWarning">#FFEB3B</color>
+    <color name="lightOk">#4CAF50</color>
+
     <!-- TODO: Also update colors in java/util/StreamColors.kt -->
     <color name="colorREZ">#212121</color>
     <color name="colorRGL">#00c853</color>

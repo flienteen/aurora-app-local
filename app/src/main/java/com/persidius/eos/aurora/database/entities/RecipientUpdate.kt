@@ -49,6 +49,8 @@ data class RecipientUpdate(
     val uatId: Int?,
     val locId: Int?,
 
+    val lifecycle: String?,
+
     val comments: String?,
 
     val labels: Map<String, String?>?,

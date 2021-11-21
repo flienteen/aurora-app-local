@@ -21,7 +21,7 @@ import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
 
 
-class Location(private val activity: Activity) {
+class Location(private val activity: Activity): LocationProvider {
 
     private val gpsRequest = 1001
     private val tag = "LOC"
@@ -34,8 +34,8 @@ class Location(private val activity: Activity) {
     private var _lat: Double = 0.0
     private var _lng: Double = 0.0
 
-    val lat: Double get() = _lat
-    val lng: Double get() = _lng
+    override val lat: Double get() = _lat
+    override val lng: Double get() = _lng
 
     private var isGpsOn = false
 

@@ -37,68 +37,67 @@ class CameraScannerFragment : Fragment() {
     private var popNav: Boolean = false
     private var debounce = false
     private fun startCamera() {
-        val targetHeight = 1280
-        val targetWidth = (viewFinder.width.toFloat() / viewFinder.height.toFloat() * targetHeight).toInt()
-        val previewConfig = PreviewConfig.Builder().apply {
-            setTargetResolution(Size(targetWidth,targetHeight))
-        }.build()
+      val targetHeight = 1280
+      val targetWidth = (viewFinder.width.toFloat() / viewFinder.height.toFloat() * targetHeight).toInt()
+      val previewConfig = PreviewConfig.Builder().apply {
+          setTargetResolution(Size(targetWidth,targetHeight))
+      }.build()
 
-        val preview = Preview(previewConfig)
-        preview.setOnPreviewOutputUpdateListener {
+      val preview = Preview(previewConfig)
+      preview.setOnPreviewOutputUpdateListener {
+        val parent = viewFinder.parent as ViewGroup
+        parent.removeView(viewFinder)
+        parent.addView(viewFinder, 0)
 
-            val parent = viewFinder.parent as ViewGroup
-            parent.removeView(viewFinder)
-            parent.addView(viewFinder, 0)
+        viewFinder.surfaceTexture = it.surfaceTexture
+        updateTransform()
+      }
 
-            viewFinder.surfaceTexture = it.surfaceTexture
-            updateTransform()
-        }
+      val analyzerConfig = ImageAnalysisConfig.Builder().apply {
+        setImageReaderMode(ImageAnalysis.ImageReaderMode.ACQUIRE_LATEST_IMAGE)
+      }.build()
 
-        val analyzerConfig = ImageAnalysisConfig.Builder().apply {
-            setImageReaderMode(ImageAnalysis.ImageReaderMode.ACQUIRE_LATEST_IMAGE)
-        }.build()
+      val analyzerUseCase = ImageAnalysis(analyzerConfig).apply {
+        setAnalyzer(executor, BarcodeAnalyzer { barcodes -> onBarcode(barcodes) })
+      }
 
-        val analyzerUseCase = ImageAnalysis(analyzerConfig).apply {
-            setAnalyzer(executor, BarcodeAnalyzer { barcodes -> onBarcode(barcodes) })
-        }
-
-        CameraX.bindToLifecycle(this, preview, analyzerUseCase)
+      CameraX.bindToLifecycle(this, preview, analyzerUseCase)
     }
 
 
     private fun onBarcode(barcodes: List<FirebaseVisionBarcode>) {
-        // rtn on debounce
-        if(debounce || barcodes.isEmpty()) { return }
+      // rtn on debounce
+      if(debounce || barcodes.isEmpty()) { return }
 
-        debounce = true
-        if(barcodes.size > 1) {
-            // show dialogue w/ warning
-            val builder = AlertDialog.Builder(requireContext())
-            builder.setTitle("Multiple coduri")
-            builder.setMessage("Au fost scanate multiple coduri. Pentru a evita ambiguitatea, asigura-te ca exista o singura eticheta in vederea camerei")
-            builder.setNeutralButton("Am Ințeles" ) { dialog, which ->
-                dialog.dismiss()
-                debounce = false
-            }
-            builder.show()
+      debounce = true
+      if(barcodes.size > 1) {
+          // show dialogue w/ warning
+          val builder = AlertDialog.Builder(requireContext())
+          builder.setTitle("Multiple coduri")
+          builder.setMessage("Au fost scanate multiple coduri. Pentru a evita ambiguitatea, asigura-te ca exista o singura eticheta in vederea camerei")
+          builder.setNeutralButton("Am Ințeles" ) { dialog, which ->
+            dialog.dismiss()
+            debounce = false
+          }
+          builder.show()
+      }
+
+      if(barcodes.size == 1) {
+        // nav to next destination
+        val navController = (activity as MainActivity).navController
+        val args = Bundle()
+        val code = barcodes[0].rawValue?.split(":")?.last()
+        args.apply {
+            putString(RecipientFragment.ARG_RECIPIENT_ID, code)
         }
 
-        if(barcodes.size == 1) {
-            // nav to next destination
-            val navController = (activity as MainActivity).navController
-            val args = Bundle()
-            val code = barcodes[0].rawValue?.split(":")?.last()
-            args.apply {
-                putString(RecipientFragment.ARG_RECIPIENT_ID, code)
-            }
-
-            // CameraX.unbindAll()
-           if(popNav) {
-                navController.popBackStack(R.id.nav_cameraScanner, true)
-            }
-
-            navController.navigate(R.id.nav_recipient, args)
+        // CameraX.unbindAll()
+       if(popNav) {
+            navController.popBackStack(R.id.nav_cameraScanner, true)
         }
+
+        navController.navigate(R.id.nav_recipient, args)
+      }
     }
 
     private fun updateTransform() {

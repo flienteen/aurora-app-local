@@ -11,6 +11,11 @@
                     android:icon="@drawable/ic_bin_24dp"
                     android:title="@string/bin"
                     />
+                <item
+                    android:id="@+id/nav_createCollection"
+                    android:icon="@drawable/ic_bin_24dp"
+                    android:title="@string/collections"
+                    />
             </menu>
         </item>
     </group>

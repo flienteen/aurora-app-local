@@ -22,6 +22,9 @@ data class Recipient(
     val posLat: Double,
     val posLng: Double,
 
+    @ColumnInfo(defaultValue = "ACTIVE")
+    val lifecycle: String,
+
     val labels: Map<String, String?>,
     val comments: String,
     val groupId: String?,

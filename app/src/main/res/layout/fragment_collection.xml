@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".ui.collection.CollectionFragment">
+
+    <data>
+        <import type="android.view.View" />
+        <import type="com.persidius.eos.aurora.ui.collection.CollectionFragmentReadState" />
+        <variable
+            name="model"
+            type="com.persidius.eos.aurora.ui.collection.CollectionViewModel" />
+
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@{model.state == CollectionFragmentReadState.WAITING_READ ? @color/colorBackground : (model.state == CollectionFragmentReadState.READ_OK ? @color/lightOk : (model.state == CollectionFragmentReadState.READ_DUPLICATED ? @color/lightWarning : @color/lightError))}"
+        >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="@string/size">
+
+                <com.persidius.eos.aurora.ui.components.InstantAutoComplete
+                    android:id="@+id/vehicleLicensePlate"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@={model.vehicleLicensePlate}"
+
+                    app:filterIgnoreText="true" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="@{model.state == CollectionFragmentReadState.WAITING_READ ? View.VISIBLE : View.INVISIBLE }"
+                android:text="Se asteapta o scanare"
+                />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="@{model.state == CollectionFragmentReadState.READ_OK ? View.VISIBLE : View.INVISIBLE }"
+                android:text="Colectare inregistrata"
+                />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="@{model.state == CollectionFragmentReadState.READ_DUPLICATED ? View.VISIBLE : View.INVISIBLE }"
+                android:text="Exista deja o colectare in ultimele 5 minute"
+                />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="@{model.state == CollectionFragmentReadState.READ_OTHER_ERROR ? View.VISIBLE : View.INVISIBLE }"
+                android:text="Eroare citire"
+                />
+        </LinearLayout>
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

@@ -8,19 +8,25 @@ import io.reactivex.Maybe
 
 @Dao
 interface ArteryDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insert(arteries: List<Artery>): Completable
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  fun rxInsert(arteries: List<Artery>): Completable
 
-    @Query("DELETE FROM Artery")
-    fun deleteAll(): Completable
+  @Query("DELETE FROM Artery")
+  fun rxDeleteAll(): Completable
 
-    @Query("SELECT * FROM Artery WHERE locId IN (:locIds)")
-    fun getByLocIds(locIds: List<Int>): Maybe<List<Artery>>
+  @Query("SELECT * FROM Artery WHERE locId IN (:locIds)")
+  fun getByLocIds(locIds: List<Int>): Maybe<List<Artery>>
 
-    @Query("SELECT COUNT(id) AS result FROM Artery")
-    fun getCount(): Maybe<Int>
+  @Query("SELECT COUNT(id) AS result FROM Artery")
+  fun getCount(): Maybe<Int>
 
-    @Query("SELECT * FROM Artery JOIN ArteryFTS ON (ArteryFTS.rowid = Artery.rowid) WHERE locId = :locId AND ArteryFTS MATCH :term")
-    fun search(locId: Int, term: String): Maybe<List<Artery>>
+  @Query("SELECT * FROM Artery JOIN ArteryFTS ON (ArteryFTS.rowid = Artery.rowid) WHERE locId = :locId AND ArteryFTS MATCH :term")
+  fun search(locId: Int, term: String): Maybe<List<Artery>>
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  suspend fun insert(arteries: List<Artery>)
+
+  @Query("DELETE FROM Artery")
+  suspend fun deleteAll()
 
 }

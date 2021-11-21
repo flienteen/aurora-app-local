@@ -209,7 +209,20 @@
                     />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Stare">
 
+                <com.persidius.eos.aurora.ui.components.InstantAutoComplete
+                    android:id="@+id/lifecycle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@={model.lifecycle}"
+                    app:filterIgnoreText="true" />
+
+            </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
     </ScrollView>
 </layout>

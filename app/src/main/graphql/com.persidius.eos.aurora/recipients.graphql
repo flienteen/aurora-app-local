@@ -23,6 +23,8 @@ query recipients($pageSize: Int!, $pageNumber: Int, $afterId: Int) {
             size
             comments
 
+            lifecycle
+
             groups (historicalRecordType: CURRENT_ONLY) {
                 eosId
             }

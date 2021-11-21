@@ -5,6 +5,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.persidius.eos.aurora.database.dao.*
 import com.persidius.eos.aurora.database.entities.*
+import com.persidius.eos.aurora.database.entities.Collection
 import com.persidius.eos.aurora.database.fts.*
 
 @Database(
@@ -12,9 +13,9 @@ import com.persidius.eos.aurora.database.fts.*
         Artery::class, ArteryFTS::class, RecommendedLabel::class,
         Recipient::class, RecipientFTS::class, RecipientTag::class,
         RecipientUpdate::class, RecipientTagUpdate::class,
-        Group::class, GroupFTS::class
+        Group::class, GroupFTS::class, Collection::class, Vehicle::class
     ],
-    version = 2,
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -33,4 +34,8 @@ abstract class EosDatabase : RoomDatabase() {
 
     abstract fun recipientTagDao(): RecipientTagDao
     abstract fun recipientTagUpdateDao(): RecipientTagUpdateDao
+
+    abstract fun collectionDao(): CollectionDao
+
+    abstract fun vehicleDao(): VehicleDao
 }

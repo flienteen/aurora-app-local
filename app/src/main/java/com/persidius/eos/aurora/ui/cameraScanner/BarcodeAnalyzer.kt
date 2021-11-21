@@ -23,29 +23,29 @@ class BarcodeAnalyzer(private val onBarcode: (List<FirebaseVisionBarcode>) -> Un
     }
 
     override fun analyze(imageProxy: ImageProxy?, degrees: Int) {
-        val currentTimestamp = System.currentTimeMillis()
+      val currentTimestamp = System.currentTimeMillis()
 
-        if(currentTimestamp - lastAnalysis < ANALYSIS_INTERVAL) {
-            return
-        }
+      if(currentTimestamp - lastAnalysis < ANALYSIS_INTERVAL) {
+        return
+      }
 
-        try {
-            val mediaImage = imageProxy?.image
-            val imageRotation = degreesToFirebaseRotation(degrees)
-            if (mediaImage != null) {
-                lastAnalysis = currentTimestamp
-                val image = FirebaseVisionImage.fromMediaImage(mediaImage, imageRotation)
-                val detector = FirebaseVision.getInstance().visionBarcodeDetector
+      try {
+        val mediaImage = imageProxy?.image
+        val imageRotation = degreesToFirebaseRotation(degrees)
+        if (mediaImage != null) {
+          lastAnalysis = currentTimestamp
+          val image = FirebaseVisionImage.fromMediaImage(mediaImage, imageRotation)
+          val detector = FirebaseVision.getInstance().visionBarcodeDetector
 
-                detector.detectInImage(image)
-                    .addOnSuccessListener { barcodes -> onBarcode(barcodes) }
-                    .addOnFailureListener {
-                        Sentry.capture(it)
-                    }
+          detector.detectInImage(image)
+            .addOnSuccessListener { barcodes -> onBarcode(barcodes) }
+            .addOnFailureListener {
+                Sentry.capture(it)
             }
-        } catch(e: Exception) {
-            // some error
-            return
         }
+      } catch(e: Exception) {
+        // some error
+        return
+      }
     }
 }

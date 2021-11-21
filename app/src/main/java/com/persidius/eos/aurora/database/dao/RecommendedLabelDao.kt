@@ -10,18 +10,24 @@ import io.reactivex.Maybe
 
 @Dao
 interface RecommendedLabelDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insert(labels: List<RecommendedLabel>): Completable
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  fun rxInsert(labels: List<RecommendedLabel>): Completable
 
-    @Query("DELETE FROM RecommendedLabel")
-    fun deleteAll(): Completable
+  @Query("DELETE FROM RecommendedLabel")
+  fun rxDeleteAll(): Completable
 
-    @Query("SELECT * FROM RecommendedLabel where label = :label")
-    fun getForLabel(label: String): Maybe<RecommendedLabel>
+  @Query("SELECT * FROM RecommendedLabel where label = :label")
+  fun getForLabel(label: String): Maybe<RecommendedLabel>
 
-    @Query("SELECT * FROM RecommendedLabel")
-    fun getAll(): Maybe<List<RecommendedLabel>>
+  @Query("SELECT * FROM RecommendedLabel")
+  fun getAll(): Maybe<List<RecommendedLabel>>
 
-    @Query("SELECT COUNT(displayName) AS result FROM RecommendedLabel")
-    fun getCount(): Maybe<Int>
+  @Query("SELECT COUNT(displayName) AS result FROM RecommendedLabel")
+  fun getCount(): Maybe<Int>
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  suspend fun insert(labels: List<RecommendedLabel>)
+
+  @Query("DELETE FROM RecommendedLabel")
+  suspend fun deleteAll()
 }

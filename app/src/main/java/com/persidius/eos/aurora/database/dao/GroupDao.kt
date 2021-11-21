@@ -10,18 +10,21 @@ import io.reactivex.Maybe
 
 @Dao
 interface GroupDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insert(groups: List<Group>): Completable
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  fun rxInsert(groups: List<Group>): Completable
 
-    @Query("DELETE FROM `Group`")
-    fun deleteAll(): Completable
+  @Query("DELETE FROM `Group`")
+  fun deleteAll(): Completable
 
-    @Query("SELECT MAX(id) AS result FROM `Group`")
-    fun maxId(): Maybe<Int>
+  @Query("SELECT MAX(id) AS result FROM `Group`")
+  fun maxId(): Maybe<Int>
 
-    @Query("SELECT COUNT(id) AS result FROM `Group`")
-    fun getCount(): Maybe<Int>
+  @Query("SELECT COUNT(id) AS result FROM `Group`")
+  fun getCount(): Maybe<Int>
 
-    @Query("SELECT * FROM `Group` JOIN GroupFTS ON (GroupFTS.rowid = `Group`.rowid) WHERE GroupFTS MATCH :term")
-    fun search(term: String): Maybe<List<Group>>
+  @Query("SELECT * FROM `Group` JOIN GroupFTS ON (GroupFTS.rowid = `Group`.rowid) WHERE GroupFTS MATCH :term")
+  fun search(term: String): Maybe<List<Group>>
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  suspend fun insert(groups: List<Group>)
 }

@@ -3,6 +3,7 @@
 schema {
     query: Query
     mutation: Mutation
+    subscription: Subscription
 }
 
 interface Paginated {
@@ -12,6 +13,253 @@ interface Paginated {
     pageSize: Int!
     "total number of results"
     total: Int!
+}
+
+type AraCollection {
+    collectedStream: WasteStream
+    "Date the event was recorded in the field"
+    createdAt: DateTime!
+    "Whether this collection is extra (more collection on same interval) or not"
+    extra: Boolean!
+    id: Int!
+    intendedStream: WasteStream
+    "Recipient record at the time collection was created"
+    recipient: Recipient
+    status: CollectionStatus!
+}
+
+type AraGroup {
+    "Street Number"
+    addressNumber: String!
+    addressStreet: String!
+    araRecipients(
+        from: DateTime,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        to: DateTime
+    ): [Recipient!]!
+    center(
+        from: DateTime,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        to: DateTime
+    ): GroupMapLngLat!
+    collections(
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int
+    ): PaginatedCollections!
+    comments: String!
+    county: County!
+    current: Boolean!
+    eosId: String!
+    from: DateTime!
+    "Whether this object is hidden by default or not"
+    hidden: Boolean!
+    id: Int!
+    labels: [Label!]!
+    loc: Loc!
+    places(
+        asOf: DateTime,
+        "Branch that must be present on the object"
+        branches: [BranchType!],
+        eosIds: [String!],
+        "Lifecycle of the service agreement."
+        lifecycles: [ServiceAgreementLifecycleType!],
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!]
+    ): [Place!]!
+    recipients(
+        from: DateTime,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        to: DateTime
+    ): [Recipient!]!
+    to: DateTime!
+    type: GroupType!
+    uat: Uat!
+    users(
+        from: DateTime,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        to: DateTime
+    ): [User!]!
+}
+
+type AraOwner {
+    araPlaces(
+        asOf: DateTime,
+        "Branch that must be present on the object"
+        branches: [BranchType!],
+        eosIds: [String!],
+        "Lifecycle of the service agreement."
+        lifecycles: [ServiceAgreementLifecycleType!],
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!]
+    ): [AraPlace!]!
+    araTemplate: String
+    attributes: String!
+    comments: String!
+    county: County!
+    effectiveInterval: [DateTime!]!
+    eosId: String!
+    "External ID used to interface this user to other systems"
+    extId: String
+    firstName: String!
+    "Whether this object is hidden by default or not"
+    hidden: Boolean!
+    id: Int!
+    idAddress: String!
+    idNumber: String!
+    labels: [Label!]!
+    "Firm name. Used for business type"
+    name: String!
+    organization: Organization!
+    places(
+        asOf: DateTime,
+        "Branch that must be present on the object"
+        branches: [BranchType!],
+        eosIds: [String!],
+        "Lifecycle of the service agreement."
+        lifecycles: [ServiceAgreementLifecycleType!],
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!]
+    ): [Place!]!
+    template: String
+    type: OwnerType!
+    uat: Uat!
+}
+
+type AraPlace {
+    "Street Number"
+    addressNumber: String!
+    addressStreet: String!
+    araGroup: AraGroup
+    araOwnerLinks: [OwnerPlaceLink!]!
+    araOwners(
+        asOf: DateTime,
+        eosIds: [String!],
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!]
+    ): [AraOwner!]!
+    araServiceAgreements(
+        asOf: DateTime,
+        "Branch that must be present on the object"
+        branches: [BranchType!],
+        eosIds: [String!],
+        "Lifecycle of the service agreement."
+        lifecycles: [ServiceAgreementLifecycleType!],
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!]
+    ): [AraServiceAgreement!]!
+    araTemplate: String
+    attributes: String!
+    branch: BranchType!
+    comments: String!
+    county: County!
+    description: String!
+    effectiveInterval: [DateTime!]!
+    eosId: String!
+    "External ID used to interface this user to other systems"
+    extId: String
+    group: Group
+    groupId: String
+    "Whether this object is hidden by default or not"
+    hidden: Boolean!
+    id: Int!
+    labels: [Label!]!
+    lifecycle: String!
+    loc: Loc!
+    organization: Organization!
+    ownerLinks: [OwnerPlaceLink!]!
+    owners(
+        asOf: DateTime,
+        eosIds: [String!],
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!]
+    ): [Owner!]!
+    serviceAgreementTemplate(asOf: DateTime): String!
+    serviceAgreements(
+        asOf: DateTime,
+        "Branch that must be present on the object"
+        branches: [BranchType!],
+        eosIds: [String!],
+        "Lifecycle of the service agreement."
+        lifecycles: [ServiceAgreementLifecycleType!],
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!]
+    ): [ServiceAgreement!]!
+    template: String
+    uat: Uat!
+}
+
+type AraServiceAgreement {
+    "Street Number"
+    addressNumber: String!
+    addressStreet: String!
+    araPlace(
+        asOf: DateTime,
+        "Branch that must be present on the object"
+        branches: [BranchType!],
+        eosIds: [String!],
+        "Lifecycle of the service agreement."
+        lifecycles: [ServiceAgreementLifecycleType!],
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!]
+    ): AraPlace!
+    araTemplate: String
+    attributes: String!
+    branch: BranchType!
+    comments: String!
+    county: County!
+    delegateEmail: String
+    effectiveInterval: [DateTime!]!
+    eosId: String!
+    "External ID used to interface this user to other systems"
+    extId: String
+    id: Int!
+    labels: [Label!]!
+    lifecycle: ServiceAgreementLifecycleType!
+    loc: Loc!
+    modifiedBy: ModificationAuthor!
+    organization: Organization!
+    place: Place!
+    "User has confirmed the recipients."
+    recipientsConfirmed: Boolean!
+    "Data object used in resolver lib to generate service agreement template"
+    resolverData(asOf: DateTime): String!
+    template(asOf: DateTime): String
+    type: String
+    uat: Uat!
+    "Active user's name of the service agreement"
+    userName: String
+    verifiedPersons: Float
+}
+
+type AraUser {
+    "Name of this user."
+    email: String!
+    emailVerified: Boolean!
+    "Unique user-id. Usually maps on to OIDC provider's GUID"
+    id: String!
+    "Verified id numbers."
+    idNumbers: [String!]!
+    "Name of this user."
+    name: String!
+    "Verified owners list."
+    ownerIds: [String!]!
+    policies: Policies!
+    "Username of this user. Usually unique, but not guaranteed."
+    username: String!
 }
 
 type Artery {
@@ -36,6 +284,8 @@ type Collection {
     createdAt: DateTime!
     "Only allowed in debug mode"
     extId: String!
+    "Whether this collection is extra (more collection on same interval) or not"
+    extra: Boolean!
     "Group record at the time collection was created (createdAt used as reference)"
     group: Group
     id: Int!
@@ -48,7 +298,13 @@ type Collection {
     status: CollectionStatus!
     tag: String!
     uat: Uat!
+    vehicle: Vehicle
     vehicleLicensePlate: String!
+}
+
+type CollectionStats {
+    count: Int!
+    interval: DateTime!
 }
 
 type County {
@@ -56,6 +312,8 @@ type County {
     id: Int!
     "Name of county, usually all caps."
     name: String!
+    "GisNode prefix compatibility field. Ex: Strada"
+    prefix: String
     "Display sequence number. Sort by this sequence instead of the ID when displaying multiple counties in a list"
     seq: Int!
     "Short code for county, as seen on vehicle license plates. Ex SB for Sibiu."
@@ -65,10 +323,63 @@ type County {
     uname: String!
 }
 
+type DailyVehicleDistance {
+    date: DateTime!
+    distance: Float!
+    endedAt: DateTime!
+    startedAt: DateTime!
+    vehicleLicensePlate: String!
+}
+
+type EosUser {
+    activeOrganization: Organization
+    allowedOrganizations: [Organization!]
+    counties: [County!]!
+    "Email of this user"
+    email: String!
+    "Unique user-id. Usually maps on to OIDC provider's GUID"
+    id: String!
+    "Name of this user."
+    name: String!
+    policies: Policies!
+    "Array of roles this user is part of. Can be null if user has no roles assigned."
+    roles: [String!]
+    uats: [Uat!]!
+    "Username of this user. Usually unique, but not guaranteed."
+    username: String!
+}
+
+type FileUpload {
+    fileUrl: String!
+    uploadParams: String!
+}
+
+type GisNode {
+    arteryId: Int
+    countyId: Int!
+    id: Int!
+    locId: Int
+    name: String!
+    nodeParentId: Int
+    nodeType: GISNodeType!
+    prefix: String!
+    searchable: Boolean!
+    type: String!
+    uatId: Int
+    uname: String!
+    updatedAt: DateTime!
+}
+
 type Group {
     "Street Number"
     addressNumber: String!
     addressStreet: String!
+    center(
+        from: DateTime,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        to: DateTime
+    ): GroupMapLngLat!
     collections(
         "Page Number"
         pageNumber: Int,
@@ -85,6 +396,17 @@ type Group {
     id: Int!
     labels: [Label!]!
     loc: Loc!
+    places(
+        asOf: DateTime,
+        "Branch that must be present on the object"
+        branches: [BranchType!],
+        eosIds: [String!],
+        "Lifecycle of the service agreement."
+        lifecycles: [ServiceAgreementLifecycleType!],
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!]
+    ): [Place!]!
     recipients(
         from: DateTime,
         "Type of records to return for this historical query"
@@ -100,6 +422,11 @@ type Group {
         historicalRecordType: HistoricalRecordType,
         to: DateTime
     ): [User!]!
+}
+
+type GroupLastCollection {
+    collectionDate: String!
+    groupId: String!
 }
 
 type GroupMap {
@@ -126,21 +453,244 @@ type Loc {
     name: String!
     posLat: Float!
     posLng: Float!
+    "GisNode prefix compatibility field. Ex: Strada"
+    prefix: String
     uat: Uat!
     uname: String!
 }
 
+type ModificationAuthor {
+    email: String
+    name: String
+    uuid: String
+}
+
 type Mutation {
+    approvePendingRecipients(asDraft: Boolean = false, comments: String = "", eosId: String!): ServiceAgreement!
+    approveServiceAgreement(eosId: String!, input: ServiceAgreementUpdateInput): ServiceAgreement!
+    araCancelServiceAgreement(comments: String = "", eosId: String!): AraServiceAgreement!
+    araCloseServiceAgreement(comments: String = "", eosId: String!): AraServiceAgreement!
+    araCreateServiceAgreement(input: AraServiceAgreementCreateInput!): AraServiceAgreement!
+    araSubmitServiceAgreement(eosId: String!, input: AraServiceAgreementSubmitInput!): AraServiceAgreement!
+    araUpdatePlace(eosId: String!, input: AraPlaceUpdateInput!): Place!
+    araUpdateServiceAgreement(eosId: String!, input: AraServiceAgreementUpdateInput!): AraServiceAgreement!
+    araUpdateUserPolicies(input: PoliciesInput!): Boolean!
+    bulkCreateVehicleRoutePoints(input: [VehicleRoutePointsCreateInput!]!): [VehicleRoutePoint!]!
+    closeOwner(comments: String = "", eosId: String!): Owner!
+    closePlace(comments: String = "", eosId: String!): Place!
+    closeServiceAgreement(comments: String = "", eosId: String!): ServiceAgreement!
+    confirmCloseServiceAgreement(comments: String = "", eosId: String!): ServiceAgreement!
     createCollection(input: CollectionCreateInput!): CollectionStatus!
+    createGisNode(input: GisNodeCreateInput!): GisNode!
     createGroup(input: GroupCreateInput!): Group!
+    createOrganization(input: OrganizationCreateInput!): Organization!
+    createOrganizationConfig(input: OrganizationConfigCreateInput!): OrganizationConfigStore!
+    createOwner(input: OwnerCreateInput!): Owner!
+    createOwnersValidationCodes(input: OwnerValidationCodeCreateInput!): [OwnerCodes!]!
+    createPlace(input: PlaceCreateInput!): Place!
     createRecipient(input: RecipientCreateInput!): Recipient!
+    createServiceAgreement(input: ServiceAgreementCreateInput!): ServiceAgreement!
     createUser(input: UserCreateInput!): User!
+    deleteGisNode(id: Int!): GisNode!
     deleteVehicleTrip(id: Int!): VehicleTrip!
+    generateDownloadLink(fileUrl: String!): String!
+    generateUploadLink(input: GenerateLinkInput!): FileUpload!
+    invalidateOwnersValidationCodes(input: OwnerInvalidationCodeInput!): [OwnerValidationCode!]!
+    mockVehicleDayStatsEvent: Boolean!
+    mockVehicleIntervalStatsEvent: Boolean!
+    printServiceAgreement(
+        asOf: DateTime,
+        "Branch that must be present on the object"
+        branches: [BranchType!],
+        "County IDs to restrict query to"
+        countyIds: [Int!],
+        "Lifecycle of the service agreement."
+        lifecycles: [ServiceAgreementLifecycleType!],
+        "Loc ids to restrict query to"
+        locIds: [Int!],
+        "Organization IDs to restrict query to"
+        organizationIds: [Int!],
+        serviceAgreementEosId: String,
+        "Street name to query (must be exact)"
+        street: [String!],
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!],
+        "UAT IDs to restrict query"
+        uatIds: [Int!]
+    ): String!
+    printTemplate(asOf: DateTime, data: String, organizationId: Int!, placeId: String, templateType: OrganizationTemplateType!): String!
+    rejectServiceAgreement(comments: String = "", eosId: String!): ServiceAgreement!
+    resolvePlaceApproval(eosId: String!, status: PlaceLifecycleType!): [Place!]!
     saveVehicleTrip(input: VehicleTripInput!): VehicleTrip!
+    updateActiveOrganization(id: Int!): Organization!
+    updateGisNode(id: Int!, input: GisNodeUpdateInput!): GisNode!
     updateGroup(eosId: String!, input: GroupUpdateInput!): Group!
+    updateOrganization(id: Int!, input: OrganizationUpdateInput!): Organization!
+    updateOrganizationConfig(input: OrganizationConfigUpdateInput!): OrganizationConfigStore!
+    updateOwner(eosId: String!, input: OwnerUpdateInput!): Owner!
+    updatePlace(eosId: String!, input: PlaceUpdateInput!): Place!
+    updatePlaceOwners(input: OwnerPlaceLinkInput!): [OwnerPlaceLink!]!
     updateRecipient(eosId: String!, input: RecipientUpdateInput!): Recipient!
     updateRecipientTag(input: RecipientTagUpdateInput!, tag: String!): RecipientTag!
+    updateServiceAgreement(eosId: String!, input: ServiceAgreementUpdateInput!): ServiceAgreement!
+    updateToS(privacy: String!, terms: String!): Policies!
     updateUser(eosId: String!, input: UserUpdateInput!): User!
+    updateVerifiedPersons(eosId: String!, from: DateTime!, verifiedPersons: Int!): [ServiceAgreement!]!
+    validateOwnerCode(input: ValidateOwnerCodeInput!): Boolean!
+}
+
+type NewSearchFieldHighlight {
+    "The name of the field to which this highlight applies"
+    fieldName: String!
+    "The value of the field with highlighting markers applied"
+    snippet: String!
+}
+
+type NewSearchResult {
+    group: Group
+    highlights: [NewSearchFieldHighlight!]!
+    owner: Owner
+    place: Place
+    recipient: Recipient
+    serviceAgreement: ServiceAgreement
+    type: NewSearchType!
+}
+
+type Organization {
+    default: Boolean!
+    id: Int!
+    limitCaps: [String!]
+    limitCounty: [Int!]!
+    limitUat: [Int!]
+    name: String!
+}
+
+type OrganizationConfigStore {
+    default: Boolean!
+    effectiveInterval: [DateTime!]!
+    id: Int!
+    input: String!
+    organizationId: Int!
+    type: OrganizationConfigStoreType!
+    value: String!
+}
+
+type Owner {
+    attributes: String!
+    comments: String!
+    county: County!
+    effectiveInterval: [DateTime!]!
+    eosId: String!
+    "External ID used to interface this user to other systems"
+    extId: String
+    firstName: String!
+    "Whether this object is hidden by default or not"
+    hidden: Boolean!
+    id: Int!
+    idAddress: String!
+    idNumber: String!
+    labels: [Label!]!
+    "Firm name. Used for business type"
+    name: String!
+    organization: Organization!
+    places(
+        asOf: DateTime,
+        "Branch that must be present on the object"
+        branches: [BranchType!],
+        eosIds: [String!],
+        "Lifecycle of the service agreement."
+        lifecycles: [ServiceAgreementLifecycleType!],
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!]
+    ): [Place!]!
+    template: String
+    type: OwnerType!
+    uat: Uat!
+}
+
+type OwnerCodes {
+    codes: [OwnerValidationCode!]!
+    ownerId: String!
+    validationCode: [String!]
+}
+
+type OwnerPlaceLink {
+    denominatorFraction: Int!
+    effectiveInterval: [DateTime!]!
+    id: Int!
+    numeratorFraction: Int!
+    ownerEosId: String!
+    "Legacy field"
+    percentage: Float! @deprecated(reason : "Not used anymore, see numeratorFraction/denominatorFraction")
+    placeEosId: String!
+}
+
+type OwnerValidationCode {
+    active: Boolean!
+    "Date the code was generated"
+    createdAt: DateTime!
+    id: Int!
+    isExpired: Boolean!
+    ownerId: String!
+    "Date the code was validated"
+    usedAt: DateTime
+    usedBy: String
+}
+
+type PaginatedAraCollections implements Paginated {
+    items: [AraCollection!]!
+    "current page number"
+    pageNumber: Int!
+    "maximum size of the page currently returned"
+    pageSize: Int!
+    "total number of results"
+    total: Int!
+}
+
+type PaginatedAraGroups implements Paginated {
+    "groups in the page"
+    items: [AraGroup!]!
+    "current page number"
+    pageNumber: Int!
+    "maximum size of the page currently returned"
+    pageSize: Int!
+    "total number of results"
+    total: Int!
+}
+
+type PaginatedAraOwners implements Paginated {
+    "owners in the page"
+    items: [AraOwner!]!
+    "current page number"
+    pageNumber: Int!
+    "maximum size of the page currently returned"
+    pageSize: Int!
+    "total number of results"
+    total: Int!
+}
+
+type PaginatedAraPlaces implements Paginated {
+    "places in the page"
+    items: [AraPlace!]!
+    "current page number"
+    pageNumber: Int!
+    "maximum size of the page currently returned"
+    pageSize: Int!
+    "total number of results"
+    total: Int!
+}
+
+type PaginatedAraServiceAgreements implements Paginated {
+    "serviceAgreements in the page"
+    items: [AraServiceAgreement!]!
+    "current page number"
+    pageNumber: Int!
+    "maximum size of the page currently returned"
+    pageSize: Int!
+    "total number of results"
+    total: Int!
 }
 
 type PaginatedCollections implements Paginated {
@@ -153,9 +703,64 @@ type PaginatedCollections implements Paginated {
     total: Int!
 }
 
+type PaginatedGisNodes implements Paginated {
+    "GisNodes in the page"
+    items: [GisNode!]!
+    "current page number"
+    pageNumber: Int!
+    "maximum size of the page currently returned"
+    pageSize: Int!
+    "total number of results"
+    total: Int!
+}
+
 type PaginatedGroups implements Paginated {
     "groups in the page"
     items: [Group!]!
+    "current page number"
+    pageNumber: Int!
+    "maximum size of the page currently returned"
+    pageSize: Int!
+    "total number of results"
+    total: Int!
+}
+
+type PaginatedNewSearchResults implements Paginated {
+    "search results in the page"
+    items: [NewSearchResult!]!
+    "current page number"
+    pageNumber: Int!
+    "maximum size of the page currently returned"
+    pageSize: Int!
+    "total number of results"
+    total: Int!
+}
+
+type PaginatedOrganizations implements Paginated {
+    "organizations in the page"
+    items: [Organization!]!
+    "current page number"
+    pageNumber: Int!
+    "maximum size of the page currently returned"
+    pageSize: Int!
+    "total number of results"
+    total: Int!
+}
+
+type PaginatedOwners implements Paginated {
+    "owners in the page"
+    items: [Owner!]!
+    "current page number"
+    pageNumber: Int!
+    "maximum size of the page currently returned"
+    pageSize: Int!
+    "total number of results"
+    total: Int!
+}
+
+type PaginatedPlaces implements Paginated {
+    "places in the page"
+    items: [Place!]!
     "current page number"
     pageNumber: Int!
     "maximum size of the page currently returned"
@@ -197,9 +802,31 @@ type PaginatedSearchResults implements Paginated {
     total: Int!
 }
 
+type PaginatedServiceAgreements implements Paginated {
+    "serviceAgreements in the page"
+    items: [ServiceAgreement!]!
+    "current page number"
+    pageNumber: Int!
+    "maximum size of the page currently returned"
+    pageSize: Int!
+    "total number of results"
+    total: Int!
+}
+
 type PaginatedUsers implements Paginated {
     "users in the page"
     items: [User!]!
+    "current page number"
+    pageNumber: Int!
+    "maximum size of the page currently returned"
+    pageSize: Int!
+    "total number of results"
+    total: Int!
+}
+
+type PaginatedVehicleSystemTests implements Paginated {
+    "Vehicle tests in the page"
+    items: [VehicleSystemTest!]!
     "current page number"
     pageNumber: Int!
     "maximum size of the page currently returned"
@@ -219,23 +846,158 @@ type PaginatedVehicleTrips {
     total: Int
 }
 
-type Profile {
-    counties: [County!]!
-    "Email of this user"
-    email: String!
-    "Unique user-id. Usually maps on to OIDC provider's GUID"
-    id: String!
-    "Name of this user."
-    name: String!
-    "Array of roles this user is part of. Can be null if user has no roles assigned."
-    roles: [String!]
-    uats: [Uat!]!
-    "Username of this user. Usually unique, but not guaranteed."
-    username: String!
+type PaginatedVehiclesStats implements Paginated {
+    items: [VehicleStatsBucket!]!
+    "current page number"
+    pageNumber: Int!
+    "maximum size of the page currently returned"
+    pageSize: Int!
+    "total number of results"
+    total: Int!
+}
+
+type Place {
+    "Street Number"
+    addressNumber: String!
+    addressStreet: String!
+    attributes: String!
+    branch: BranchType!
+    comments: String!
+    county: County!
+    description: String!
+    effectiveInterval: [DateTime!]!
+    eosId: String!
+    "External ID used to interface this user to other systems"
+    extId: String
+    group: Group
+    groupId: String
+    "Whether this object is hidden by default or not"
+    hidden: Boolean!
+    id: Int!
+    labels: [Label!]!
+    lifecycle: String!
+    loc: Loc!
+    organization: Organization!
+    ownerLinks: [OwnerPlaceLink!]!
+    owners(
+        asOf: DateTime,
+        eosIds: [String!],
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!]
+    ): [Owner!]!
+    serviceAgreementTemplate(asOf: DateTime): String!
+    serviceAgreements(
+        asOf: DateTime,
+        "Branch that must be present on the object"
+        branches: [BranchType!],
+        eosIds: [String!],
+        "Lifecycle of the service agreement."
+        lifecycles: [ServiceAgreementLifecycleType!],
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!]
+    ): [ServiceAgreement!]!
+    template: String
+    uat: Uat!
+}
+
+type PlaceTaxes {
+    template: String!
+    values: String!
+}
+
+type Policies {
+    privacy: String!
+    terms: String!
 }
 
 type Query {
-    arteries(countyIds: [Int!], locIds: [Int!], uatIds: [Int!]): [Artery!]!
+    araCollections(
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        placeIds: [String!]!
+    ): PaginatedAraCollections!
+    araGroups(
+        eosIds: [String!],
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int
+    ): PaginatedAraGroups!
+    araMe: AraUser
+    araOwners(
+        asOf: DateTime,
+        "County IDs to restrict query to"
+        countyIds: [Int!],
+        eosIds: [String!],
+        extIds: [String!],
+        groupIds: [String!],
+        groupTypes: [GroupType!],
+        "State of hideables to show"
+        hideableState: HideableState,
+        "Labels that must be present on the object"
+        labels: [String!],
+        "Organization IDs to restrict query to"
+        organizationIds: [Int!],
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!],
+        "UAT IDs to restrict query"
+        uatIds: [Int!]
+    ): PaginatedAraOwners!
+    araPlaces(
+        asOf: DateTime,
+        "Branch that must be present on the object"
+        branches: [BranchType!],
+        eosIds: [String!],
+        extIds: [String!],
+        groupIds: [String!],
+        groupTypes: [GroupType!],
+        "Labels that must be present on the object"
+        labels: [String!],
+        "Loc ids to restrict query to"
+        locIds: [Int!],
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        "Street name to query (must be exact)"
+        street: [String!],
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!]
+    ): PaginatedAraPlaces!
+    araServiceAgreements(
+        asOf: DateTime,
+        "Branch that must be present on the object"
+        branches: [BranchType!],
+        delegated: Boolean,
+        eosIds: [String!],
+        "Labels that must be present on the object"
+        labels: [String!],
+        "Lifecycle of the service agreement."
+        lifecycles: [ServiceAgreementLifecycleType!],
+        "Loc ids to restrict query to"
+        locIds: [Int!],
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        placeIds: [String!],
+        "Street name to query (must be exact)"
+        street: [String!],
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!]
+    ): PaginatedAraServiceAgreements!
+    arteries(countyIds: [Int!], locIds: [Int!], uatIds: [Int!]): [Artery!]! @deprecated(reason : "Use the gisNodes query instead")
     collections(
         arrivedAt: QueryCollectionDateFilter,
         "County IDs to restrict query to"
@@ -256,8 +1018,182 @@ type Query {
         "Only return collections that have the specified vehicleLicensePlates set"
         vehicleLicensePlates: [String!]
     ): PaginatedCollections!
-    counties: [County!]!
+    counties: [County!]! @deprecated(reason : "Use the gisNodes query instead")
+    exportCollections(
+        arrivedAt: QueryCollectionDateFilter,
+        "County IDs to restrict query to"
+        countyIds: [Int!],
+        createdAt: QueryCollectionDateFilter,
+        "Format of the export. Currently supported: xlsx and csv"
+        exportFormat: String!,
+        "Return collections that only correspond to certain group ids"
+        groupIds: [String!],
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        "Return collections that only correspond to certain recipient ids"
+        recipientIds: [String!],
+        "Only return collections that have the specified status"
+        status: [CollectionStatus!],
+        "UAT IDs to restrict query"
+        uatIds: [Int!],
+        "Only return collections that have the specified vehicleLicensePlates set"
+        vehicleLicensePlates: [String!]
+    ): String!
+    exportGisNodes(
+        countyIds: [Int!],
+        "Format of the export. Currently supported: xlsx and csv"
+        exportFormat: String!,
+        ids: [Int!],
+        locIds: [Int!],
+        nodeParentIds: [Int!],
+        nodeTypes: [GISNodeType!],
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        q: String,
+        searchable: Boolean,
+        uatIds: [Int!],
+        updatedFrom: DateTime,
+        updatedTo: DateTime
+    ): String!
+    exportGroups(
+        "For delta queries"
+        afterId: Int,
+        "County IDs to restrict query to"
+        countyIds: [Int!],
+        eosIds: [String!],
+        "Format of the export. Currently supported: xlsx and csv"
+        exportFormat: String!,
+        from: DateTime,
+        "State of hideables to show"
+        hideableState: HideableState,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        "Labels that must be present on the object"
+        labels: [String!],
+        "Loc ids to restrict query to"
+        locIds: [Int!],
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        "Street name to query (must be exact)"
+        street: [String!],
+        to: DateTime,
+        types: [GroupType!],
+        "UAT IDs to restrict query"
+        uatIds: [Int!]
+    ): String!
+    exportRecipients(
+        "Used for delta queries. Requires DISABLE_PAGINATION role"
+        afterId: Int,
+        altIds: [String!],
+        "County IDs to restrict query to"
+        countyIds: [Int!],
+        eosIds: [String!],
+        "Format of the export. Currently supported: xlsx and csv"
+        exportFormat: String!,
+        from: DateTime,
+        groupIds: [String!],
+        "State of hideables to show"
+        hideableState: HideableState,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        "Labels that must be present on the object"
+        labels: [String!],
+        lifecycles: [RecipientLifecycle!],
+        "Loc ids to restrict query to"
+        locIds: [Int!],
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        sizes: [String!],
+        streams: [WasteStream!],
+        "Street name to query (must be exact)"
+        street: [String!],
+        to: DateTime,
+        "UAT IDs to restrict query"
+        uatIds: [Int!]
+    ): String!
+    exportUsers(
+        "County IDs to restrict query to"
+        countyIds: [Int!],
+        eosIds: [String!],
+        "Format of the export. Currently supported: xlsx and csv"
+        exportFormat: String!,
+        extIds: [String!],
+        from: DateTime,
+        groupIds: [String!],
+        groupTypes: [GroupType!],
+        "State of hideables to show"
+        hideableState: HideableState,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        "Labels that must be present on the object"
+        labels: [String!],
+        "Loc ids to restrict query to"
+        locIds: [Int!],
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        "Street name to query (must be exact)"
+        street: [String!],
+        to: DateTime,
+        types: [UserType!],
+        "UAT IDs to restrict query"
+        uatIds: [Int!]
+    ): String!
+    getDailyVehicleDistance(
+        "County IDs to restrict query to"
+        countyIds: [Int!],
+        createdAt: QueryDateFilter,
+        "UAT IDs to restrict query"
+        uatIds: [Int!],
+        "Only return vehicles that have the specified licensePlates set"
+        vehicleLicensePlates: [String!]!
+    ): [DailyVehicleDistance!]!
+    getVehicleDayStats(
+        "County IDs to restrict query to"
+        countyIds: [Int!],
+        createdAt: QueryDateFilter,
+        "UAT IDs to restrict query"
+        uatIds: [Int!],
+        "Only return vehicles that have the specified licensePlates set"
+        vehicleLicensePlates: [String!]!
+    ): [VehicleDayStats!]!
+    getVehicleIntervalStats(
+        "County IDs to restrict query to"
+        countyIds: [Int!],
+        createdAt: QueryDateFilter,
+        "UAT IDs to restrict query"
+        uatIds: [Int!],
+        "Only return vehicles that have the specified licensePlates set"
+        vehicleLicensePlates: [String!]!
+    ): [VehicleIntervalStats!]!
+    gisNode(
+        countyIds: [Int!],
+        ids: [Int!],
+        locIds: [Int!],
+        nodeParentIds: [Int!],
+        nodeTypes: [GISNodeType!],
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        q: String,
+        searchable: Boolean,
+        uatIds: [Int!],
+        updatedFrom: DateTime,
+        updatedTo: DateTime
+    ): PaginatedGisNodes!
     groupMap: GroupMap!
+    groupMapLyts: GroupMap!
+    groupTests: [Group!]!
     groups(
         "For delta queries"
         afterId: Int,
@@ -277,16 +1213,124 @@ type Query {
         pageNumber: Int,
         "Results per page. Max 100."
         pageSize: Int,
-        "Street name to query (can be inexact)"
-        street: String,
+        "Street name to query (must be exact)"
+        street: [String!],
         to: DateTime,
         types: [GroupType!],
         "UAT IDs to restrict query"
         uatIds: [Int!]
     ): PaginatedGroups!
-    locs(countyIds: [Int!], uatIds: [Int!]): [Loc!]!
+    "ServiceAgreement template by place id"
+    loadTemplate(asOf: DateTime, placeId: String!): String!
+    locs(countyIds: [Int!], uatIds: [Int!]): [Loc!]! @deprecated(reason : "Use the gisNodes query instead")
     "Current user's profile"
-    me: Profile
+    me: EosUser
+    newSearch(
+        groupFields: [GroupSearchField!],
+        ownerFields: [OwnerSearchField!],
+        "Page Number, starts at zero"
+        pageNumber: Int,
+        "Results per page. Default 20. Max 200."
+        pageSize: Int,
+        placeFields: [PlaceSearchField!],
+        q: String!,
+        recipientFields: [RecipientSearchField!],
+        serviceAgreementFields: [ServiceAgreementSearchField!],
+        type: NewSearchType!
+    ): PaginatedNewSearchResults!
+    organizationConfigs(
+        asOf: DateTime,
+        ids: [Int!],
+        organizationId: Int!,
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!],
+        type: OrganizationConfigStoreType
+    ): [OrganizationConfigStore!]!
+    organizations(
+        ids: [Int!],
+        name: String,
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int
+    ): PaginatedOrganizations!
+    owners(
+        asOf: DateTime,
+        "County IDs to restrict query to"
+        countyIds: [Int!],
+        eosIds: [String!],
+        extIds: [String!],
+        groupIds: [String!],
+        groupTypes: [GroupType!],
+        "State of hideables to show"
+        hideableState: HideableState,
+        "Labels that must be present on the object"
+        labels: [String!],
+        "Organization IDs to restrict query to"
+        organizationIds: [Int!],
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!],
+        "UAT IDs to restrict query"
+        uatIds: [Int!]
+    ): PaginatedOwners!
+    ownersValidationCodes(ownerEosIds: [String!]!): [OwnerCodes!]!
+    placeTaxes(
+        asOf: DateTime,
+        "County IDs to restrict query to"
+        countyIds: [Int!],
+        eosIds: [String!],
+        extIds: [String!],
+        from: DateTime,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        "Organization IDs to restrict query to"
+        organizationIds: [Int!],
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!],
+        to: DateTime,
+        "UAT IDs to restrict query"
+        uatIds: [Int!]
+    ): PlaceTaxes!
+    places(
+        asOf: DateTime,
+        "Branch that must be present on the object"
+        branches: [BranchType!],
+        "County IDs to restrict query to"
+        countyIds: [Int!],
+        eosIds: [String!],
+        extIds: [String!],
+        groupIds: [String!],
+        groupTypes: [GroupType!],
+        "State of hideables to show"
+        hideableState: HideableState,
+        "Labels that must be present on the object"
+        labels: [String!],
+        "Lifecycle of the place."
+        lifecycles: [PlaceLifecycleType!],
+        "Loc ids to restrict query to"
+        locIds: [Int!],
+        "Organization IDs to restrict query to"
+        organizationIds: [Int!],
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        "Street name to query (must be exact)"
+        street: [String!],
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!],
+        "UAT IDs to restrict query"
+        uatIds: [Int!]
+    ): PaginatedPlaces!
+    recipientLifecycles: [RecipientLifecycle!]!
     recipientTags(
         "Used for delta queries. Requires DISABLE_PAGINATION role"
         afterId: Int,
@@ -318,6 +1362,7 @@ type Query {
         historicalRecordType: HistoricalRecordType,
         "Labels that must be present on the object"
         labels: [String!],
+        lifecycles: [RecipientLifecycle!],
         "Loc ids to restrict query to"
         locIds: [Int!],
         "Page Number"
@@ -326,13 +1371,15 @@ type Query {
         pageSize: Int,
         sizes: [String!],
         streams: [WasteStream!],
-        "Street name to query (can be inexact)"
-        street: String,
+        "Street name to query (must be exact)"
+        street: [String!],
         to: DateTime,
         "UAT IDs to restrict query"
         uatIds: [Int!]
     ): PaginatedRecipients!
     recommendedLabels: [RecommendedLabel!]!
+    "Data object used in resolver lib to generate service agreement template.Data object include service agreement entity as an empty object"
+    resolverDataByPlace(asOf: DateTime, placeId: String!): String!
     search(
         "County IDs to restrict query to"
         countyIds: [Int!],
@@ -346,14 +1393,45 @@ type Query {
         "UAT IDs to restrict query"
         uatIds: [Int!]
     ): PaginatedSearchResults!
+    serviceAgreements(
+        asOf: DateTime,
+        "Branch that must be present on the object"
+        branches: [BranchType!],
+        "County IDs to restrict query to"
+        countyIds: [Int!],
+        delegated: Boolean,
+        eosIds: [String!],
+        "Labels that must be present on the object"
+        labels: [String!],
+        "Lifecycle of the service agreement."
+        lifecycles: [ServiceAgreementLifecycleType!],
+        "Loc ids to restrict query to"
+        locIds: [Int!],
+        "Organization IDs to restrict query to"
+        organizationIds: [Int!],
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        placeIds: [String!],
+        "Street name to query (must be exact)"
+        street: [String!],
+        "Type of records to return for this temporal query"
+        temporalRecordType: TemporalRecordType,
+        timeInterval: [DateTime!],
+        "UAT IDs to restrict query"
+        uatIds: [Int!]
+    ): PaginatedServiceAgreements!
+    serviceAgreementsIds(amount: Float!): [String!]!
     stat: Stat!
-    uats(countyIds: [Int!]): [Uat!]!
+    uats(countyIds: [Int!]): [Uat!]! @deprecated(reason : "Use the gisNodes query instead")
     users(
         "County IDs to restrict query to"
         countyIds: [Int!],
         eosIds: [String!],
         extIds: [String!],
         from: DateTime,
+        groupIds: [String!],
         groupTypes: [GroupType!],
         "State of hideables to show"
         hideableState: HideableState,
@@ -367,13 +1445,34 @@ type Query {
         pageNumber: Int,
         "Results per page. Max 100."
         pageSize: Int,
-        "Street name to query (can be inexact)"
-        street: String,
+        "Street name to query (must be exact)"
+        street: [String!],
         to: DateTime,
         types: [UserType!],
         "UAT IDs to restrict query"
         uatIds: [Int!]
     ): PaginatedUsers!
+    "Return an array of resolved 'columns' values. Array<Array<columns>>"
+    vehicleRoutePoints(
+        arrivedAt: QueryDateFilter,
+        columns: [VehicleRouteColumns!],
+        "Return collections that only correspond to certain group ids"
+        countyIds: [String!],
+        createdAt: QueryDateFilter,
+        "Only return vehicle route points that have the specified vehicleLicensePlates set"
+        vehicleLicensePlates: [String!]
+    ): [[ANY!]!]
+    vehicleSystemTests(
+        createdAt: QueryDateFilter,
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        status: [VehicleTestStatus!],
+        types: [VehicleTestType!],
+        "Only return test that have the specified vehicleLicensePlates list"
+        vehicleLicensePlates: [String!]
+    ): PaginatedVehicleSystemTests!
     vehicleTrips(
         date: VehicleTripDateFilter,
         id: [Int!],
@@ -384,7 +1483,26 @@ type Query {
         stream: [WasteStream!],
         vehicleLicensePlate: [String!]
     ): PaginatedVehicleTrips!
-    vehicles: [Vehicle!]!
+    vehicles(
+        "Only return vehicles that have the specified vehicleLicensePlates"
+        licensePlates: [String!],
+        "Only return vehicles that belongs to testGroupId array"
+        testGroupIds: [String!]
+    ): [Vehicle!]!
+    vehiclesStats(
+        countyId: Int,
+        "County IDs to restrict query to"
+        countyIds: [Int!],
+        createdAt: QueryDateFilter,
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        "UAT IDs to restrict query"
+        uatIds: [Int!],
+        "Only return vehicles that have the specified licensePlates set"
+        vehicleLicensePlates: [String!]
+    ): PaginatedVehiclesStats!
 }
 
 type Recipient {
@@ -414,6 +1532,7 @@ type Recipient {
     hidden: Boolean!
     id: Int!
     labels: [Label!]!
+    lifecycle: RecipientLifecycle!
     loc: Loc!
     "Last known latitude"
     posLat: Float!
@@ -462,20 +1581,62 @@ type RecommendedLabel {
 type SearchResult {
     group: Group
     highlight: SearchResultHighlight!
+    owner: Owner
+    place: Place
     recipient: Recipient
+    serviceAgreement: ServiceAgreement
     user: User
 }
 
 type SearchResultHighlight {
     addressNumber: String
     addressStreet: String
+    delegateEmail: String
+    description: String
+    eosId: String
     extId: String
-    id: String
+    firstName: String
+    idAddress: String
     name: String
+    q: String
+    userName: String
+}
+
+type ServiceAgreement {
+    "Street Number"
+    addressNumber: String!
+    addressStreet: String!
+    attributes: String!
+    branch: BranchType!
+    comments: String!
+    county: County!
+    delegateEmail: String
+    effectiveInterval: [DateTime!]!
+    eosId: String!
+    "External ID used to interface this user to other systems"
+    extId: String
+    id: Int!
+    labels: [Label!]!
+    lifecycle: ServiceAgreementLifecycleType!
+    loc: Loc!
+    modifiedBy: ModificationAuthor!
+    organization: Organization!
+    place: Place!
+    "User has confirmed the recipients."
+    recipientsConfirmed: Boolean!
+    "Data object used in resolver lib to generate service agreement template"
+    resolverData(asOf: DateTime): String!
+    template(asOf: DateTime): String
+    type: String
+    uat: Uat!
+    "Active user's name of the service agreement"
+    userName: String
+    verifiedPersons: Float
 }
 
 type Stat {
     collectionCount: [StatCollectionBucket!]!
+    userCollectionsCount(usersEosIds: [String!]!): [StatUserCollections!]!
     userCountPerCategory: [UserCountPerCategory!]!
 }
 
@@ -490,12 +1651,50 @@ type StatCollectionBucketValues {
     value: Int!
 }
 
+type StatUserCollections {
+    count: Int!
+    day: DateTime!
+}
+
+type Subscription {
+    newGroupCollection: GroupLastCollection!
+    newVehicleDayStats(
+        "County IDs to restrict query to"
+        countyIds: [Int!],
+        createdAt: QueryDateFilter,
+        "UAT IDs to restrict query"
+        uatIds: [Int!],
+        "Only return vehicles that have the specified licensePlates set"
+        vehicleLicensePlates: [String!]!
+    ): [VehicleDayStats!]!
+    newVehicleIntervalStats(
+        "County IDs to restrict query to"
+        countyIds: [Int!],
+        createdAt: QueryDateFilter,
+        "UAT IDs to restrict query"
+        uatIds: [Int!],
+        "Only return vehicles that have the specified licensePlates set"
+        vehicleLicensePlates: [String!]!
+    ): [VehicleIntervalStats!]!
+    newVehicleRoutePoints(
+        arrivedAt: QueryDateFilter,
+        columns: [VehicleRouteColumns!],
+        "Return collections that only correspond to certain group ids"
+        countyIds: [String!],
+        createdAt: QueryDateFilter,
+        "Only return vehicle route points that have the specified vehicleLicensePlates set"
+        vehicleLicensePlates: [String!]
+    ): [VehicleRoutePoint!]!
+}
+
 type Uat {
     arteries: [Artery!]!
     county: County!
     id: Int!
     locs: [Loc!]!
     name: String!
+    "GisNode prefix compatibility field. Ex: Strada"
+    prefix: String
     uname: String!
 }
 
@@ -504,6 +1703,17 @@ type User {
     addressNumber: String!
     addressStreet: String!
     attributes: [UserAttribute!]!
+    "Collections associated to the user through groups"
+    collections(
+        from: DateTime,
+        "Type of records to return for this historical query"
+        historicalRecordType: HistoricalRecordType,
+        "Page Number"
+        pageNumber: Int,
+        "Results per page. Max 100."
+        pageSize: Int,
+        to: DateTime
+    ): PaginatedCollections!
     comments: String!
     county: County!
     current: Boolean!
@@ -547,7 +1757,89 @@ type UserCountPerCategory {
 
 type Vehicle {
     county: County!
+    identifier: String
     licensePlate: String!
+    systemType: VehicleSystemType!
+    testGroupId: String
+}
+
+type VehicleDayStats {
+    vehicleLicensePlate: String!
+    vol1100L: Int
+    vol120L: Int
+    vol240L: Int
+}
+
+type VehicleIntervalStats {
+    collections: [CollectionStats!]!
+    vehicleLicensePlate: String!
+}
+
+type VehicleRoutePoint {
+    "Date the event was recorded in the cloud"
+    arrivedAt: DateTime!
+    county: County!
+    "Date the event was recorded in the field"
+    createdAt: DateTime!
+    "Driving direction of the vehicle."
+    direction: VehicleRouteDirection!
+    "Total driving distance for the day [km]."
+    drivingDistance: Float!
+    "Only allowed in debug mode"
+    extId: String!
+    "Heading (compass direction) of the vehicle [°]."
+    heading: Float!
+    id: Int!
+    "Longitude of the position the route point was created at. WGS-84 decimal degress."
+    posLat: Float!
+    "Longitude of the position the route point was created at. WGS-84 decimal degress."
+    posLng: Float!
+    "Speed of the vehicle [km/h]."
+    speed: Float
+    "License plate of the vehicle the route point belongs to."
+    vehicleLicensePlate: String!
+}
+
+type VehicleStats {
+    endDate: DateTime!
+    recipientCount: Int!
+    startDate: DateTime!
+    totalVolume: Int!
+    vol1100L: Int!
+    vol120L: Int!
+    vol240L: Int!
+}
+
+type VehicleStatsBucket {
+    daysStats: [VehicleStats!]!
+    identifier: String
+    intervalStats: VehicleStats!
+    licensePlate: String!
+}
+
+type VehicleSystemSensor {
+    collectionId: Int
+    createdAt: String!
+    posLat: Int
+    posLng: Int
+    status: VehicleTestStatus!
+}
+
+type VehicleSystemTest {
+    centerAntenna: VehicleSystemSensor
+    "Creation date of the test (insert into db)."
+    createdAt: DateTime!
+    gps: VehicleSystemSensor
+    id: Int!
+    leftAntenna: VehicleSystemSensor
+    rightAntenna: VehicleSystemSensor
+    status: VehicleTestStatus!
+    systemType: VehicleSystemType!
+    "Date from the first sensor of the test that has been triggered (except gps)."
+    triggeredAt: DateTime
+    type: VehicleTestType!
+    uhfAntenna: VehicleSystemSensor
+    vehicleLicensePlate: String!
 }
 
 type VehicleTrip {
@@ -558,7 +1850,14 @@ type VehicleTrip {
     id: Int!
     start: DateTime!
     stream: WasteStream!
+    vehicle: Vehicle!
     vehicleLicensePlate: String!
+}
+
+"Type of branch the model belongs to."
+enum BranchType {
+    MAIN
+    REQUEST
 }
 
 "The source of this reading"
@@ -567,6 +1866,7 @@ enum CollectionSource {
     MANUAL
     RIGHT_ANTENNA
     SIDE_ANTENNA
+    UHF_ANTENNA
 }
 
 "Status of collection resolution process"
@@ -580,8 +1880,24 @@ enum CollectionStatus {
 "eos object type enum"
 enum EosObjectType {
     GROUP
+    OWNER
+    PLACE
     RECIPIENT
+    SERVICE_AGREEMENT
     USER
+}
+
+enum GISNodeType {
+    ARTERY
+    ARTERY_SUBDIVISION
+    COUNTY
+    LOC
+    UAT
+}
+
+enum GroupSearchField {
+    ADDRESS
+    EOS_ID
 }
 
 "The type of group. Subject to change in the future"
@@ -607,10 +1923,162 @@ enum HistoricalRecordType {
     INHERIT
 }
 
+enum NewSearchType {
+    GROUP
+    OWNER
+    PLACE
+    RECIPIENT
+    SERVICE_AGREEMENT
+}
+
+enum OrganizationConfigStoreType {
+    CONFIGS
+    OWNER_TEMPLATE
+    PLACE_TEMPLATE
+    SERVICE_AGREEMENT_APPROVAL
+    SERVICE_AGREEMENT_TEMPLATE
+    TAX_TEMPLATE
+}
+
+enum OrganizationTemplateType {
+    OWNER
+    PLACE
+    SERVICE_AGREEMENT
+}
+
+enum OwnerSearchField {
+    EOS_ID
+    EXT_ID
+    FIRST_NAME
+    ID_ADDRESS
+    ID_NUMBER
+    NAME
+}
+
+"Owner type"
+enum OwnerType {
+    BUSINESS
+    DOMESTIC
+}
+
+"Type of place lifecycle status."
+enum PlaceLifecycleType {
+    ACTIVE
+    APPROVED
+    CLOSED
+    PENDING
+    REJECTED
+    UNDEFINED
+}
+
+enum PlaceSearchField {
+    ADDRESS
+    DESCRIPTION
+    EOS_ID
+    EXT_ID
+}
+
+"Recipient lifecycle"
+enum RecipientLifecycle {
+    ACTIVE
+    DELETED
+    LABEL_ONLY
+    TAG_ATTACHED
+}
+
+enum RecipientSearchField {
+    ADDRESS
+    ALT_ID
+    EOS_ID
+}
+
+"Type of service agreement lifecycle status."
+enum ServiceAgreementLifecycleType {
+    ACTIVE
+    APPROVED
+    CANCELLED
+    CLOSED
+    CLOSING
+    DRAFT
+    INVALID
+    PENDING_APPROVAL
+    PENDING_CLOSE
+    PENDING_RECIPIENT_RESOLUTION
+    REJECTED
+    UNDEFINED
+}
+
+enum ServiceAgreementSearchField {
+    ADDRESS
+    DELEGATE_EMAIL
+    EOS_ID
+    EXT_ID
+    USERNAME
+}
+
+"Type of temporal record to return for an object"
+enum TemporalRecordType {
+    CURRENT_ONLY
+    FULL
+    FUTURE_ONLY
+    HISTORY_ONLY
+    INHERIT
+}
+
 "User type"
 enum UserType {
     BUSINESS
     DOMESTIC
+}
+
+enum VehicleRouteColumns {
+    ARRIVED_AT
+    CREATED_AT
+    DIRECTION
+    DRIVING_DISTANCE
+    EXT_ID
+    HEADING
+    ID
+    POS_LAT
+    POS_LNG
+    SPEED
+    VEHICLE_LICENSE_PLATE
+}
+
+"""
+
+Driving direction of the vehicle.
+Possible values:
+v = forward. Normal driving direction
+r = reverse. The vehicle is driving in reverse gear.
+x =
+? =
+"""
+enum VehicleRouteDirection {
+    FORWARD
+    REVERSE
+    STOPPED
+    UNKNOWN
+}
+
+"Vehicle system type for scanning recipients"
+enum VehicleSystemType {
+    LOW_FREQUENCY
+    ULTRA_HEIGHT_FREQUENCY
+}
+
+"Vehicle antennas and other system test status"
+enum VehicleTestStatus {
+    FAILED
+    IN_PROGRESS
+    NOT_STARTED
+    PASSED
+}
+
+"Vehicle antennas and other system test type"
+enum VehicleTestType {
+    DAILY
+    ON_DEMAND
 }
 
 "Waste stream type. REZ = Residual, RPC/RGL/RPM = Recyclable, BIO = Biodegradable"
@@ -620,6 +2088,44 @@ enum WasteStream {
     RGL
     RPC
     RPM
+}
+
+input AraPlaceUpdateInput {
+    addressNumber: String
+    addressStreet: String
+    "Specifies the point in time from where the input applies."
+    asOf: DateTime
+    attributes: String
+    comments: String
+    description: String
+    "Specifies the period of effectiveness."
+    effectiveInterval: [DateTime!]
+    "External ID used to interface this user to other systems"
+    extId: String
+    groupId: String
+    "Object hidden or not"
+    hidden: Boolean
+    locId: Int
+    uatId: Int
+}
+
+input AraServiceAgreementCreateInput {
+    comments: String = ""
+    placeId: String!
+    "Attributes values from template form."
+    userInput: String
+}
+
+input AraServiceAgreementSubmitInput {
+    comments: String = ""
+    "Attributes values from template form."
+    userInput: String
+}
+
+input AraServiceAgreementUpdateInput {
+    comments: String = ""
+    "Attributes values from template form."
+    userInput: String
 }
 
 input CollectionCreateInput {
@@ -634,6 +2140,36 @@ input CollectionCreateInput {
     source: CollectionSource!
     tag: String!
     vehicleLicensePlate: String!
+}
+
+input GenerateLinkInput {
+    "Name of the file with the extension included. Ex: file.pdf"
+    filename: String!
+    "File mime type. Ex: application/pdf"
+    type: String!
+}
+
+input GisNodeCreateInput {
+    arteryId: Int
+    countyId: Int
+    id: Int
+    locId: Int
+    name: String!
+    nodeParentId: Int
+    nodeType: GISNodeType!
+    prefix: String!
+    searchable: Boolean!
+    type: String!
+    uatId: Int
+    uname: String!
+}
+
+input GisNodeUpdateInput {
+    name: String
+    prefix: String
+    searchable: Boolean
+    type: String
+    uname: String
 }
 
 input GroupCreateInput {
@@ -668,7 +2204,153 @@ input LabelInput {
     value: String
 }
 
+input OrganizationConfigCreateInput {
+    "Specifies the point in time from where the input applies."
+    asOf: DateTime
+    "Specifies the period of effectiveness."
+    effectiveInterval: [DateTime!]
+    input: String!
+    organizationId: Int!
+    type: OrganizationConfigStoreType!
+}
+
+input OrganizationConfigUpdateInput {
+    "Specifies the point in time from where the input applies."
+    asOf: DateTime
+    "Specifies the period of effectiveness."
+    effectiveInterval: [DateTime!]
+    input: String!
+    organizationId: Int!
+    type: OrganizationConfigStoreType!
+}
+
+input OrganizationCreateInput {
+    default: Boolean
+    limitCaps: [String!]!
+    limitCounty: [Int!]!
+    limitUat: [Int!]!
+    name: String!
+}
+
+input OrganizationUpdateInput {
+    limitCaps: [String!]
+    limitCounty: [Int!]
+    limitUat: [Int!]
+    name: String
+}
+
+input OwnerCreateInput {
+    "Specifies the point in time from where the input applies."
+    asOf: DateTime
+    comments: String!
+    countyId: Int!
+    "Specifies the period of effectiveness."
+    effectiveInterval: [DateTime!]
+    "External ID used to interface this user to other systems"
+    extId: String
+    firstName: String!
+    "Object hidden or not"
+    hidden: Boolean!
+    idAddress: String!
+    idNumber: String!
+    name: String
+    type: OwnerType!
+    uatId: Int!
+    "Attributes values from template form."
+    userInput: String
+}
+
+input OwnerInvalidationCodeInput {
+    codeIds: [Int!]!
+}
+
+input OwnerLink {
+    denominatorFraction: Int!
+    numeratorFraction: Int!
+    ownerEosId: String!
+}
+
+input OwnerPlaceLinkInput {
+    ownerLinks: [OwnerLink!]!
+    placeEosId: String!
+}
+
+input OwnerUpdateInput {
+    "Specifies the point in time from where the input applies."
+    asOf: DateTime
+    comments: String
+    "Specifies the period of effectiveness."
+    effectiveInterval: [DateTime!]
+    "External ID used to interface this user to other systems"
+    extId: String
+    firstName: String
+    "Object hidden or not"
+    hidden: Boolean
+    idAddress: String
+    idNumber: String
+    name: String
+    type: OwnerType
+    uatId: Int
+    "Attributes values from template form."
+    userInput: String
+}
+
+input OwnerValidationCodeCreateInput {
+    ownerIds: [String!]!
+}
+
+input PlaceCreateInput {
+    addressNumber: String!
+    addressStreet: String!
+    "Specifies the point in time from where the input applies."
+    asOf: DateTime
+    comments: String!
+    countyId: Int!
+    description: String!
+    "Specifies the period of effectiveness."
+    effectiveInterval: [DateTime!]
+    "External ID used to interface this user to other systems"
+    extId: String
+    groupId: String
+    "Object hidden or not"
+    hidden: Boolean!
+    locId: Int!
+    uatId: Int!
+    "Attributes values from template form."
+    userInput: String
+}
+
+input PlaceUpdateInput {
+    addressNumber: String
+    addressStreet: String
+    "Specifies the point in time from where the input applies."
+    asOf: DateTime
+    comments: String
+    description: String
+    "Specifies the period of effectiveness."
+    effectiveInterval: [DateTime!]
+    "External ID used to interface this user to other systems"
+    extId: String
+    groupId: String
+    "Object hidden or not"
+    hidden: Boolean
+    locId: Int
+    uatId: Int
+    "Attributes values from template form."
+    userInput: String
+}
+
+input PoliciesInput {
+    privacy: Boolean!
+    terms: Boolean!
+}
+
 input QueryCollectionDateFilter {
+    from: DateTime
+    to: DateTime
+}
+
+input QueryDateFilter {
     from: DateTime
     to: DateTime
 }
@@ -684,6 +2366,7 @@ input RecipientCreateInput {
     hidden: Boolean!
     "Full label array"
     labels: [LabelInput!]!
+    lifecycle: RecipientLifecycle!
     locId: Int!
     posLat: Float!
     posLng: Float!
@@ -706,12 +2389,47 @@ input RecipientUpdateInput {
     hidden: Boolean
     "Full label array"
     labels: [LabelInput!]
+    lifecycle: RecipientLifecycle
     locId: Int
     posLat: Float
     posLng: Float
     size: String
     stream: WasteStream
     uatId: Int
+}
+
+input ServiceAgreementCreateInput {
+    addressNumber: String
+    addressStreet: String
+    "Create a service agreement with invalid state if validation fails. Available only with CREATE_INVALID_SERVICE_AGREEMENT permission."
+    allowInvalidServiceAgreement: Boolean = false
+    "Specifies the point in time from where the input applies."
+    asOf: DateTime
+    comments: String
+    "Specifies the period of effectiveness."
+    effectiveInterval: [DateTime!]
+    extId: String
+    locId: Int
+    placeId: String!
+    uatId: Int
+    "Attributes values from template form."
+    userInput: String
+}
+
+input ServiceAgreementUpdateInput {
+    addressNumber: String
+    addressStreet: String
+    "Update a service agreement with an invalid state if validation fails."
+    allowInvalidServiceAgreement: Boolean = false
+    "Specifies the point in time from where the input applies."
+    asOf: DateTime
+    comments: String
+    "Specifies the period of effectiveness."
+    effectiveInterval: [DateTime!]
+    locId: Int
+    uatId: Int
+    "Attributes values from template form."
+    userInput: String
 }
 
 input UserAttributeInput {
@@ -758,6 +2476,36 @@ input UserUpdateInput {
     uatId: Int
 }
 
+input ValidateOwnerCodeInput {
+    ownerId: String!
+    validationCode: [String!]!
+}
+
+input VehicleRoutePointsCreateInput {
+    "Date the event was sent to EOS"
+    arrivedAt: DateTime!
+    countyId: Int
+    "Date the event was recorded in the field"
+    createdAt: DateTime!
+    "Driving direction of the vehicle."
+    direction: VehicleRouteDirection!
+    "Total driving distance for the day [km]."
+    drivingDistance: Float!
+    "Only allowed in debug mode"
+    extId: String!
+    "Heading (compass direction) of the vehicle [°]."
+    heading: Float!
+    ignoreTimeout: Boolean
+    "Longitude of the position the route point was created at. WGS-84 decimal degress."
+    posLat: Float!
+    "Longitude of the position the route point was created at. WGS-84 decimal degress."
+    posLng: Float!
+    "Speed of the vehicle [km/h]."
+    speed: Float
+    "License plate of the vehicle the route point belongs to."
+    vehicleLicensePlate: String!
+}
+
 input VehicleTripDateFilter {
     from: DateTime
     to: DateTime
@@ -775,3 +2523,6 @@ input VehicleTripInput {
 
 "The javascript `Date` as string. Type represents date and time as the ISO Date string."
 scalar DateTime
+
+"ANY type"
+scalar ANY

@@ -18,7 +18,6 @@ class MultipenUHF: BTDeviceClass {
     }
 
     private val subs: CompositeDisposable = CompositeDisposable()
-    private var packets: PublishSubject<String> = PublishSubject.create()
 
     @SuppressLint("CheckResult")
     override fun start(read: Observable<ByteArray>, write: (data: ByteArray) -> Completable, tags: PublishSubject<String>) {

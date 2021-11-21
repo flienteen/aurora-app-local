@@ -11,9 +11,8 @@
     <string name="add_economic_agents">Înregistrare Agent Economic</string>
     <string name="password">Parolă</string>
     <string name="map">Hartă</string>
-
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="collections">Colectări</string>
+    <string name="size">Mărime</string>
 
     <array name="eos_env">
         <item>Dezvoltare</item>
@@ -23,4 +22,6 @@
         <item>persidius.dev</item>
         <item>persidius.com</item>
     </array>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

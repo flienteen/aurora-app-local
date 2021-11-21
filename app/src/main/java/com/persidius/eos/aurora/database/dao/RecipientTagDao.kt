@@ -8,24 +8,27 @@ import io.reactivex.Single
 
 @Dao
 interface RecipientTagDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insert(tags: List<RecipientTag>): Completable
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  fun rxInsert(tags: List<RecipientTag>): Completable
 
-    @Query("DELETE FROM RecipientTag")
-    fun deleteAll(): Completable
+  @Query("DELETE FROM RecipientTag")
+  fun deleteAll(): Completable
 
-    @Query("DELETE FROM RecipientTag WHERE tag IN (:tags)")
-    fun deleteTags(tags: List<String>): Completable
+  @Query("DELETE FROM RecipientTag WHERE tag IN (:tags)")
+  fun deleteTags(tags: List<String>): Completable
 
-    @Query("SELECT * FROM RecipientTag WHERE tag = :tag")
-    fun getByTag(tag: String): Maybe<RecipientTag>
+  @Query("SELECT * FROM RecipientTag WHERE tag = :tag")
+  fun getByTag(tag: String): Maybe<RecipientTag>
 
-    @Query("SELECT * FROM RecipientTag WHERE recipientId = :recipientId")
-    fun getByRecipientId(recipientId: String): Single<List<RecipientTag>>
+  @Query("SELECT * FROM RecipientTag WHERE recipientId = :recipientId")
+  fun getByRecipientId(recipientId: String): Single<List<RecipientTag>>
 
-    @Query("SELECT MAX(id) AS result FROM RecipientTag LIMIT 1")
-    fun maxId(): Maybe<Int>
+  @Query("SELECT MAX(id) AS result FROM RecipientTag LIMIT 1")
+  fun maxId(): Maybe<Int>
 
-    @Query("SELECT COUNT(id) AS result FROM RecipientTag")
-    fun getCount(): Maybe<Int>
+  @Query("SELECT COUNT(id) AS result FROM RecipientTag")
+  fun getCount(): Maybe<Int>
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  suspend fun insert(tags: List<RecipientTag>)
 }

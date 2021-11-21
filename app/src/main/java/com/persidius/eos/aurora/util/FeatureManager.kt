@@ -22,4 +22,8 @@ class FeatureManager(authMgr: AuthManager) {
     val setGroupBinEnabled: Observable<Boolean> = authMgr.session.roles.map {
         Role.VIEW_GROUP in it
     }.observeOn(AndroidSchedulers.mainThread())
+
+    val createCollectionEnabled: Observable<Boolean> = authMgr.session.roles.map {
+      Role.CREATE_COLLECTION in it
+    }.observeOn(AndroidSchedulers.mainThread())
 }

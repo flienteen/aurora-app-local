@@ -9,5 +9,7 @@ enum class Role {
     UPDATE_TAGS,
 
     DISABLE_PAGINATION,
+
+    CREATE_COLLECTION,
     DEBUG;
 }

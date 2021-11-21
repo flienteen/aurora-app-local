@@ -1,4 +1,4 @@
-query definitions {
+query definitions($includeVehicles: Boolean!) {
     ## Gis Hierarchy
     me {
         uats {
@@ -28,5 +28,12 @@ query definitions {
     recommendedLabels {
         displayName
         label
+    }
+
+    vehicles @include(if: $includeVehicles) {
+        licensePlate
+        county {
+            id
+        }
     }
 }

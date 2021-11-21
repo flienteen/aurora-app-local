@@ -4,6 +4,7 @@ import android.view.View
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.persidius.eos.aurora.database.entities.*
+import com.persidius.eos.aurora.type.RecipientLifecycle
 
 class RecipientViewModel: ViewModel() {
 
@@ -49,6 +50,8 @@ class RecipientViewModel: ViewModel() {
 
     val streamSelectable: MutableLiveData<Boolean> = MutableLiveData(true)
     val sizeSelectable: MutableLiveData<Boolean> = MutableLiveData(true)
+
+    val lifecycle: MutableLiveData<String> = MutableLiveData()
 
     fun selectTag0(v: View) {
         tagSelected.value = 0
