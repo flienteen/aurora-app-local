@@ -18,6 +18,7 @@ object Preferences: SharedPreferences.OnSharedPreferenceChangeListener, Collecti
   private const val AM_USERNAME = "amUsername"
   private const val AM_PASSWORD = "amPassword"
 
+
   private const val BT_ENABLED = "btEnabled"
   private const val BT_DEVICE_TYPE = "btDeviceType"
   private const val BT_DEVICE_ID = "btDeviceId"
@@ -30,6 +31,10 @@ object Preferences: SharedPreferences.OnSharedPreferenceChangeListener, Collecti
 
   // Vibrate when a tag reassignment is discovered
   private const val REASSIGN_WARNING = "reassignWarning"
+
+  // Value to override the rapid register recipients flux with
+  private const val STREAM_OVERRIDE_ENABLED = "streamOverrideEnabled"
+  private const val STREAM_OVERRIDE = "streamOverride"
 
   lateinit var prefs: SharedPreferences
 
@@ -51,6 +56,8 @@ object Preferences: SharedPreferences.OnSharedPreferenceChangeListener, Collecti
   override lateinit var minimumTimeBetweenCollections: BehaviorSubject<Int>
 
   lateinit var reassignWarning: BehaviorSubject<Boolean>
+  lateinit var streamOverrideEnabled: BehaviorSubject<Boolean>
+  lateinit var streamOverride: BehaviorSubject<String>
 
   fun init(applicationContext: Context) {
     prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
@@ -79,7 +86,12 @@ object Preferences: SharedPreferences.OnSharedPreferenceChangeListener, Collecti
       }
       REASSIGN_WARNING -> {
         reassignWarning.onNext(sharedPreferences.getBoolean(key, true))
-        Log.d("Prefs", "ReassignWarning: ${sharedPreferences.getBoolean(key, true)}")
+      }
+      STREAM_OVERRIDE -> {
+        streamOverride.onNext(sharedPreferences.getString(key, "")!!)
+      }
+      STREAM_OVERRIDE_ENABLED -> {
+        streamOverrideEnabled.onNext(sharedPreferences.getBoolean(key, false))
       }
     }
   }
@@ -91,6 +103,9 @@ object Preferences: SharedPreferences.OnSharedPreferenceChangeListener, Collecti
 
   private fun initOtherPrefs() {
     reassignWarning = PrefUtils.setupBoolean(REASSIGN_WARNING, true)
+
+    streamOverrideEnabled = PrefUtils.setupBoolean(STREAM_OVERRIDE_ENABLED, false)
+    streamOverride = PrefUtils.setupString(STREAM_OVERRIDE, "REZ")
   }
 
   private fun initSmPrefs() {

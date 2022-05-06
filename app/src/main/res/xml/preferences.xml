@@ -39,15 +39,27 @@
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="ALERTE"
-        app:icon="@drawable/ic_baseline_warning_24"
+        android:title="FUNCTIONALITATE"
+        app:icon="@drawable/preferences_functionality_24dp"
     >
         <SwitchPreferenceCompat
             app:key="reassignWarning"
-            app:title="Refolosire cip"
+            app:title="Alertă refolosire cip"
             app:summary="Alertează când un cip a fost deja scanat la altă etichetă"
             app:defaultValue="true"
             />
+        <SwitchPreferenceCompat
+            app:key="streamOverrideEnabled"
+            app:title="Suprascriere flux la înregistrare"
+            app:summary="Suprascriere flux deșeuri în procesul de înregistrare recipienți"
+            />
+        <ListPreference
+            app:key="streamOverride"
+            app:title="Valoare nouă flux"
+            app:summary=""
+            app:dependency="streamOverrideEnabled"
+            />
+
     </PreferenceCategory>
     <PreferenceCategory
         app:title="GENERAL"

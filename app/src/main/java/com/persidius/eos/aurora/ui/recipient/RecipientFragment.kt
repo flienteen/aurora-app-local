@@ -27,6 +27,7 @@ import io.sentry.Sentry
 class RecipientFragment: AutoDisposeFragment() {
   companion object {
     const val ARG_RECIPIENT_ID = "recipientId"
+    const val ARG_CAN_OVERRIDE_STREAM = "canOverrideStream"
     const val tag = "RecipientFragment"
   }
 
@@ -68,6 +69,9 @@ class RecipientFragment: AutoDisposeFragment() {
 
     // Get the arguments
     val recipientId = arguments?.getString(ARG_RECIPIENT_ID)
+    val canOverrideStream = arguments?.getBoolean(ARG_CAN_OVERRIDE_STREAM) ?: false
+    val streamOverrideEnabled = Preferences.streamOverrideEnabled.blockingFirst()
+    val streamOverride = Preferences.streamOverride.blockingFirst()
 
     val mainActivity = (requireActivity() as MainActivity)
     val toolbar = mainActivity.toolbar
@@ -140,7 +144,7 @@ class RecipientFragment: AutoDisposeFragment() {
         viewModel.tagSelected.value = 0
         viewModel.tagSlots.value = size.slots
 
-        viewModel.uat.observe(viewLifecycleOwner, { newVal ->
+        viewModel.uat.observe(viewLifecycleOwner) { newVal ->
 
           val uat = viewModel.uats.value?.firstOrNull { u -> u.name == newVal }
           if (uat != null) {
@@ -163,9 +167,9 @@ class RecipientFragment: AutoDisposeFragment() {
           } else {
             viewModel.locs.value = listOf()
           }
-        })
+        }
 
-        viewModel.uats.observe(viewLifecycleOwner, { newVal ->
+        viewModel.uats.observe(viewLifecycleOwner) { newVal ->
           binding.uat.setAdapter(
             FoldingArrayAdapter(
               requireActivity(),
@@ -173,9 +177,9 @@ class RecipientFragment: AutoDisposeFragment() {
               newVal.map { u -> u.name })
           )
           binding.uat.validator = (binding.uat.adapter as FoldingArrayAdapter).getValidator("Nedefinit")
-        })
+        }
 
-        viewModel.locs.observe(viewLifecycleOwner, { newVal ->
+        viewModel.locs.observe(viewLifecycleOwner) { newVal ->
           binding.loc.setAdapter(
             FoldingArrayAdapter(
               requireActivity(),
@@ -184,22 +188,21 @@ class RecipientFragment: AutoDisposeFragment() {
             )
           )
           binding.loc.validator = (binding.loc.adapter as FoldingArrayAdapter).getValidator("Nedefinit")
-        })
+        }
 
         viewModel.uats.value = data.second
-        Log.d(RecipientFragment.tag, "${data.fourth}")
         viewModel.uat.value = data.fourth[0].name
         viewModel.loc.value = data.third[0].name
         viewModel.recLabels.value = data.fifth
 
         // Ensure we're always displaying the correct tags
-        viewModel.size.observe(viewLifecycleOwner, { newSize ->
+        viewModel.size.observe(viewLifecycleOwner) { newSize ->
           val newRecipientSize = RecipientSize.fromDisplayName(newSize) ?: RecipientSize.SIZE_120L
           viewModel.tagSlots.value = newRecipientSize.slots
           if (newRecipientSize.slots - 1 <= (viewModel.tagSelected.value ?: 0)) {
             viewModel.tagSelected.value = 0
           }
-        })
+        }
 
         binding.stream.inputType = InputType.TYPE_NULL
         binding.stream.setAdapter(
@@ -236,11 +239,19 @@ class RecipientFragment: AutoDisposeFragment() {
         binding.lifecycle.validator = (binding.lifecycle.adapter as FoldingArrayAdapter).getValidator(RecipientLifecycle.LABEL_ONLY.toString())
         viewModel.lifecycle.value = RecipientLifecycleDisplayName.get(recipient.lifecycle)
 
-        // Convert recipient stream to display name
-        viewModel.stream.value = try {
-          RecipientStream.valueOf(recipient.stream).displayName
-        } catch (t: Throwable) {
-          ""
+        if(canOverrideStream && streamOverrideEnabled) {
+          viewModel.stream.value = try {
+            RecipientStream.valueOf(streamOverride).displayName
+          } catch (t: Throwable) {
+            ""
+          }
+        } else {
+          // Convert recipient stream to display name
+          viewModel.stream.value = try {
+            RecipientStream.valueOf(recipient.stream).displayName
+          } catch (t: Throwable) {
+            ""
+          }
         }
         viewModel.size.value = recipient.size
 
@@ -408,7 +419,6 @@ class RecipientFragment: AutoDisposeFragment() {
   private fun executeSave(
     changes: RecipientChangedValues
   ) {
-    Log.d(RecipientFragment.tag, "ExeSave")
     // Push the updates in the update db
     val mainActivity = (requireActivity() as MainActivity)
     val createdBy = mainActivity.authMgr.session.email.blockingFirst().value ?: "No Email"
@@ -474,7 +484,6 @@ class RecipientFragment: AutoDisposeFragment() {
 
   private fun applyRecipientTagUpdates(t: List<RecipientTag>, p: List<RecipientTagUpdate>): Completable {
     val (shedTags, remainingTags) = t.partition { tag -> p.none { it.tag == tag.tag } }
-    Log.d(RecipientFragment.tag, "DELETE FOR TAGS = ${shedTags.map { it.tag }}")
 
 
     val updatedTags =
@@ -509,8 +518,6 @@ class RecipientFragment: AutoDisposeFragment() {
         ))
       }
     }
-
-    Log.d(RecipientFragment.tag, "UPDATE FOR TAGS ${updatedTags.map { it.tag }}")
 
     return Database.recipientTags.deleteTags(shedTags.map { it.tag })
       .andThen(Database.recipientTags.rxInsert(updatedTags.toList()))

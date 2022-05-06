@@ -1,10 +1,10 @@
 package com.persidius.eos.aurora.ui.settings
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import androidx.lifecycle.Observer
 import androidx.navigation.NavOptions
-import androidx.navigation.NavOptionsBuilder
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
@@ -18,6 +18,10 @@ import com.uber.autodispose.android.autoDispose
 import io.reactivex.android.schedulers.AndroidSchedulers
 
 class SettingsFragment : PreferenceFragmentCompat() {
+  private val streamOverrideLabels = arrayOf("Rezidual (Negru)", "Biodegradabil (Maro)", "Plastic și Metal (Galben)", "Hârtie și Carton (Albastru)", "Sticlă (Verde)")
+  private val streamOverrideValues = arrayOf("REZ", "BIO", "RPM", "RPC", "RGL")
+
+  @SuppressLint("AutoDispose", "CheckResult")
   override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
     setPreferencesFromResource(R.xml.preferences, rootKey)
 
@@ -58,6 +62,22 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
     mainActivity.btSvc.tagLiveData.observe(this, btDataObserver)
     mainActivity.btSvc.getState().asLiveData().observe(this, btStateObserver)
+
+    val streamOverride = findPreference<ListPreference>("streamOverride")
+    streamOverride?.entries = streamOverrideLabels
+    streamOverride?.entryValues = streamOverrideValues
+    streamOverride?.summaryProvider = Preference.SummaryProvider<ListPreference> {
+      if (it.value != null) {
+        val labelIndex = streamOverrideValues.indexOf(it.value)
+        if (labelIndex != -1) {
+          streamOverrideLabels[labelIndex]
+        } else {
+          it.value
+        }
+      } else {
+        "Atinge pentru a selecta o valoare"
+      }
+    }
 
     // "Logout" is only enabled if signedIn && not locked
     // switch server is only enabled if !signedOut && not locked

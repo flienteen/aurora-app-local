@@ -100,13 +100,19 @@ class CameraScannerFragment : Fragment() {
         if(rawCode != null) {
           val modernCodeMatch = linkRegex.matchEntire(rawCode)
           if (modernCodeMatch != null) {
-            code = modernCodeMatch.groups[1]?.value;
+            code = modernCodeMatch.groups[1]?.value
           }
         }
         code = code?.toUpperCase(Locale.ENGLISH)
 
         args.apply {
-            putString(RecipientFragment.ARG_RECIPIENT_ID, code)
+          putString(RecipientFragment.ARG_RECIPIENT_ID, code)
+          // HACK: The fast recipient registration flow is achieved by
+          // "not" removing the camera from the nav stack, so the save/back action
+          // always navigates back to the camera. We need to tell the recipient
+          // fragment *IF* it can override the stream, which is only possible in the
+          // recipient registration flow (aka when popNav is false)
+          putBoolean(RecipientFragment.ARG_CAN_OVERRIDE_STREAM, !popNav)
         }
 
         // CameraX.unbindAll()
