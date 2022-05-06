@@ -54,6 +54,7 @@ class MainActivity : AppCompatActivity() {
     val login: MenuItem = n.menu.findItem(R.id.nav_login)
     val recipientSearch: MenuItem = n.menu.findItem(R.id.nav_searchRecipient)
     val createBin: MenuItem = n.menu.findItem(R.id.nav_cameraScanner)!!
+    val createCollection: MenuItem = n.menu.findItem(R.id.nav_createCollection)
   }
 
   private lateinit var menu: DrawerMenu
@@ -141,7 +142,7 @@ class MainActivity : AppCompatActivity() {
 
     // Passing each menu ID as a set of Ids because each menu should be considered as top level destinations.
     appBarConfiguration = AppBarConfiguration(
-      setOf(R.id.nav_settings, R.id.nav_no_permissions, R.id.nav_login, R.id.nav_searchRecipient), drawerLayout
+      setOf(R.id.nav_settings, R.id.nav_login, R.id.nav_searchRecipient, R.id.nav_createCollection), drawerLayout
     )
 
     setupActionBarWithNavController(_navController, appBarConfiguration)
@@ -162,6 +163,10 @@ class MainActivity : AppCompatActivity() {
 
     subs.add(featMgr.searchBinEnabled.subscribe {
       menu.recipientSearch.isEnabled = it
+    })
+
+    subs.add(featMgr.createCollectionEnabled.subscribe {
+      menu.createCollection.isEnabled = it
     })
 
     _location = Location(this)

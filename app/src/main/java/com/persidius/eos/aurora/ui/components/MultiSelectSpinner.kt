@@ -31,10 +31,6 @@ class MultiSelectSpinner : Spinner, OnMultiChoiceClickListener {
         super.setAdapter(simpleAdapter)
     }
 
-    fun addSpinnerListener(listener: OnSpinnerEventsListener) {
-        this.listener = listener
-    }
-
     override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
         super.onWindowFocusChanged(hasWindowFocus)
         if (hasWindowFocus) {
@@ -56,7 +52,7 @@ class MultiSelectSpinner : Spinner, OnMultiChoiceClickListener {
     override fun performClick(): Boolean {
         val builder = AlertDialog.Builder(context)
         builder.setMultiChoiceItems(_items, mSelection, this)
-        val popup = builder.show()
+        builder.show()
         listener?.onSpinnerOpened()
 //        post { dropDownVerticalOffset += -200 }
 //        val layoutParams = popup?.window?.attributes

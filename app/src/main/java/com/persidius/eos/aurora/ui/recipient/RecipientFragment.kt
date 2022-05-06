@@ -624,7 +624,7 @@ class RecipientFragment: AutoDisposeFragment() {
     val vmTag0 = viewModel.tag0.value!!
     val vmTag1 = viewModel.tag1.value!!
 
-    val vmLifecycle = viewModel.lifecycle.value
+    val vmLifecycle = RecipientLifecycleDisplayName.toValue(viewModel.lifecycle.value).toString()
 
     val tag0 = viewModel.tags?.firstOrNull { t -> t.slot == 0 }?.tag ?: ""
     val tag1 = viewModel.tags?.firstOrNull { t -> t.slot == 1 }?.tag ?: ""
@@ -642,7 +642,7 @@ class RecipientFragment: AutoDisposeFragment() {
       size = if (r.size == vmSize) null else vmSize,
       stream = if (r.stream == vmStream) null else vmStream,
       comments = if (r.comments == vmComments) null else vmComments,
-      lifecycle = if (vmLifecycle == r.lifecycle) null else RecipientLifecycleDisplayName.toValue(vmLifecycle).toString(),
+      lifecycle = if (vmLifecycle == r.lifecycle) null else vmLifecycle,
       addressStreet = if (r.addressStreet == vmAddressStreet) null else vmAddressStreet,
       addressNumber = if (r.addressNumber == vmAddressNumber) null else vmAddressNumber,
       groupId = if (rGroupId == vmGroupId) null else vmGroupId,

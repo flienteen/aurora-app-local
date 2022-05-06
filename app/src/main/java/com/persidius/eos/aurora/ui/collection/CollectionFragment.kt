@@ -97,6 +97,11 @@ class CollectionFragment : AutoDisposeFragment() {
           }
         }
       }
+
+    val mainActivity = (requireActivity() as MainActivity)
+    val toolbar = mainActivity.toolbar
+    toolbar.title = "Înregistrare Colectări"
+
     return binding.root
   }
 }

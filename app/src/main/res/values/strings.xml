@@ -13,6 +13,7 @@
     <string name="map">Hartă</string>
     <string name="collections">Colectări</string>
     <string name="size">Mărime</string>
+    <string name="vehicle_license_plate">Număr Înmatriculare</string>
 
     <array name="eos_env">
         <item>Dezvoltare</item>

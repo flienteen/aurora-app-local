@@ -30,7 +30,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="@string/size">
+                android:hint="@string/vehicle_license_plate">
 
                 <com.persidius.eos.aurora.ui.components.InstantAutoComplete
                     android:id="@+id/vehicleLicensePlate"
@@ -43,28 +43,32 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
+                android:textSize="20sp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:visibility="@{model.state == CollectionFragmentReadState.WAITING_READ ? View.VISIBLE : View.INVISIBLE }"
+                android:visibility="@{model.state == CollectionFragmentReadState.WAITING_READ ? View.VISIBLE : View.GONE }"
                 android:text="Se asteapta o scanare"
                 />
 
             <TextView
+                android:textSize="20sp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:visibility="@{model.state == CollectionFragmentReadState.READ_OK ? View.VISIBLE : View.INVISIBLE }"
+                android:visibility="@{model.state == CollectionFragmentReadState.READ_OK ? View.VISIBLE : View.GONE }"
                 android:text="Colectare inregistrata"
                 />
             <TextView
+                android:textSize="20sp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:visibility="@{model.state == CollectionFragmentReadState.READ_DUPLICATED ? View.VISIBLE : View.INVISIBLE }"
+                android:visibility="@{model.state == CollectionFragmentReadState.READ_DUPLICATED ? View.VISIBLE : View.GONE }"
                 android:text="Exista deja o colectare in ultimele 5 minute"
                 />
             <TextView
+                android:textSize="20sp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:visibility="@{model.state == CollectionFragmentReadState.READ_OTHER_ERROR ? View.VISIBLE : View.INVISIBLE }"
+                android:visibility="@{model.state == CollectionFragmentReadState.READ_OTHER_ERROR ? View.VISIBLE : View.GONE }"
                 android:text="Eroare citire"
                 />
         </LinearLayout>
