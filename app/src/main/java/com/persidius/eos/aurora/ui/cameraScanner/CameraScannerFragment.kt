@@ -17,12 +17,14 @@ import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode
 import com.persidius.eos.aurora.MainActivity
 import com.persidius.eos.aurora.R
 import com.persidius.eos.aurora.ui.recipient.RecipientFragment
+import java.util.*
 import java.util.concurrent.Executors
 
 class CameraScannerFragment : Fragment() {
 
     private val executor = Executors.newSingleThreadExecutor()
     private lateinit var viewFinder: TextureView
+    private val linkRegex = Regex("^(?:(?:https://)?persidius\\.link/r/)?([a-z0-9]{4,8})$", RegexOption.IGNORE_CASE)
 
     companion object {
         /**
@@ -49,7 +51,7 @@ class CameraScannerFragment : Fragment() {
         parent.removeView(viewFinder)
         parent.addView(viewFinder, 0)
 
-        viewFinder.surfaceTexture = it.surfaceTexture
+        viewFinder.setSurfaceTexture(it.surfaceTexture)
         updateTransform()
       }
 
@@ -75,7 +77,7 @@ class CameraScannerFragment : Fragment() {
           val builder = AlertDialog.Builder(requireContext())
           builder.setTitle("Multiple coduri")
           builder.setMessage("Au fost scanate multiple coduri. Pentru a evita ambiguitatea, asigura-te ca exista o singura eticheta in vederea camerei")
-          builder.setNeutralButton("Am Ințeles" ) { dialog, which ->
+          builder.setNeutralButton("Am Ințeles" ) { dialog, _ ->
             dialog.dismiss()
             debounce = false
           }
@@ -83,10 +85,26 @@ class CameraScannerFragment : Fragment() {
       }
 
       if(barcodes.size == 1) {
-        // nav to next destination
+
         val navController = (activity as MainActivity).navController
         val args = Bundle()
-        val code = barcodes[0].rawValue?.split(":")?.last()
+
+        // we support 3 formats:
+        // 1. legacy <OBJ_TYPE>:ID
+        // 2. normal ID (4,5,6 alphanumeric)
+        // 3. 'modern' link ids: (https://)persidius.link/r/<ID>
+        // all these are case insensitive
+        val rawCode = barcodes[0].rawValue
+        var code = rawCode?.split(":")?.last()
+
+        if(rawCode != null) {
+          val modernCodeMatch = linkRegex.matchEntire(rawCode)
+          if (modernCodeMatch != null) {
+            code = modernCodeMatch.groups[1]?.value;
+          }
+        }
+        code = code?.toUpperCase(Locale.ENGLISH)
+
         args.apply {
             putString(RecipientFragment.ARG_RECIPIENT_ID, code)
         }

@@ -19,7 +19,7 @@ configurations.all {
 }
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 32
 
     sourceSets {
         main.java.srcDirs += 'src/main/graphql'
@@ -32,10 +32,10 @@ android {
 
     defaultConfig {
         applicationId "com.persidius.eos.aurora"
-        minSdkVersion 28
-        targetSdkVersion 29
-        versionCode 541
-        versionName "5.4.1"
+        minSdkVersion 30
+        targetSdkVersion 32
+        versionCode 550
+        versionName "5.5.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         javaCompileOptions {
