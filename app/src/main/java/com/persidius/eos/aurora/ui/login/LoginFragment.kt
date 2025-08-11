@@ -9,6 +9,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavOptions
+import androidx.navigation.fragment.findNavController
 import com.persidius.eos.aurora.MainActivity
 import com.persidius.eos.aurora.R
 import com.persidius.eos.aurora.databinding.FragmentLoginBinding
@@ -38,7 +39,7 @@ class LoginFragment : Fragment() {
             //if(activity.featMgr.searchBinEnabled.blockingFirst()) {
                 Log.d("LoginFragment", "all resolved, navigating")
                 // navigate to recipient mgmt
-                activity.navController.navigate(R.id.action_nav_login_to_nav_searchRecipient)
+                findNavController().navigate(R.id.action_nav_login_to_nav_searchRecipient)
          //   }
             /* TODO: else {
                 // Navigate to not enough permissions, please logout.
