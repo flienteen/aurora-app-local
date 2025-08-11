@@ -1,8 +1,13 @@
 package com.persidius.eos.aurora.ui.settings
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 import androidx.navigation.NavOptions
 import androidx.preference.ListPreference
@@ -14,14 +19,12 @@ import com.persidius.eos.aurora.MainActivity
 import com.persidius.eos.aurora.R
 import com.persidius.eos.aurora.util.asLiveData
 import com.persidius.eos.aurora.bluetooth.BTService
-import com.uber.autodispose.android.autoDispose
 import io.reactivex.android.schedulers.AndroidSchedulers
 
 class SettingsFragment : PreferenceFragmentCompat() {
   private val streamOverrideLabels = arrayOf("Rezidual (Negru)", "Biodegradabil (Maro)", "Plastic și Metal (Galben)", "Hârtie și Carton (Albastru)", "Sticlă (Verde)")
   private val streamOverrideValues = arrayOf("REZ", "BIO", "RPM", "RPC", "RGL")
 
-  @SuppressLint("AutoDispose", "CheckResult")
   override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
     setPreferencesFromResource(R.xml.preferences, rootKey)
 
@@ -32,11 +35,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
     val mainActivity = requireActivity() as MainActivity
 
     val devIdPref = findPreference<ListPreference>("btDeviceId")
-    devIdPref?.entries = mainActivity.btSvc.getDeviceList().map { it.name }.toTypedArray()
-    devIdPref?.entryValues = mainActivity.btSvc.getDeviceList().map { it.id }.toTypedArray()
     devIdPref?.summaryProvider = Preference.SummaryProvider<ListPreference> {
       it.value ?: "Selectare dispozitiv bluetooth"
     }
+
+    requestBluetoothPermission()
 
     val devTypePref = findPreference<ListPreference>("btDeviceType")
     devTypePref?.entries = mainActivity.btSvc.getDeviceTypeList().toTypedArray()
@@ -108,4 +111,36 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     updateAMSettings()
   }
+
+  private fun populateBluetoothDeviceList() {
+    val mainActivity = requireActivity() as MainActivity
+    val devIdPref = findPreference<ListPreference>("btDeviceId")
+    devIdPref?.entries = mainActivity.btSvc.getDeviceList().map { it.name }.toTypedArray()
+    devIdPref?.entryValues = mainActivity.btSvc.getDeviceList().map { it.id }.toTypedArray()
+  }
+
+  private fun requestBluetoothPermission() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+      if (ContextCompat.checkSelfPermission(
+          requireActivity(),
+          Manifest.permission.BLUETOOTH_CONNECT
+        ) == PackageManager.PERMISSION_GRANTED
+      ) {
+        populateBluetoothDeviceList()
+      } else {
+        requestPermissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
+      }
+    } else {
+      populateBluetoothDeviceList()
+    }
+  }
+
+  private val requestPermissionLauncher =
+    registerForActivityResult(
+      ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+      if (isGranted) {
+        populateBluetoothDeviceList()
+      }
+    }
 }
