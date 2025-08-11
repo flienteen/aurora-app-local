@@ -22,8 +22,12 @@ class LoginFragment : Fragment() {
         val activity: MainActivity = activity as MainActivity
         val viewModel = ViewModelProvider(this, LoginViewModelProviderFactory(activity.authMgr)).get(LoginViewModel::class.java)
         binding.model = viewModel
-        navigateIfLoggedIn()
         return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        navigateIfLoggedIn()
     }
 
     private fun navigateIfLoggedIn() {
